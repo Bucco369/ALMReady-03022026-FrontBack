@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Upload, FileSpreadsheet, Eye, RefreshCw, Download } from 'lucide-react';
+import { Upload, FileSpreadsheet, Eye, RefreshCw, Download, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -82,15 +82,14 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
     setFileName(null);
   }, [onPositionsChange]);
 
-  // Calculate summary metrics
   const assetCount = positions.filter(p => p.instrumentType === 'Asset').length;
   const liabilityCount = positions.filter(p => p.instrumentType === 'Liability').length;
   const totalNotional = positions.reduce((sum, p) => sum + Math.abs(p.notional), 0);
 
   const formatNotional = (num: number) => {
-    if (num >= 1e9) return `${(num / 1e9).toFixed(1)}bn`;
-    if (num >= 1e6) return `${(num / 1e6).toFixed(1)}m`;
-    if (num >= 1e3) return `${(num / 1e3).toFixed(0)}k`;
+    if (num >= 1e9) return `${(num / 1e9).toFixed(1)}B`;
+    if (num >= 1e6) return `${(num / 1e6).toFixed(1)}M`;
+    if (num >= 1e3) return `${(num / 1e3).toFixed(0)}K`;
     return num.toString();
   };
 
@@ -105,32 +104,30 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
 
   const formatPercent = (num: number) => (num * 100).toFixed(2) + '%';
 
+  const isLoaded = positions.length > 0;
+
   return (
     <>
-      <div className="quadrant-card animate-fade-in h-full flex flex-col">
-        <div className="quadrant-header">
-          <div className="quadrant-title">
-            <FileSpreadsheet className="h-5 w-5 text-primary" />
-            Balance Positions
+      <div className="dashboard-card">
+        <div className="dashboard-card-header">
+          <div className="flex items-center gap-1.5">
+            <FileSpreadsheet className="h-3.5 w-3.5 text-primary" />
+            <span className="text-xs font-semibold text-foreground">Balance Positions</span>
           </div>
-          {positions.length > 0 && (
-            <span className="text-xs text-muted-foreground">{fileName}</span>
-          )}
+          <StatusIndicator loaded={isLoaded} />
         </div>
 
-        <div className="quadrant-content flex-1 flex flex-col">
-          {positions.length === 0 ? (
+        <div className="dashboard-card-content">
+          {!isLoaded ? (
             <div
-              className={`upload-zone flex-1 ${isDragging ? 'active' : ''}`}
+              className={`compact-upload-zone ${isDragging ? 'active' : ''}`}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
             >
-              <Upload className="empty-state-icon" />
-              <p className="mb-4 text-sm font-medium text-foreground">
-                Upload balance positions
-              </p>
-              <div className="flex gap-2">
+              <Upload className="h-5 w-5 text-muted-foreground mb-1" />
+              <p className="text-xs text-muted-foreground mb-2">Drop CSV or click to upload</p>
+              <div className="flex gap-1.5">
                 <label>
                   <Input
                     type="file"
@@ -138,50 +135,42 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
                     className="hidden"
                     onChange={handleInputChange}
                   />
-                  <Button variant="outline" size="sm" asChild>
-                    <span>Browse Files</span>
+                  <Button variant="outline" size="sm" asChild className="h-6 text-xs px-2">
+                    <span>Browse</span>
                   </Button>
                 </label>
-                <Button variant="ghost" size="sm" onClick={handleDownloadSample}>
-                  <Download className="mr-1 h-4 w-4" />
+                <Button variant="ghost" size="sm" onClick={handleDownloadSample} className="h-6 text-xs px-2">
+                  <Download className="mr-1 h-3 w-3" />
                   Sample
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="flex flex-col flex-1">
-              <div className="space-y-1 mb-4">
-                <div className="metric-row">
-                  <span className="metric-label">Positions loaded</span>
-                  <span className="metric-value">{positions.length}</span>
-                </div>
-                <div className="metric-row">
-                  <span className="metric-label">Assets / Liabilities</span>
-                  <span className="metric-value">{assetCount} / {liabilityCount}</span>
-                </div>
-                <div className="metric-row">
-                  <span className="metric-label">Total notional</span>
-                  <span className="metric-value">{formatNotional(totalNotional)}</span>
-                </div>
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <MetricBox label="Positions" value={positions.length.toString()} />
+                <MetricBox label="Notional" value={formatNotional(totalNotional)} />
+                <MetricBox label="Assets" value={assetCount.toString()} variant="success" />
+                <MetricBox label="Liabilities" value={liabilityCount.toString()} variant="muted" />
               </div>
-
-              <div className="flex gap-2 mt-auto pt-4 border-t border-border">
+              
+              <div className="flex gap-1.5 pt-1">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowDetails(true)}
-                  className="flex-1"
+                  className="flex-1 h-6 text-xs"
                 >
-                  <Eye className="mr-1.5 h-4 w-4" />
+                  <Eye className="mr-1 h-3 w-3" />
                   View details
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleReplace}
+                  className="h-6 text-xs px-2"
                 >
-                  <RefreshCw className="mr-1.5 h-4 w-4" />
-                  Replace
+                  <RefreshCw className="h-3 w-3" />
                 </Button>
               </div>
             </div>
@@ -192,13 +181,13 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileSpreadsheet className="h-5 w-5 text-primary" />
-              Balance Positions Detail
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <FileSpreadsheet className="h-4 w-4 text-primary" />
+              Balance Positions ({positions.length})
             </DialogTitle>
           </DialogHeader>
           <div className="overflow-auto flex-1">
-            <table className="data-table">
+            <table className="data-table text-xs">
               <thead>
                 <tr>
                   <th>Type</th>
@@ -214,7 +203,7 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
                   <tr key={position.id}>
                     <td>
                       <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                        className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium ${
                           position.instrumentType === 'Asset'
                             ? 'bg-success/10 text-success'
                             : 'bg-destructive/10 text-destructive'
@@ -224,16 +213,10 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
                       </span>
                     </td>
                     <td className="font-medium">{position.description}</td>
-                    <td className="text-right font-mono">
-                      {formatCurrency(position.notional)}
-                    </td>
-                    <td className="font-mono text-xs">{position.maturityDate}</td>
-                    <td className="text-right font-mono">
-                      {formatPercent(position.couponRate)}
-                    </td>
-                    <td className="text-xs text-muted-foreground">
-                      {position.repriceFrequency}
-                    </td>
+                    <td className="text-right font-mono">{formatCurrency(position.notional)}</td>
+                    <td className="font-mono">{position.maturityDate}</td>
+                    <td className="text-right font-mono">{formatPercent(position.couponRate)}</td>
+                    <td className="text-muted-foreground">{position.repriceFrequency}</td>
                   </tr>
                 ))}
               </tbody>
@@ -242,5 +225,34 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function StatusIndicator({ loaded }: { loaded: boolean }) {
+  return loaded ? (
+    <div className="flex items-center gap-1 text-success">
+      <CheckCircle2 className="h-3 w-3" />
+      <span className="text-[10px] font-medium">Loaded</span>
+    </div>
+  ) : (
+    <div className="flex items-center gap-1 text-muted-foreground">
+      <XCircle className="h-3 w-3" />
+      <span className="text-[10px] font-medium">Not loaded</span>
+    </div>
+  );
+}
+
+function MetricBox({ label, value, variant = 'default' }: { label: string; value: string; variant?: 'default' | 'success' | 'muted' }) {
+  const valueClass = variant === 'success' 
+    ? 'text-success' 
+    : variant === 'muted' 
+      ? 'text-muted-foreground' 
+      : 'text-foreground';
+  
+  return (
+    <div className="rounded-md bg-muted/50 px-2 py-1.5">
+      <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</div>
+      <div className={`text-sm font-semibold ${valueClass}`}>{value}</div>
+    </div>
   );
 }

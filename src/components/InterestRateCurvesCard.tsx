@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Upload, TrendingUp, Eye, RefreshCw, Download } from 'lucide-react';
+import { Upload, TrendingUp, Eye, RefreshCw, Download, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -105,35 +105,35 @@ export function InterestRateCurvesCard({
   }, [onCurvesChange]);
 
   const selectedCurve = curves.find((c) => c.id === selectedBaseCurve);
-  const baseCurveName = curves.find(c => c.id === selectedBaseCurve)?.name;
-  const discountCurveName = curves.find(c => c.id === selectedDiscountCurve)?.name;
   const tenorCount = selectedCurve?.points.length ?? 0;
+  const isLoaded = curves.length > 0;
+  const hasBaseCurve = selectedBaseCurve !== null;
+  const hasDiscountCurve = selectedDiscountCurve !== null;
 
   const formatPercent = (num: number) => (num * 100).toFixed(2) + '%';
 
   return (
     <>
-      <div className="quadrant-card animate-fade-in h-full flex flex-col">
-        <div className="quadrant-header">
-          <div className="quadrant-title">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            Interest Rate Curves
+      <div className="dashboard-card">
+        <div className="dashboard-card-header">
+          <div className="flex items-center gap-1.5">
+            <TrendingUp className="h-3.5 w-3.5 text-primary" />
+            <span className="text-xs font-semibold text-foreground">Interest Rate Curves</span>
           </div>
+          <StatusIndicator loaded={isLoaded} />
         </div>
 
-        <div className="quadrant-content flex-1 flex flex-col">
-          {curves.length === 0 ? (
+        <div className="dashboard-card-content">
+          {!isLoaded ? (
             <div
-              className={`upload-zone flex-1 ${isDragging ? 'active' : ''}`}
+              className={`compact-upload-zone ${isDragging ? 'active' : ''}`}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
             >
-              <Upload className="empty-state-icon" />
-              <p className="mb-4 text-sm font-medium text-foreground">
-                Upload yield curve
-              </p>
-              <div className="flex gap-2">
+              <Upload className="h-5 w-5 text-muted-foreground mb-1" />
+              <p className="text-xs text-muted-foreground mb-2">Drop CSV or click to upload</p>
+              <div className="flex gap-1.5">
                 <label>
                   <Input
                     type="file"
@@ -141,83 +141,49 @@ export function InterestRateCurvesCard({
                     className="hidden"
                     onChange={handleInputChange}
                   />
-                  <Button variant="outline" size="sm" asChild>
-                    <span>Browse Files</span>
+                  <Button variant="outline" size="sm" asChild className="h-6 text-xs px-2">
+                    <span>Browse</span>
                   </Button>
                 </label>
-                <Button variant="ghost" size="sm" onClick={handleDownloadSample}>
-                  <Download className="mr-1 h-4 w-4" />
+                <Button variant="ghost" size="sm" onClick={handleDownloadSample} className="h-6 text-xs px-2">
+                  <Download className="mr-1 h-3 w-3" />
                   Sample
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="flex flex-col flex-1">
-              <div className="space-y-1 mb-4">
-                <div className="metric-row">
-                  <span className="metric-label">Curves loaded</span>
-                  <span className="metric-value">{curves.length}</span>
-                </div>
-                <div className="metric-row">
-                  <span className="metric-label">Tenors</span>
-                  <span className="metric-value">{tenorCount}</span>
-                </div>
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <MetricBox label="Curves" value={curves.length.toString()} />
+                <MetricBox label="Tenors" value={tenorCount.toString()} />
               </div>
 
-              <div className="space-y-3 mb-4">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                    Base Curve
-                  </label>
-                  <Select value={selectedBaseCurve || ''} onValueChange={onBaseCurveSelect}>
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue placeholder="Select base curve" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {curves.map((curve) => (
-                        <SelectItem key={curve.id} value={curve.id}>
-                          {curve.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <CurveStatus label="Base" selected={hasBaseCurve} name={selectedCurve?.name} />
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                    Discount Curve
-                  </label>
-                  <Select value={selectedDiscountCurve || ''} onValueChange={onDiscountCurveSelect}>
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue placeholder="Select discount curve" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {curves.map((curve) => (
-                        <SelectItem key={curve.id} value={curve.id}>
-                          {curve.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="flex items-center gap-2">
+                  <CurveStatus label="Discount" selected={hasDiscountCurve} name={curves.find(c => c.id === selectedDiscountCurve)?.name} />
                 </div>
               </div>
-
-              <div className="flex gap-2 mt-auto pt-4 border-t border-border">
+              
+              <div className="flex gap-1.5 pt-1">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowDetails(true)}
-                  className="flex-1"
+                  className="flex-1 h-6 text-xs"
                 >
-                  <Eye className="mr-1.5 h-4 w-4" />
-                  View curve
+                  <Eye className="mr-1 h-3 w-3" />
+                  View curves
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleClear}
+                  className="h-6 text-xs px-2"
                 >
-                  <RefreshCw className="mr-1.5 h-4 w-4" />
-                  Clear
+                  <RefreshCw className="h-3 w-3" />
                 </Button>
               </div>
             </div>
@@ -226,37 +192,114 @@ export function InterestRateCurvesCard({
       </div>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              {selectedCurve?.name || 'Yield Curve'}
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              Interest Rate Curves
             </DialogTitle>
           </DialogHeader>
-          {selectedCurve && (
-            <div className="overflow-auto max-h-[60vh]">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Tenor</th>
-                    <th className="text-right">Rate</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedCurve.points.map((point, index) => (
-                    <tr key={index}>
-                      <td className="font-mono">{point.tenor}</td>
-                      <td className="text-right font-mono">
-                        {formatPercent(point.rate)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                  Base Curve
+                </label>
+                <Select value={selectedBaseCurve || ''} onValueChange={onBaseCurveSelect}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {curves.map((curve) => (
+                      <SelectItem key={curve.id} value={curve.id} className="text-xs">
+                        {curve.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                  Discount Curve
+                </label>
+                <Select value={selectedDiscountCurve || ''} onValueChange={onDiscountCurveSelect}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {curves.map((curve) => (
+                      <SelectItem key={curve.id} value={curve.id} className="text-xs">
+                        {curve.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          )}
+
+            {selectedCurve && (
+              <div className="overflow-auto max-h-[40vh]">
+                <table className="data-table text-xs">
+                  <thead>
+                    <tr>
+                      <th>Tenor</th>
+                      <th className="text-right">Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedCurve.points.map((point, index) => (
+                      <tr key={index}>
+                        <td className="font-mono">{point.tenor}</td>
+                        <td className="text-right font-mono">{formatPercent(point.rate)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function StatusIndicator({ loaded }: { loaded: boolean }) {
+  return loaded ? (
+    <div className="flex items-center gap-1 text-success">
+      <CheckCircle2 className="h-3 w-3" />
+      <span className="text-[10px] font-medium">Loaded</span>
+    </div>
+  ) : (
+    <div className="flex items-center gap-1 text-muted-foreground">
+      <XCircle className="h-3 w-3" />
+      <span className="text-[10px] font-medium">Not loaded</span>
+    </div>
+  );
+}
+
+function MetricBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-muted/50 px-2 py-1.5">
+      <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</div>
+      <div className="text-sm font-semibold text-foreground">{value}</div>
+    </div>
+  );
+}
+
+function CurveStatus({ label, selected, name }: { label: string; selected: boolean; name?: string }) {
+  return (
+    <div className="flex items-center gap-1.5 text-xs">
+      {selected ? (
+        <CheckCircle2 className="h-3 w-3 text-success shrink-0" />
+      ) : (
+        <XCircle className="h-3 w-3 text-muted-foreground shrink-0" />
+      )}
+      <span className="text-muted-foreground">{label}:</span>
+      <span className={selected ? 'text-foreground font-medium truncate' : 'text-muted-foreground'}>
+        {name || 'Not selected'}
+      </span>
+    </div>
   );
 }

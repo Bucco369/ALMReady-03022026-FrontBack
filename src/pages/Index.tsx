@@ -60,45 +60,59 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <TrendingUp className="h-4.5 w-4.5 text-primary-foreground" />
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
+      {/* Compact Header */}
+      <header className="shrink-0 border-b border-border bg-card">
+        <div className="flex items-center justify-between px-4 py-2">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
+              <TrendingUp className="h-3.5 w-3.5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-foreground">EVE/NII Calculator</h1>
-              <p className="text-xs text-muted-foreground">
-                Interest Rate Risk in the Banking Book
-              </p>
+              <h1 className="text-sm font-semibold text-foreground leading-tight">EVE/NII Calculator</h1>
+              <p className="text-[10px] text-muted-foreground leading-tight">IRRBB Analysis Dashboard</p>
             </div>
           </div>
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleLoadSampleData}
-            className="gap-2"
-          >
-            <FileSpreadsheet className="h-4 w-4" />
-            Load Sample Data
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLoadSampleData}
+              className="h-7 text-xs gap-1.5"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5" />
+              Load Sample
+            </Button>
+            <Button
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              onClick={handleCalculate}
+              disabled={!canCalculate || isCalculating}
+            >
+              {isCalculating ? (
+                <>
+                  <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  Calculating...
+                </>
+              ) : (
+                <>
+                  <Calculator className="h-3.5 w-3.5" />
+                  Calculate EVE & NII
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-6 py-6">
-        {/* 2x2 Quadrant Grid */}
-        <div className="grid gap-5 lg:grid-cols-2 mb-6" style={{ minHeight: 'calc(100vh - 220px)' }}>
-          {/* Top Left - Balance Positions */}
+      {/* 2x2 Dashboard Grid */}
+      <main className="flex-1 p-3 overflow-hidden">
+        <div className="grid grid-cols-2 grid-rows-2 gap-3 h-full">
           <BalancePositionsCard
             positions={positions}
             onPositionsChange={setPositions}
           />
-
-          {/* Top Right - Interest Rate Curves */}
           <InterestRateCurvesCard
             curves={curves}
             selectedBaseCurve={selectedBaseCurve}
@@ -107,48 +121,22 @@ const Index = () => {
             onBaseCurveSelect={setSelectedBaseCurve}
             onDiscountCurveSelect={setSelectedDiscountCurve}
           />
-
-          {/* Bottom Left - Scenarios */}
           <ScenariosCard
             scenarios={scenarios}
             onScenariosChange={setScenarios}
           />
-
-          {/* Bottom Right - Results */}
           <ResultsCard
             results={results}
             isCalculating={isCalculating}
           />
         </div>
-
-        {/* Calculate Button - Prominent */}
-        <div className="flex justify-center">
-          <Button
-            size="lg"
-            className="gap-2.5 px-8 shadow-lg transition-all hover:shadow-xl disabled:opacity-50"
-            onClick={handleCalculate}
-            disabled={!canCalculate || isCalculating}
-          >
-            {isCalculating ? (
-              <>
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                Calculating...
-              </>
-            ) : (
-              <>
-                <Calculator className="h-5 w-5" />
-                Calculate EVE & NII (Indicative)
-              </>
-            )}
-          </Button>
-        </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-card py-4 mt-auto">
-        <div className="container mx-auto px-6 text-center text-xs text-muted-foreground">
-          EVE/NII Calculator • Illustrative IRRBB analysis prototype
-        </div>
+      {/* Minimal Footer */}
+      <footer className="shrink-0 border-t border-border bg-card py-1.5 px-4">
+        <p className="text-[10px] text-muted-foreground text-center">
+          Illustrative IRRBB prototype • Results are indicative only
+        </p>
       </footer>
     </div>
   );

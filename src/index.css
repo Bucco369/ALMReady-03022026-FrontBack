@@ -121,34 +121,47 @@
 }
 
 @layer components {
-  /* Data table styling */
+  /* Dashboard card - compact executive style */
+  .dashboard-card {
+    @apply flex flex-col rounded-lg border border-border bg-card shadow-sm overflow-hidden;
+  }
+
+  .dashboard-card-header {
+    @apply flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30;
+  }
+
+  .dashboard-card-content {
+    @apply flex-1 p-3 flex flex-col;
+  }
+
+  /* Compact upload zone */
+  .compact-upload-zone {
+    @apply flex flex-col items-center justify-center flex-1 rounded-md border border-dashed border-border bg-muted/20 p-3 transition-all duration-200;
+  }
+
+  .compact-upload-zone:hover {
+    @apply border-primary/40 bg-accent/50;
+  }
+
+  .compact-upload-zone.active {
+    @apply border-primary bg-accent;
+  }
+
+  /* Data table styling - compact */
   .data-table {
     @apply w-full border-collapse text-sm;
   }
 
   .data-table th {
-    @apply bg-muted/50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground;
+    @apply bg-muted/50 px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground;
   }
 
   .data-table td {
-    @apply border-t border-border px-4 py-3;
+    @apply border-t border-border px-3 py-2;
   }
 
   .data-table tr:hover td {
     @apply bg-accent/50;
-  }
-
-  /* Upload zone styling */
-  .upload-zone {
-    @apply flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/20 p-8 transition-all duration-200;
-  }
-
-  .upload-zone:hover {
-    @apply border-primary/40 bg-accent/50;
-  }
-
-  .upload-zone.active {
-    @apply border-primary bg-accent;
   }
 
   /* Value display utilities */
@@ -160,7 +173,7 @@
     @apply text-destructive;
   }
 
-  /* Quadrant card */
+  /* Legacy quadrant card (for backwards compat) */
   .quadrant-card {
     @apply rounded-xl border border-border bg-card shadow-sm transition-shadow duration-200 hover:shadow-md;
   }
@@ -214,5 +227,18 @@
 
   .scenario-card.selected {
     @apply border-primary bg-primary/5;
+  }
+
+  /* Upload zone (legacy) */
+  .upload-zone {
+    @apply flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/20 p-8 transition-all duration-200;
+  }
+
+  .upload-zone:hover {
+    @apply border-primary/40 bg-accent/50;
+  }
+
+  .upload-zone.active {
+    @apply border-primary bg-accent;
   }
 }
