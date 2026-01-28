@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Upload, FileSpreadsheet, Eye, RefreshCw, Download, CheckCircle2, XCircle } from 'lucide-react';
+import { Upload, FileSpreadsheet, Eye, RefreshCw, Download, CheckCircle2, XCircle, ChevronRight, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -16,10 +16,35 @@ interface BalancePositionsCardProps {
   onPositionsChange: (positions: Position[]) => void;
 }
 
+// Static placeholder data for the aggregated view
+const PLACEHOLDER_DATA = {
+  assets: {
+    amount: 2_450_000_000,
+    positions: 72,
+    avgRate: 0.0425,
+    subcategories: [
+      { name: 'Mortgages', amount: 1_200_000_000, positions: 34, avgRate: 0.0385 },
+      { name: 'Bonds', amount: 850_000_000, positions: 22, avgRate: 0.0465 },
+      { name: 'Loans', amount: 400_000_000, positions: 16, avgRate: 0.0510 },
+    ],
+  },
+  liabilities: {
+    amount: 2_280_000_000,
+    positions: 52,
+    avgRate: 0.0285,
+    subcategories: [
+      { name: 'Sight Deposits', amount: 680_000_000, positions: 18, avgRate: 0.0050 },
+      { name: 'Term Deposits', amount: 920_000_000, positions: 24, avgRate: 0.0320 },
+      { name: 'Wholesale Funding', amount: 680_000_000, positions: 10, avgRate: 0.0425 },
+    ],
+  },
+};
+
 export function BalancePositionsCard({ positions, onPositionsChange }: BalancePositionsCardProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   const handleFileUpload = useCallback(
     (file: File) => {
@@ -80,18 +105,29 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
   const handleReplace = useCallback(() => {
     onPositionsChange([]);
     setFileName(null);
+    setExpandedRows(new Set());
   }, [onPositionsChange]);
 
-  const assetCount = positions.filter(p => p.instrumentType === 'Asset').length;
-  const liabilityCount = positions.filter(p => p.instrumentType === 'Liability').length;
-  const totalNotional = positions.reduce((sum, p) => sum + Math.abs(p.notional), 0);
+  const toggleRow = (rowId: string) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(rowId)) {
+        next.delete(rowId);
+      } else {
+        next.add(rowId);
+      }
+      return next;
+    });
+  };
 
-  const formatNotional = (num: number) => {
-    if (num >= 1e9) return `${(num / 1e9).toFixed(1)}B`;
-    if (num >= 1e6) return `${(num / 1e6).toFixed(1)}M`;
+  const formatAmount = (num: number) => {
+    if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
+    if (num >= 1e6) return `${(num / 1e6).toFixed(0)}M`;
     if (num >= 1e3) return `${(num / 1e3).toFixed(0)}K`;
     return num.toString();
   };
+
+  const formatPercent = (num: number) => (num * 100).toFixed(2) + '%';
 
   const formatCurrency = (num: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -101,8 +137,6 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
       maximumFractionDigits: 0,
     }).format(num);
   };
-
-  const formatPercent = (num: number) => (num * 100).toFixed(2) + '%';
 
   const isLoaded = positions.length > 0;
 
@@ -147,14 +181,73 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
             </div>
           ) : (
             <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-2">
-                <MetricBox label="Positions" value={positions.length.toString()} />
-                <MetricBox label="Notional" value={formatNotional(totalNotional)} />
-                <MetricBox label="Assets" value={assetCount.toString()} variant="success" />
-                <MetricBox label="Liabilities" value={liabilityCount.toString()} variant="muted" />
+              {/* Aggregated Balance Table */}
+              <div className="balance-summary-table">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-muted-foreground border-b border-border/50">
+                      <th className="text-left font-medium py-1.5 pl-1">Category</th>
+                      <th className="text-right font-medium py-1.5">Amount</th>
+                      <th className="text-right font-medium py-1.5">Pos.</th>
+                      <th className="text-right font-medium py-1.5 pr-1">Avg Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Assets Row */}
+                    <BalanceRow
+                      id="assets"
+                      label="Assets"
+                      amount={PLACEHOLDER_DATA.assets.amount}
+                      positions={PLACEHOLDER_DATA.assets.positions}
+                      avgRate={PLACEHOLDER_DATA.assets.avgRate}
+                      isExpanded={expandedRows.has('assets')}
+                      onToggle={() => toggleRow('assets')}
+                      formatAmount={formatAmount}
+                      formatPercent={formatPercent}
+                      variant="asset"
+                    />
+                    {expandedRows.has('assets') && PLACEHOLDER_DATA.assets.subcategories.map((sub, idx) => (
+                      <SubcategoryRow
+                        key={`asset-${idx}`}
+                        label={sub.name}
+                        amount={sub.amount}
+                        positions={sub.positions}
+                        avgRate={sub.avgRate}
+                        formatAmount={formatAmount}
+                        formatPercent={formatPercent}
+                      />
+                    ))}
+                    
+                    {/* Liabilities Row */}
+                    <BalanceRow
+                      id="liabilities"
+                      label="Liabilities"
+                      amount={PLACEHOLDER_DATA.liabilities.amount}
+                      positions={PLACEHOLDER_DATA.liabilities.positions}
+                      avgRate={PLACEHOLDER_DATA.liabilities.avgRate}
+                      isExpanded={expandedRows.has('liabilities')}
+                      onToggle={() => toggleRow('liabilities')}
+                      formatAmount={formatAmount}
+                      formatPercent={formatPercent}
+                      variant="liability"
+                    />
+                    {expandedRows.has('liabilities') && PLACEHOLDER_DATA.liabilities.subcategories.map((sub, idx) => (
+                      <SubcategoryRow
+                        key={`liability-${idx}`}
+                        label={sub.name}
+                        amount={sub.amount}
+                        positions={sub.positions}
+                        avgRate={sub.avgRate}
+                        formatAmount={formatAmount}
+                        formatPercent={formatPercent}
+                      />
+                    ))}
+                  </tbody>
+                </table>
               </div>
               
-              <div className="flex gap-1.5 pt-1">
+              {/* Action Buttons */}
+              <div className="flex gap-1.5 pt-1 border-t border-border/30">
                 <Button
                   variant="outline"
                   size="sm"
@@ -178,12 +271,13 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
         </div>
       </div>
 
+      {/* Details Modal */}
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <FileSpreadsheet className="h-4 w-4 text-primary" />
-              Balance Positions ({positions.length})
+              Position Details ({positions.length} positions)
             </DialogTitle>
           </DialogHeader>
           <div className="overflow-auto flex-1">
@@ -228,6 +322,7 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
   );
 }
 
+// Status Indicator Component
 function StatusIndicator({ loaded }: { loaded: boolean }) {
   return loaded ? (
     <div className="flex items-center gap-1 text-success">
@@ -242,17 +337,90 @@ function StatusIndicator({ loaded }: { loaded: boolean }) {
   );
 }
 
-function MetricBox({ label, value, variant = 'default' }: { label: string; value: string; variant?: 'default' | 'success' | 'muted' }) {
-  const valueClass = variant === 'success' 
-    ? 'text-success' 
-    : variant === 'muted' 
-      ? 'text-muted-foreground' 
-      : 'text-foreground';
+// Balance Row Component (expandable parent row)
+interface BalanceRowProps {
+  id: string;
+  label: string;
+  amount: number;
+  positions: number;
+  avgRate: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+  formatAmount: (n: number) => string;
+  formatPercent: (n: number) => string;
+  variant: 'asset' | 'liability';
+}
+
+function BalanceRow({
+  label,
+  amount,
+  positions,
+  avgRate,
+  isExpanded,
+  onToggle,
+  formatAmount,
+  formatPercent,
+  variant,
+}: BalanceRowProps) {
+  const ChevronIcon = isExpanded ? ChevronDown : ChevronRight;
+  const labelColor = variant === 'asset' ? 'text-success' : 'text-destructive';
   
   return (
-    <div className="rounded-md bg-muted/50 px-2 py-1.5">
-      <div className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</div>
-      <div className={`text-sm font-semibold ${valueClass}`}>{value}</div>
-    </div>
+    <tr 
+      className="group cursor-pointer hover:bg-muted/30 transition-colors border-b border-border/30"
+      onClick={onToggle}
+    >
+      <td className="py-1.5 pl-1">
+        <div className="flex items-center gap-1">
+          <ChevronIcon className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition-colors" />
+          <span className={`font-semibold ${labelColor}`}>{label}</span>
+        </div>
+      </td>
+      <td className="text-right py-1.5 font-mono font-medium text-foreground">
+        {formatAmount(amount)}
+      </td>
+      <td className="text-right py-1.5 font-mono text-muted-foreground">
+        {positions}
+      </td>
+      <td className="text-right py-1.5 pr-1 font-mono text-muted-foreground">
+        {formatPercent(avgRate)}
+      </td>
+    </tr>
+  );
+}
+
+// Subcategory Row Component (indented child row)
+interface SubcategoryRowProps {
+  label: string;
+  amount: number;
+  positions: number;
+  avgRate: number;
+  formatAmount: (n: number) => string;
+  formatPercent: (n: number) => string;
+}
+
+function SubcategoryRow({
+  label,
+  amount,
+  positions,
+  avgRate,
+  formatAmount,
+  formatPercent,
+}: SubcategoryRowProps) {
+  return (
+    <tr className="bg-muted/20 text-muted-foreground">
+      <td className="py-1 pl-6">
+        <span className="text-[11px]">{label}</span>
+      </td>
+      <td className="text-right py-1 font-mono text-[11px]">
+        {formatAmount(amount)}
+      </td>
+      <td className="text-right py-1 font-mono text-[11px]">
+        {positions}
+      </td>
+      <td className="text-right py-1 pr-1 font-mono text-[11px]">
+        {formatPercent(avgRate)}
+      </td>
+    </tr>
   );
 }
