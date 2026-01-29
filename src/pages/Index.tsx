@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { BalancePositionsCard } from '@/components/BalancePositionsCard';
-import { InterestRateCurvesCard } from '@/components/InterestRateCurvesCard';
-import { ScenariosCard } from '@/components/ScenariosCard';
+import { CurvesAndScenariosCard } from '@/components/CurvesAndScenariosCard';
 import { ResultsCard } from '@/components/ResultsCard';
 import { runCalculation } from '@/lib/calculationEngine';
 import type { Position, YieldCurve, Scenario, CalculationResults } from '@/types/financial';
@@ -13,8 +12,7 @@ const Index = () => {
   // State management
   const [positions, setPositions] = useState<Position[]>([]);
   const [curves, setCurves] = useState<YieldCurve[]>([]);
-  const [selectedBaseCurve, setSelectedBaseCurve] = useState<string | null>(null);
-  const [selectedDiscountCurve, setSelectedDiscountCurve] = useState<string | null>(null);
+  const [selectedCurves, setSelectedCurves] = useState<string[]>(['risk-free', 'euribor-3m']);
   const [scenarios, setScenarios] = useState<Scenario[]>(DEFAULT_SCENARIOS);
   const [results, setResults] = useState<CalculationResults | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -22,19 +20,16 @@ const Index = () => {
   // Check if calculation is possible
   const canCalculate = 
     positions.length > 0 && 
-    curves.length > 0 && 
-    selectedBaseCurve !== null &&
-    selectedDiscountCurve !== null &&
+    selectedCurves.length > 0 &&
     scenarios.some((s) => s.enabled);
 
   // Handle calculation
   const handleCalculate = useCallback(() => {
     if (!canCalculate) return;
 
-    const baseCurve = curves.find((c) => c.id === selectedBaseCurve);
-    const discountCurve = curves.find((c) => c.id === selectedDiscountCurve);
-
-    if (!baseCurve || !discountCurve) return;
+    // Use sample curve for calculation (placeholder)
+    const baseCurve = curves.length > 0 ? curves[0] : SAMPLE_YIELD_CURVE;
+    const discountCurve = baseCurve;
 
     setIsCalculating(true);
     
@@ -49,14 +44,12 @@ const Index = () => {
       setResults(calculationResults);
       setIsCalculating(false);
     }, 500);
-  }, [canCalculate, positions, curves, selectedBaseCurve, selectedDiscountCurve, scenarios]);
+  }, [canCalculate, positions, curves, scenarios]);
 
   // Load sample data
   const handleLoadSampleData = useCallback(() => {
     setPositions(SAMPLE_POSITIONS);
     setCurves([SAMPLE_YIELD_CURVE]);
-    setSelectedBaseCurve(SAMPLE_YIELD_CURVE.id);
-    setSelectedDiscountCurve(SAMPLE_YIELD_CURVE.id);
   }, []);
 
   return (
@@ -106,29 +99,30 @@ const Index = () => {
         </div>
       </header>
 
-      {/* 2x2 Dashboard Grid */}
+      {/* Dashboard Grid - 3 quadrants: 1 left, 2 stacked right */}
       <main className="flex-1 p-3 overflow-hidden">
         <div className="grid grid-cols-2 grid-rows-2 gap-3 h-full">
+          {/* Top-left: Balance Positions */}
           <BalancePositionsCard
             positions={positions}
             onPositionsChange={setPositions}
           />
-          <InterestRateCurvesCard
-            curves={curves}
-            selectedBaseCurve={selectedBaseCurve}
-            selectedDiscountCurve={selectedDiscountCurve}
-            onCurvesChange={setCurves}
-            onBaseCurveSelect={setSelectedBaseCurve}
-            onDiscountCurveSelect={setSelectedDiscountCurve}
-          />
-          <ScenariosCard
+          
+          {/* Top-right: Curves & Scenarios (merged) */}
+          <CurvesAndScenariosCard
             scenarios={scenarios}
             onScenariosChange={setScenarios}
+            selectedCurves={selectedCurves}
+            onSelectedCurvesChange={setSelectedCurves}
           />
-          <ResultsCard
-            results={results}
-            isCalculating={isCalculating}
-          />
+          
+          {/* Bottom: Results (spans full width) */}
+          <div className="col-span-2">
+            <ResultsCard
+              results={results}
+              isCalculating={isCalculating}
+            />
+          </div>
         </div>
       </main>
 

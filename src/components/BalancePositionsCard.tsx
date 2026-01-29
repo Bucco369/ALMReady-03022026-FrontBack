@@ -180,74 +180,76 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
               </div>
             </div>
           ) : (
-            <div className="space-y-2">
-              {/* Aggregated Balance Table */}
-              <div className="balance-summary-table">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="text-muted-foreground border-b border-border/50">
-                      <th className="text-left font-medium py-1.5 pl-1">Category</th>
-                      <th className="text-right font-medium py-1.5">Amount</th>
-                      <th className="text-right font-medium py-1.5">Pos.</th>
-                      <th className="text-right font-medium py-1.5 pr-1">Avg Rate</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {/* Assets Row */}
-                    <BalanceRow
-                      id="assets"
-                      label="Assets"
-                      amount={PLACEHOLDER_DATA.assets.amount}
-                      positions={PLACEHOLDER_DATA.assets.positions}
-                      avgRate={PLACEHOLDER_DATA.assets.avgRate}
-                      isExpanded={expandedRows.has('assets')}
-                      onToggle={() => toggleRow('assets')}
-                      formatAmount={formatAmount}
-                      formatPercent={formatPercent}
-                      variant="asset"
-                    />
-                    {expandedRows.has('assets') && PLACEHOLDER_DATA.assets.subcategories.map((sub, idx) => (
-                      <SubcategoryRow
-                        key={`asset-${idx}`}
-                        label={sub.name}
-                        amount={sub.amount}
-                        positions={sub.positions}
-                        avgRate={sub.avgRate}
+            <div className="flex flex-col flex-1 min-h-0">
+              {/* Scrollable Balance Table with Sticky Header */}
+              <div className="flex-1 min-h-0 overflow-hidden rounded-md border border-border/50">
+                <div className="h-full overflow-auto balance-scroll-container">
+                  <table className="w-full text-xs">
+                    <thead className="sticky top-0 z-10 bg-card">
+                      <tr className="text-muted-foreground border-b border-border">
+                        <th className="text-left font-medium py-1.5 pl-2 bg-muted/50">Category</th>
+                        <th className="text-right font-medium py-1.5 bg-muted/50">Amount</th>
+                        <th className="text-right font-medium py-1.5 bg-muted/50">Pos.</th>
+                        <th className="text-right font-medium py-1.5 pr-2 bg-muted/50">Avg Rate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* Assets Row */}
+                      <BalanceRow
+                        id="assets"
+                        label="Assets"
+                        amount={PLACEHOLDER_DATA.assets.amount}
+                        positions={PLACEHOLDER_DATA.assets.positions}
+                        avgRate={PLACEHOLDER_DATA.assets.avgRate}
+                        isExpanded={expandedRows.has('assets')}
+                        onToggle={() => toggleRow('assets')}
                         formatAmount={formatAmount}
                         formatPercent={formatPercent}
+                        variant="asset"
                       />
-                    ))}
-                    
-                    {/* Liabilities Row */}
-                    <BalanceRow
-                      id="liabilities"
-                      label="Liabilities"
-                      amount={PLACEHOLDER_DATA.liabilities.amount}
-                      positions={PLACEHOLDER_DATA.liabilities.positions}
-                      avgRate={PLACEHOLDER_DATA.liabilities.avgRate}
-                      isExpanded={expandedRows.has('liabilities')}
-                      onToggle={() => toggleRow('liabilities')}
-                      formatAmount={formatAmount}
-                      formatPercent={formatPercent}
-                      variant="liability"
-                    />
-                    {expandedRows.has('liabilities') && PLACEHOLDER_DATA.liabilities.subcategories.map((sub, idx) => (
-                      <SubcategoryRow
-                        key={`liability-${idx}`}
-                        label={sub.name}
-                        amount={sub.amount}
-                        positions={sub.positions}
-                        avgRate={sub.avgRate}
+                      {expandedRows.has('assets') && PLACEHOLDER_DATA.assets.subcategories.map((sub, idx) => (
+                        <SubcategoryRow
+                          key={`asset-${idx}`}
+                          label={sub.name}
+                          amount={sub.amount}
+                          positions={sub.positions}
+                          avgRate={sub.avgRate}
+                          formatAmount={formatAmount}
+                          formatPercent={formatPercent}
+                        />
+                      ))}
+                      
+                      {/* Liabilities Row */}
+                      <BalanceRow
+                        id="liabilities"
+                        label="Liabilities"
+                        amount={PLACEHOLDER_DATA.liabilities.amount}
+                        positions={PLACEHOLDER_DATA.liabilities.positions}
+                        avgRate={PLACEHOLDER_DATA.liabilities.avgRate}
+                        isExpanded={expandedRows.has('liabilities')}
+                        onToggle={() => toggleRow('liabilities')}
                         formatAmount={formatAmount}
                         formatPercent={formatPercent}
+                        variant="liability"
                       />
-                    ))}
-                  </tbody>
-                </table>
+                      {expandedRows.has('liabilities') && PLACEHOLDER_DATA.liabilities.subcategories.map((sub, idx) => (
+                        <SubcategoryRow
+                          key={`liability-${idx}`}
+                          label={sub.name}
+                          amount={sub.amount}
+                          positions={sub.positions}
+                          avgRate={sub.avgRate}
+                          formatAmount={formatAmount}
+                          formatPercent={formatPercent}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
               
               {/* Action Buttons */}
-              <div className="flex gap-1.5 pt-1 border-t border-border/30">
+              <div className="flex gap-1.5 pt-2 border-t border-border/30 mt-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -271,51 +273,111 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
         </div>
       </div>
 
-      {/* Details Modal */}
+      {/* Details Modal - Now shows expanded aggregated view */}
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <FileSpreadsheet className="h-4 w-4 text-primary" />
-              Position Details ({positions.length} positions)
+              Balance Positions - Aggregated View
             </DialogTitle>
           </DialogHeader>
           <div className="overflow-auto flex-1">
-            <table className="data-table text-xs">
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Description</th>
-                  <th className="text-right">Notional</th>
-                  <th>Maturity</th>
-                  <th className="text-right">Rate</th>
-                  <th>Reprice</th>
+            <table className="w-full text-xs">
+              <thead className="sticky top-0 bg-card z-10">
+                <tr className="text-muted-foreground border-b border-border">
+                  <th className="text-left font-medium py-2 pl-3 bg-muted/50">Category</th>
+                  <th className="text-right font-medium py-2 bg-muted/50">Amount</th>
+                  <th className="text-right font-medium py-2 bg-muted/50">Positions</th>
+                  <th className="text-right font-medium py-2 pr-3 bg-muted/50">Avg Rate</th>
                 </tr>
               </thead>
               <tbody>
-                {positions.map((position) => (
-                  <tr key={position.id}>
-                    <td>
-                      <span
-                        className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium ${
-                          position.instrumentType === 'Asset'
-                            ? 'bg-success/10 text-success'
-                            : 'bg-destructive/10 text-destructive'
-                        }`}
-                      >
-                        {position.instrumentType}
-                      </span>
+                {/* Assets - Always expanded in details */}
+                <tr className="border-b border-border bg-success/5">
+                  <td className="py-2 pl-3">
+                    <span className="font-semibold text-success">Assets</span>
+                  </td>
+                  <td className="text-right py-2 font-mono font-semibold text-foreground">
+                    {formatCurrency(PLACEHOLDER_DATA.assets.amount)}
+                  </td>
+                  <td className="text-right py-2 font-mono text-muted-foreground">
+                    {PLACEHOLDER_DATA.assets.positions}
+                  </td>
+                  <td className="text-right py-2 pr-3 font-mono text-muted-foreground">
+                    {formatPercent(PLACEHOLDER_DATA.assets.avgRate)}
+                  </td>
+                </tr>
+                {PLACEHOLDER_DATA.assets.subcategories.map((sub, idx) => (
+                  <tr key={`modal-asset-${idx}`} className="border-b border-border/50">
+                    <td className="py-1.5 pl-8">
+                      <span className="text-muted-foreground">{sub.name}</span>
                     </td>
-                    <td className="font-medium">{position.description}</td>
-                    <td className="text-right font-mono">{formatCurrency(position.notional)}</td>
-                    <td className="font-mono">{position.maturityDate}</td>
-                    <td className="text-right font-mono">{formatPercent(position.couponRate)}</td>
-                    <td className="text-muted-foreground">{position.repriceFrequency}</td>
+                    <td className="text-right py-1.5 font-mono text-sm">
+                      {formatCurrency(sub.amount)}
+                    </td>
+                    <td className="text-right py-1.5 font-mono text-muted-foreground">
+                      {sub.positions}
+                    </td>
+                    <td className="text-right py-1.5 pr-3 font-mono text-muted-foreground">
+                      {formatPercent(sub.avgRate)}
+                    </td>
                   </tr>
                 ))}
+                
+                {/* Liabilities - Always expanded in details */}
+                <tr className="border-b border-border bg-destructive/5 mt-2">
+                  <td className="py-2 pl-3">
+                    <span className="font-semibold text-destructive">Liabilities</span>
+                  </td>
+                  <td className="text-right py-2 font-mono font-semibold text-foreground">
+                    {formatCurrency(PLACEHOLDER_DATA.liabilities.amount)}
+                  </td>
+                  <td className="text-right py-2 font-mono text-muted-foreground">
+                    {PLACEHOLDER_DATA.liabilities.positions}
+                  </td>
+                  <td className="text-right py-2 pr-3 font-mono text-muted-foreground">
+                    {formatPercent(PLACEHOLDER_DATA.liabilities.avgRate)}
+                  </td>
+                </tr>
+                {PLACEHOLDER_DATA.liabilities.subcategories.map((sub, idx) => (
+                  <tr key={`modal-liability-${idx}`} className="border-b border-border/50">
+                    <td className="py-1.5 pl-8">
+                      <span className="text-muted-foreground">{sub.name}</span>
+                    </td>
+                    <td className="text-right py-1.5 font-mono text-sm">
+                      {formatCurrency(sub.amount)}
+                    </td>
+                    <td className="text-right py-1.5 font-mono text-muted-foreground">
+                      {sub.positions}
+                    </td>
+                    <td className="text-right py-1.5 pr-3 font-mono text-muted-foreground">
+                      {formatPercent(sub.avgRate)}
+                    </td>
+                  </tr>
+                ))}
+
+                {/* Net Position Summary */}
+                <tr className="border-t-2 border-border bg-muted/30">
+                  <td className="py-2 pl-3">
+                    <span className="font-semibold text-foreground">Net Position</span>
+                  </td>
+                  <td className="text-right py-2 font-mono font-bold text-foreground">
+                    {formatCurrency(PLACEHOLDER_DATA.assets.amount - PLACEHOLDER_DATA.liabilities.amount)}
+                  </td>
+                  <td className="text-right py-2 font-mono text-muted-foreground">
+                    {PLACEHOLDER_DATA.assets.positions + PLACEHOLDER_DATA.liabilities.positions}
+                  </td>
+                  <td className="text-right py-2 pr-3 font-mono text-muted-foreground">
+                    —
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
+          <p className="text-[10px] text-muted-foreground text-center pt-2 border-t border-border/30">
+            This aggregated view summarizes underlying position-level data
+          </p>
         </DialogContent>
       </Dialog>
     </>
@@ -370,7 +432,7 @@ function BalanceRow({
       className="group cursor-pointer hover:bg-muted/30 transition-colors border-b border-border/30"
       onClick={onToggle}
     >
-      <td className="py-1.5 pl-1">
+      <td className="py-1.5 pl-2">
         <div className="flex items-center gap-1">
           <ChevronIcon className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition-colors" />
           <span className={`font-semibold ${labelColor}`}>{label}</span>
@@ -382,7 +444,7 @@ function BalanceRow({
       <td className="text-right py-1.5 font-mono text-muted-foreground">
         {positions}
       </td>
-      <td className="text-right py-1.5 pr-1 font-mono text-muted-foreground">
+      <td className="text-right py-1.5 pr-2 font-mono text-muted-foreground">
         {formatPercent(avgRate)}
       </td>
     </tr>
@@ -409,7 +471,7 @@ function SubcategoryRow({
 }: SubcategoryRowProps) {
   return (
     <tr className="bg-muted/20 text-muted-foreground">
-      <td className="py-1 pl-6">
+      <td className="py-1 pl-7">
         <span className="text-[11px]">{label}</span>
       </td>
       <td className="text-right py-1 font-mono text-[11px]">
@@ -418,7 +480,7 @@ function SubcategoryRow({
       <td className="text-right py-1 font-mono text-[11px]">
         {positions}
       </td>
-      <td className="text-right py-1 pr-1 font-mono text-[11px]">
+      <td className="text-right py-1 pr-2 font-mono text-[11px]">
         {formatPercent(avgRate)}
       </td>
     </tr>
