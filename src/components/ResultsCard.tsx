@@ -8,6 +8,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { CalculationResults } from '@/types/financial';
+import { EVEChart } from '@/components/results/EVEChart';
+import { NIIChart } from '@/components/results/NIIChart';
 
 interface ResultsCardProps {
   results: CalculationResults | null;
@@ -84,96 +86,100 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
             <BarChart3 className="h-3.5 w-3.5 text-primary" />
             <span className="text-xs font-semibold text-foreground">Results</span>
           </div>
-          <span className="text-[10px] text-muted-foreground">
-            {new Date(results.calculatedAt).toLocaleTimeString()}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground">
+              {new Date(results.calculatedAt).toLocaleTimeString()}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowDetails(true)}
+              className="h-5 px-2 text-[10px]"
+            >
+              <Eye className="mr-1 h-3 w-3" />
+              Details
+            </Button>
+          </div>
         </div>
 
         <div className="dashboard-card-content">
-          {/* Horizontal layout for expanded results area */}
-          <div className="flex gap-4 items-stretch">
-            {/* Left: Key Metrics */}
-            <div className="flex-1 flex flex-col gap-2">
-              <div className="grid grid-cols-2 gap-2">
-                <ResultMetricLarge label="Base EVE" value={formatCompact(results.baseEve)} />
-                <ResultMetricLarge label="Base NII" value={formatCompact(results.baseNii)} />
+          {/* Four quarters layout: 1/4 summary, 3/4 charts */}
+          <div className="flex gap-3 h-full">
+            {/* First quarter: Numeric summary */}
+            <div className="w-1/4 flex flex-col gap-2">
+              {/* Key Metrics */}
+              <div className="space-y-1.5">
+                <ResultMetricCompact label="Base EVE" value={formatCompact(results.baseEve)} />
+                <ResultMetricCompact label="Base NII" value={formatCompact(results.baseNii)} />
               </div>
               
               {/* Worst Case Box */}
-              <div className="rounded-lg border border-warning/30 bg-warning/5 p-3">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <AlertTriangle className="h-4 w-4 text-warning" />
-                  <span className="text-xs font-semibold text-foreground">Worst Case Scenario</span>
+              <div className="rounded-lg border border-warning/30 bg-warning/5 p-2 flex-1">
+                <div className="flex items-center gap-1 mb-1.5">
+                  <AlertTriangle className="h-3 w-3 text-warning" />
+                  <span className="text-[10px] font-semibold text-foreground">Worst Case</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">{results.worstCaseScenario}</span>
-                  <div
-                    className={`flex items-center gap-1.5 text-lg font-bold ${
-                      results.worstCaseDeltaEve >= 0 ? 'text-success' : 'text-destructive'
-                    }`}
-                  >
-                    {results.worstCaseDeltaEve >= 0 ? (
-                      <TrendingUp className="h-5 w-5" />
-                    ) : (
-                      <TrendingDown className="h-5 w-5" />
-                    )}
-                    ΔEVE {formatDelta(results.worstCaseDeltaEve)}
-                  </div>
+                <div className="text-[9px] text-muted-foreground mb-1">{results.worstCaseScenario}</div>
+                <div
+                  className={`flex items-center gap-1 text-sm font-bold ${
+                    results.worstCaseDeltaEve >= 0 ? 'text-success' : 'text-destructive'
+                  }`}
+                >
+                  {results.worstCaseDeltaEve >= 0 ? (
+                    <TrendingUp className="h-3.5 w-3.5" />
+                  ) : (
+                    <TrendingDown className="h-3.5 w-3.5" />
+                  )}
+                  <span>ΔEVE {formatDelta(results.worstCaseDeltaEve)}</span>
+                </div>
+              </div>
+
+              {/* Mini scenario table */}
+              <div className="rounded-lg border border-border overflow-hidden flex-1">
+                <div className="bg-muted/30 px-2 py-1 border-b border-border">
+                  <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wide">Scenarios</span>
+                </div>
+                <div className="max-h-20 overflow-auto custom-scrollbar">
+                  <table className="w-full text-[10px]">
+                    <tbody>
+                      {results.scenarioResults.slice(0, 4).map((result) => (
+                        <tr key={result.scenarioId} className="border-b border-border/30">
+                          <td className="py-0.5 px-2 text-foreground truncate max-w-[80px]">{result.scenarioName}</td>
+                          <td className={`text-right py-0.5 px-2 font-mono ${
+                            result.deltaEve >= 0 ? 'text-success' : 'text-destructive'
+                          }`}>
+                            {result.deltaEve >= 0 ? '+' : ''}{formatCompact(result.deltaEve)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
 
-            {/* Right: Scenario Summary Table */}
-            <div className="flex-1 rounded-lg border border-border overflow-hidden">
-              <div className="bg-muted/30 px-3 py-1.5 border-b border-border">
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Scenario Results</span>
+            {/* Remaining 3/4: Charts side by side */}
+            <div className="w-3/4 flex gap-3">
+              {/* EVE Chart */}
+              <div className="flex-1 rounded-lg border border-border overflow-hidden">
+                <EVEChart />
               </div>
-              <div className="max-h-32 overflow-auto">
-                <table className="w-full text-xs">
-                  <thead className="sticky top-0 bg-card">
-                    <tr className="border-b border-border">
-                      <th className="text-left font-medium py-1.5 px-2 text-muted-foreground">Scenario</th>
-                      <th className="text-right font-medium py-1.5 px-2 text-muted-foreground">ΔEVE</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {results.scenarioResults.slice(0, 6).map((result) => (
-                      <tr key={result.scenarioId} className="border-b border-border/50">
-                        <td className="py-1 px-2 text-foreground">{result.scenarioName}</td>
-                        <td className={`text-right py-1 px-2 font-mono ${
-                          result.deltaEve >= 0 ? 'text-success' : 'text-destructive'
-                        }`}>
-                          {result.deltaEve >= 0 ? '+' : ''}{formatCompact(result.deltaEve)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              
+              {/* NII Chart */}
+              <div className="flex-1 rounded-lg border border-border overflow-hidden">
+                <NIIChart />
               </div>
             </div>
-          </div>
-
-          {/* View Details Button */}
-          <div className="pt-2 mt-2 border-t border-border/30">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDetails(true)}
-              className="h-6 text-xs"
-            >
-              <Eye className="mr-1 h-3 w-3" />
-              View full results
-            </Button>
           </div>
         </div>
       </div>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
               <BarChart3 className="h-4 w-4 text-primary" />
-              Calculation Results
+              Calculation Results – Full Details
             </DialogTitle>
           </DialogHeader>
           
@@ -227,11 +233,11 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
   );
 }
 
-function ResultMetricLarge({ label, value }: { label: string; value: string }) {
+function ResultMetricCompact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-muted/50 px-3 py-2">
-      <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">{label}</div>
-      <div className="text-lg font-bold text-foreground">{value}</div>
+    <div className="rounded-lg bg-muted/50 px-2.5 py-1.5">
+      <div className="text-[9px] text-muted-foreground uppercase tracking-wide">{label}</div>
+      <div className="text-base font-bold text-foreground">{value}</div>
     </div>
   );
 }
