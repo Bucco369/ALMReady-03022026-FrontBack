@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Upload, FileSpreadsheet, Eye, RefreshCw, Download, CheckCircle2, XCircle, ChevronRight, ChevronDown } from 'lucide-react';
+import { Upload, FileSpreadsheet, Eye, RefreshCw, Download, CheckCircle2, XCircle, ChevronRight, ChevronDown, FlaskConical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -10,6 +10,8 @@ import {
 } from '@/components/ui/dialog';
 import type { Position } from '@/types/financial';
 import { parsePositionsCSV, generateSamplePositionsCSV } from '@/lib/csvParser';
+import { WhatIfBuilder } from '@/components/whatif/WhatIfBuilder';
+import { useWhatIf } from '@/components/whatif/WhatIfContext';
 
 interface BalancePositionsCardProps {
   positions: Position[];
@@ -45,6 +47,8 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
   const [fileName, setFileName] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [showWhatIfBuilder, setShowWhatIfBuilder] = useState(false);
+  const { modifications, isApplied } = useWhatIf();
 
   const handleFileUpload = useCallback(
     (file: File) => {
@@ -260,6 +264,21 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
                   View details
                 </Button>
                 <Button
+                  size="sm"
+                  onClick={() => setShowWhatIfBuilder(true)}
+                  className="flex-1 h-6 text-xs relative"
+                >
+                  <FlaskConical className="mr-1 h-3 w-3" />
+                  What-If
+                  {modifications.length > 0 && (
+                    <span className={`absolute -top-1 -right-1 h-3.5 min-w-[14px] rounded-full text-[9px] font-bold flex items-center justify-center px-1 ${
+                      isApplied ? 'bg-success text-success-foreground' : 'bg-warning text-warning-foreground'
+                    }`}>
+                      {modifications.length}
+                    </span>
+                  )}
+                </Button>
+                <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleReplace}
@@ -380,6 +399,9 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
           </p>
         </DialogContent>
       </Dialog>
+
+      {/* What-If Builder Side Panel */}
+      <WhatIfBuilder open={showWhatIfBuilder} onOpenChange={setShowWhatIfBuilder} />
     </>
   );
 }

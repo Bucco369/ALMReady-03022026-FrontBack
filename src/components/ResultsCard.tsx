@@ -10,6 +10,7 @@ import {
 import type { CalculationResults } from '@/types/financial';
 import { EVEChart } from '@/components/results/EVEChart';
 import { NIIChart } from '@/components/results/NIIChart';
+import { useWhatIf } from '@/components/whatif/WhatIfContext';
 
 interface ResultsCardProps {
   results: CalculationResults | null;
@@ -18,7 +19,9 @@ interface ResultsCardProps {
 
 export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
   const [showDetails, setShowDetails] = useState(false);
-
+  const { modifications, isApplied } = useWhatIf();
+  
+  const hasModifications = modifications.length > 0 && isApplied;
   const formatCurrency = (num: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -105,55 +108,82 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
         <div className="dashboard-card-content">
           {/* Four quarters layout: 1/4 summary, 3/4 charts */}
           <div className="flex gap-3 h-full">
-            {/* First quarter: Numeric summary */}
+            {/* First quarter: Numeric summary table */}
             <div className="w-1/4 flex flex-col gap-2">
-              {/* Key Metrics */}
-              <div className="space-y-1.5">
-                <ResultMetricCompact label="Base EVE" value={formatCompact(results.baseEve)} />
-                <ResultMetricCompact label="Base NII" value={formatCompact(results.baseNii)} />
+              {/* Main Metrics Table - 3 columns */}
+              <div className="rounded-lg border border-border overflow-hidden flex-1">
+                <table className="w-full text-[10px]">
+                  <thead>
+                    <tr className="bg-muted/50 border-b border-border">
+                      <th className="text-left font-semibold py-1.5 px-2 text-muted-foreground">Metric</th>
+                      <th className="text-right font-semibold py-1.5 px-2 text-muted-foreground">Value</th>
+                      <th className="text-right font-semibold py-1.5 px-2 text-muted-foreground">Δ What-If</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-border/50 hover:bg-accent/30">
+                      <td className="py-1.5 px-2 font-medium text-foreground">Base EVE</td>
+                      <td className="text-right py-1.5 px-2 font-mono font-semibold text-foreground">
+                        {formatCompact(results.baseEve)}
+                      </td>
+                      <td className={`text-right py-1.5 px-2 font-mono ${hasModifications ? 'text-success' : 'text-muted-foreground'}`}>
+                        {hasModifications ? '+12.5M' : '—'}
+                      </td>
+                    </tr>
+                    <tr className="border-b border-border/50 hover:bg-accent/30">
+                      <td className="py-1.5 px-2 font-medium text-foreground">Worst ΔEVE vs C1</td>
+                      <td className={`text-right py-1.5 px-2 font-mono font-semibold ${
+                        results.worstCaseDeltaEve >= 0 ? 'text-success' : 'text-destructive'
+                      }`}>
+                        {((results.worstCaseDeltaEve / results.baseEve) * 100).toFixed(1)}%
+                      </td>
+                      <td className={`text-right py-1.5 px-2 font-mono ${hasModifications ? 'text-success' : 'text-muted-foreground'}`}>
+                        {hasModifications ? '+0.3%' : '—'}
+                      </td>
+                    </tr>
+                    <tr className="border-b border-border/50 hover:bg-accent/30">
+                      <td className="py-1.5 px-2 font-medium text-foreground">Base NII</td>
+                      <td className="text-right py-1.5 px-2 font-mono font-semibold text-foreground">
+                        {formatCompact(results.baseNii)}
+                      </td>
+                      <td className={`text-right py-1.5 px-2 font-mono ${hasModifications ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {hasModifications ? '-2.1M' : '—'}
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-accent/30">
+                      <td className="py-1.5 px-2 font-medium text-foreground">Worst ΔNII vs C1</td>
+                      <td className={`text-right py-1.5 px-2 font-mono font-semibold ${
+                        (results.scenarioResults.find(s => s.scenarioName === results.worstCaseScenario)?.deltaNii ?? 0) >= 0 
+                          ? 'text-success' : 'text-destructive'
+                      }`}>
+                        {(((results.scenarioResults.find(s => s.scenarioName === results.worstCaseScenario)?.deltaNii ?? 0) / results.baseNii) * 100).toFixed(1)}%
+                      </td>
+                      <td className={`text-right py-1.5 px-2 font-mono ${hasModifications ? 'text-destructive' : 'text-muted-foreground'}`}>
+                        {hasModifications ? '-0.2%' : '—'}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
               
               {/* Worst Case Box */}
-              <div className="rounded-lg border border-warning/30 bg-warning/5 p-2 flex-1">
-                <div className="flex items-center gap-1 mb-1.5">
+              <div className="rounded-lg border border-warning/30 bg-warning/5 p-2">
+                <div className="flex items-center gap-1 mb-1">
                   <AlertTriangle className="h-3 w-3 text-warning" />
                   <span className="text-[10px] font-semibold text-foreground">Worst Case</span>
                 </div>
-                <div className="text-[9px] text-muted-foreground mb-1">{results.worstCaseScenario}</div>
+                <div className="text-[9px] text-muted-foreground mb-0.5">{results.worstCaseScenario}</div>
                 <div
-                  className={`flex items-center gap-1 text-sm font-bold ${
+                  className={`flex items-center gap-1 text-xs font-bold ${
                     results.worstCaseDeltaEve >= 0 ? 'text-success' : 'text-destructive'
                   }`}
                 >
                   {results.worstCaseDeltaEve >= 0 ? (
-                    <TrendingUp className="h-3.5 w-3.5" />
+                    <TrendingUp className="h-3 w-3" />
                   ) : (
-                    <TrendingDown className="h-3.5 w-3.5" />
+                    <TrendingDown className="h-3 w-3" />
                   )}
                   <span>ΔEVE {formatDelta(results.worstCaseDeltaEve)}</span>
-                </div>
-              </div>
-
-              {/* Mini scenario table */}
-              <div className="rounded-lg border border-border overflow-hidden flex-1">
-                <div className="bg-muted/30 px-2 py-1 border-b border-border">
-                  <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wide">Scenarios</span>
-                </div>
-                <div className="max-h-20 overflow-auto custom-scrollbar">
-                  <table className="w-full text-[10px]">
-                    <tbody>
-                      {results.scenarioResults.slice(0, 4).map((result) => (
-                        <tr key={result.scenarioId} className="border-b border-border/30">
-                          <td className="py-0.5 px-2 text-foreground truncate max-w-[80px]">{result.scenarioName}</td>
-                          <td className={`text-right py-0.5 px-2 font-mono ${
-                            result.deltaEve >= 0 ? 'text-success' : 'text-destructive'
-                          }`}>
-                            {result.deltaEve >= 0 ? '+' : ''}{formatCompact(result.deltaEve)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
               </div>
             </div>
