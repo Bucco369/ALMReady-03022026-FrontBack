@@ -1,17 +1,25 @@
-import React, { useCallback, useState } from 'react';
-import { Upload, FileSpreadsheet, Eye, RefreshCw, Download, CheckCircle2, XCircle, ChevronRight, ChevronDown, FlaskConical } from 'lucide-react';
+import React, { useCallback, useState, useMemo } from 'react';
+import { Upload, FileSpreadsheet, Eye, RefreshCw, Download, CheckCircle2, XCircle, ChevronRight, ChevronDown, FlaskConical, CalendarIcon, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import type { Position } from '@/types/financial';
 import { parsePositionsCSV, generateSamplePositionsCSV } from '@/lib/csvParser';
 import { WhatIfBuilder } from '@/components/whatif/WhatIfBuilder';
 import { useWhatIf } from '@/components/whatif/WhatIfContext';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface BalancePositionsCardProps {
   positions: Position[];
@@ -25,9 +33,9 @@ const PLACEHOLDER_DATA = {
     positions: 72,
     avgRate: 0.0425,
     subcategories: [
-      { name: 'Mortgages', amount: 1_200_000_000, positions: 34, avgRate: 0.0385 },
-      { name: 'Bonds', amount: 850_000_000, positions: 22, avgRate: 0.0465 },
-      { name: 'Loans', amount: 400_000_000, positions: 16, avgRate: 0.0510 },
+      { id: 'mortgages', name: 'Mortgages', amount: 1_200_000_000, positions: 34, avgRate: 0.0385 },
+      { id: 'bonds', name: 'Bonds', amount: 850_000_000, positions: 22, avgRate: 0.0465 },
+      { id: 'loans', name: 'Loans', amount: 400_000_000, positions: 16, avgRate: 0.0510 },
     ],
   },
   liabilities: {
@@ -35,12 +43,53 @@ const PLACEHOLDER_DATA = {
     positions: 52,
     avgRate: 0.0285,
     subcategories: [
-      { name: 'Sight Deposits', amount: 680_000_000, positions: 18, avgRate: 0.0050 },
-      { name: 'Term Deposits', amount: 920_000_000, positions: 24, avgRate: 0.0320 },
-      { name: 'Wholesale Funding', amount: 680_000_000, positions: 10, avgRate: 0.0425 },
+      { id: 'sight-deposits', name: 'Sight Deposits', amount: 680_000_000, positions: 18, avgRate: 0.0050 },
+      { id: 'term-deposits', name: 'Term Deposits', amount: 920_000_000, positions: 24, avgRate: 0.0320 },
+      { id: 'wholesale-funding', name: 'Wholesale Funding', amount: 680_000_000, positions: 10, avgRate: 0.0425 },
     ],
   },
 };
+
+// Helper to compute What-If deltas per category
+function computeWhatIfDeltas(modifications: any[]) {
+  const deltas: Record<string, { amount: number; positions: number; rate: number; items: any[] }> = {
+    assets: { amount: 0, positions: 0, rate: 0, items: [] },
+    liabilities: { amount: 0, positions: 0, rate: 0, items: [] },
+    mortgages: { amount: 0, positions: 0, rate: 0, items: [] },
+    bonds: { amount: 0, positions: 0, rate: 0, items: [] },
+    loans: { amount: 0, positions: 0, rate: 0, items: [] },
+    'sight-deposits': { amount: 0, positions: 0, rate: 0, items: [] },
+    'term-deposits': { amount: 0, positions: 0, rate: 0, items: [] },
+    'wholesale-funding': { amount: 0, positions: 0, rate: 0, items: [] },
+  };
+
+  modifications.forEach(mod => {
+    const multiplier = mod.type === 'add' ? 1 : -1;
+    const notional = (mod.notional || 0) * multiplier;
+    const posCount = multiplier;
+    const rate = (mod.rate || 0) * multiplier;
+
+    // Determine parent category
+    const category = mod.category === 'asset' ? 'assets' : mod.category === 'liability' ? 'liabilities' : null;
+    
+    if (category) {
+      deltas[category].amount += notional;
+      deltas[category].positions += posCount;
+      deltas[category].rate += rate;
+      deltas[category].items.push(mod);
+    }
+
+    // Subcategory
+    if (mod.subcategory && deltas[mod.subcategory]) {
+      deltas[mod.subcategory].amount += notional;
+      deltas[mod.subcategory].positions += posCount;
+      deltas[mod.subcategory].rate += rate;
+      deltas[mod.subcategory].items.push(mod);
+    }
+  });
+
+  return deltas;
+}
 
 export function BalancePositionsCard({ positions, onPositionsChange }: BalancePositionsCardProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -48,7 +97,10 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
   const [showDetails, setShowDetails] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set(['assets', 'liabilities']));
   const [showWhatIfBuilder, setShowWhatIfBuilder] = useState(false);
-  const { modifications, isApplied } = useWhatIf();
+  const { modifications, isApplied, analysisDate, setAnalysisDate, cet1Capital, setCet1Capital, resetAll } = useWhatIf();
+  
+  // Compute What-If deltas
+  const whatIfDeltas = useMemo(() => computeWhatIfDeltas(modifications), [modifications]);
 
   const handleFileUpload = useCallback(
     (file: File) => {
@@ -185,6 +237,51 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
             </div>
           ) : (
             <div className="flex flex-col flex-1 min-h-0">
+              {/* Analysis Date & CET1 Inputs */}
+              <div className="flex gap-2 mb-2 pb-2 border-b border-border/30">
+                {/* Analysis Date Picker */}
+                <div className="flex-1">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "h-7 w-full justify-start text-left text-xs font-normal",
+                          !analysisDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-1.5 h-3 w-3" />
+                        {analysisDate ? format(analysisDate, "dd MMM yyyy") : "Analysis Date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={analysisDate || undefined}
+                        onSelect={(date) => setAnalysisDate(date || null)}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                
+                {/* CET1 Capital Input */}
+                <div className="flex-1">
+                  <div className="relative">
+                    <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                    <Input
+                      type="number"
+                      placeholder="CET1 Capital"
+                      value={cet1Capital ?? ''}
+                      onChange={(e) => setCet1Capital(e.target.value ? parseFloat(e.target.value) : null)}
+                      className="h-7 text-xs pl-6 pr-2"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* Scrollable Balance Table with Sticky Header */}
               <div className="flex-1 min-h-0 overflow-hidden rounded-md border border-border/50">
                 <div className="h-full overflow-auto balance-scroll-container">
@@ -199,53 +296,81 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
                     </thead>
                     <tbody>
                       {/* Assets Row */}
-                      <BalanceRow
+                      <BalanceRowWithDelta
                         id="assets"
                         label="Assets"
                         amount={PLACEHOLDER_DATA.assets.amount}
                         positions={PLACEHOLDER_DATA.assets.positions}
                         avgRate={PLACEHOLDER_DATA.assets.avgRate}
+                        delta={whatIfDeltas.assets}
                         isExpanded={expandedRows.has('assets')}
                         onToggle={() => toggleRow('assets')}
                         formatAmount={formatAmount}
                         formatPercent={formatPercent}
                         variant="asset"
                       />
-                      {expandedRows.has('assets') && PLACEHOLDER_DATA.assets.subcategories.map((sub, idx) => (
-                        <SubcategoryRow
-                          key={`asset-${idx}`}
-                          label={sub.name}
-                          amount={sub.amount}
-                          positions={sub.positions}
-                          avgRate={sub.avgRate}
-                          formatAmount={formatAmount}
-                          formatPercent={formatPercent}
-                        />
+                      {expandedRows.has('assets') && PLACEHOLDER_DATA.assets.subcategories.map((sub) => (
+                        <React.Fragment key={`asset-${sub.id}`}>
+                          <SubcategoryRowWithDelta
+                            id={sub.id}
+                            label={sub.name}
+                            amount={sub.amount}
+                            positions={sub.positions}
+                            avgRate={sub.avgRate}
+                            delta={whatIfDeltas[sub.id]}
+                            formatAmount={formatAmount}
+                            formatPercent={formatPercent}
+                          />
+                          {/* Render What-If items under this subcategory */}
+                          {whatIfDeltas[sub.id]?.items.map((mod: any) => (
+                            <WhatIfItemRow
+                              key={mod.id}
+                              label={mod.label}
+                              amount={mod.notional || 0}
+                              type={mod.type}
+                              formatAmount={formatAmount}
+                            />
+                          ))}
+                        </React.Fragment>
                       ))}
                       
                       {/* Liabilities Row */}
-                      <BalanceRow
+                      <BalanceRowWithDelta
                         id="liabilities"
                         label="Liabilities"
                         amount={PLACEHOLDER_DATA.liabilities.amount}
                         positions={PLACEHOLDER_DATA.liabilities.positions}
                         avgRate={PLACEHOLDER_DATA.liabilities.avgRate}
+                        delta={whatIfDeltas.liabilities}
                         isExpanded={expandedRows.has('liabilities')}
                         onToggle={() => toggleRow('liabilities')}
                         formatAmount={formatAmount}
                         formatPercent={formatPercent}
                         variant="liability"
                       />
-                      {expandedRows.has('liabilities') && PLACEHOLDER_DATA.liabilities.subcategories.map((sub, idx) => (
-                        <SubcategoryRow
-                          key={`liability-${idx}`}
-                          label={sub.name}
-                          amount={sub.amount}
-                          positions={sub.positions}
-                          avgRate={sub.avgRate}
-                          formatAmount={formatAmount}
-                          formatPercent={formatPercent}
-                        />
+                      {expandedRows.has('liabilities') && PLACEHOLDER_DATA.liabilities.subcategories.map((sub) => (
+                        <React.Fragment key={`liability-${sub.id}`}>
+                          <SubcategoryRowWithDelta
+                            id={sub.id}
+                            label={sub.name}
+                            amount={sub.amount}
+                            positions={sub.positions}
+                            avgRate={sub.avgRate}
+                            delta={whatIfDeltas[sub.id]}
+                            formatAmount={formatAmount}
+                            formatPercent={formatPercent}
+                          />
+                          {/* Render What-If items under this subcategory */}
+                          {whatIfDeltas[sub.id]?.items.map((mod: any) => (
+                            <WhatIfItemRow
+                              key={mod.id}
+                              label={mod.label}
+                              amount={mod.notional || 0}
+                              type={mod.type}
+                              formatAmount={formatAmount}
+                            />
+                          ))}
+                        </React.Fragment>
                       ))}
                     </tbody>
                   </table>
@@ -281,8 +406,12 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleReplace}
+                  onClick={() => {
+                    resetAll();
+                    handleReplace();
+                  }}
                   className="h-6 text-xs px-2"
+                  title="Reset all"
                 >
                   <RefreshCw className="h-3 w-3" />
                 </Button>
@@ -421,13 +550,14 @@ function StatusIndicator({ loaded }: { loaded: boolean }) {
   );
 }
 
-// Balance Row Component (expandable parent row)
-interface BalanceRowProps {
+// Balance Row Component with What-If delta display
+interface BalanceRowWithDeltaProps {
   id: string;
   label: string;
   amount: number;
   positions: number;
   avgRate: number;
+  delta: { amount: number; positions: number; rate: number; items: any[] };
   isExpanded: boolean;
   onToggle: () => void;
   formatAmount: (n: number) => string;
@@ -435,19 +565,30 @@ interface BalanceRowProps {
   variant: 'asset' | 'liability';
 }
 
-function BalanceRow({
+function BalanceRowWithDelta({
   label,
   amount,
   positions,
   avgRate,
+  delta,
   isExpanded,
   onToggle,
   formatAmount,
   formatPercent,
   variant,
-}: BalanceRowProps) {
+}: BalanceRowWithDeltaProps) {
   const ChevronIcon = isExpanded ? ChevronDown : ChevronRight;
   const labelColor = variant === 'asset' ? 'text-success' : 'text-destructive';
+  const hasDelta = delta.amount !== 0 || delta.positions !== 0;
+  
+  const formatDelta = (n: number) => {
+    if (n === 0) return '';
+    const sign = n > 0 ? '+' : '';
+    if (Math.abs(n) >= 1e9) return `${sign}${(n / 1e9).toFixed(1)}B`;
+    if (Math.abs(n) >= 1e6) return `${sign}${(n / 1e6).toFixed(0)}M`;
+    if (Math.abs(n) >= 1e3) return `${sign}${(n / 1e3).toFixed(0)}K`;
+    return `${sign}${n}`;
+  };
   
   return (
     <tr 
@@ -462,35 +603,64 @@ function BalanceRow({
       </td>
       <td className="text-right py-1.5 font-mono font-medium text-foreground">
         {formatAmount(amount)}
+        {hasDelta && delta.amount !== 0 && (
+          <span className={`ml-1 text-[9px] ${delta.amount > 0 ? 'text-success' : 'text-destructive'}`}>
+            ({formatDelta(delta.amount)})
+          </span>
+        )}
       </td>
       <td className="text-right py-1.5 font-mono text-muted-foreground">
         {positions}
+        {hasDelta && delta.positions !== 0 && (
+          <span className={`ml-1 text-[9px] ${delta.positions > 0 ? 'text-success' : 'text-destructive'}`}>
+            ({delta.positions > 0 ? '+' : ''}{delta.positions})
+          </span>
+        )}
       </td>
       <td className="text-right py-1.5 pr-2 font-mono text-muted-foreground">
         {formatPercent(avgRate)}
+        {hasDelta && delta.rate !== 0 && (
+          <span className={`ml-1 text-[9px] ${delta.rate > 0 ? 'text-success' : 'text-destructive'}`}>
+            ({delta.rate > 0 ? '+' : ''}{(delta.rate * 100).toFixed(2)}%)
+          </span>
+        )}
       </td>
     </tr>
   );
 }
 
-// Subcategory Row Component (indented child row)
-interface SubcategoryRowProps {
+// Subcategory Row Component with What-If delta display
+interface SubcategoryRowWithDeltaProps {
+  id: string;
   label: string;
   amount: number;
   positions: number;
   avgRate: number;
+  delta?: { amount: number; positions: number; rate: number; items: any[] };
   formatAmount: (n: number) => string;
   formatPercent: (n: number) => string;
 }
 
-function SubcategoryRow({
+function SubcategoryRowWithDelta({
   label,
   amount,
   positions,
   avgRate,
+  delta,
   formatAmount,
   formatPercent,
-}: SubcategoryRowProps) {
+}: SubcategoryRowWithDeltaProps) {
+  const hasDelta = delta && (delta.amount !== 0 || delta.positions !== 0);
+  
+  const formatDelta = (n: number) => {
+    if (n === 0) return '';
+    const sign = n > 0 ? '+' : '';
+    if (Math.abs(n) >= 1e9) return `${sign}${(n / 1e9).toFixed(1)}B`;
+    if (Math.abs(n) >= 1e6) return `${sign}${(n / 1e6).toFixed(0)}M`;
+    if (Math.abs(n) >= 1e3) return `${sign}${(n / 1e3).toFixed(0)}K`;
+    return `${sign}${n}`;
+  };
+
   return (
     <tr className="bg-muted/20 text-muted-foreground">
       <td className="py-1 pl-7">
@@ -498,12 +668,58 @@ function SubcategoryRow({
       </td>
       <td className="text-right py-1 font-mono text-[11px]">
         {formatAmount(amount)}
+        {hasDelta && delta.amount !== 0 && (
+          <span className={`ml-1 text-[9px] ${delta.amount > 0 ? 'text-success' : 'text-destructive'}`}>
+            ({formatDelta(delta.amount)})
+          </span>
+        )}
       </td>
       <td className="text-right py-1 font-mono text-[11px]">
         {positions}
+        {hasDelta && delta.positions !== 0 && (
+          <span className={`ml-1 text-[9px] ${delta.positions > 0 ? 'text-success' : 'text-destructive'}`}>
+            ({delta.positions > 0 ? '+' : ''}{delta.positions})
+          </span>
+        )}
       </td>
       <td className="text-right py-1 pr-2 font-mono text-[11px]">
         {formatPercent(avgRate)}
+        {hasDelta && delta.rate !== 0 && (
+          <span className={`ml-1 text-[9px] ${delta.rate > 0 ? 'text-success' : 'text-destructive'}`}>
+            ({delta.rate > 0 ? '+' : ''}{(delta.rate * 100).toFixed(2)}%)
+          </span>
+        )}
+      </td>
+    </tr>
+  );
+}
+
+// What-If Item Row (shows individual What-If positions)
+interface WhatIfItemRowProps {
+  label: string;
+  amount: number;
+  type: 'add' | 'remove';
+  formatAmount: (n: number) => string;
+}
+
+function WhatIfItemRow({ label, amount, type, formatAmount }: WhatIfItemRowProps) {
+  const isAdd = type === 'add';
+  return (
+    <tr className={`${isAdd ? 'bg-success/10' : 'bg-destructive/10'}`}>
+      <td className="py-0.5 pl-10">
+        <span className={`text-[10px] font-medium ${isAdd ? 'text-success' : 'text-destructive'}`}>
+          {isAdd ? '+ ' : '− '}{label}
+          <span className="ml-1 text-[8px] opacity-70">(What-If)</span>
+        </span>
+      </td>
+      <td className={`text-right py-0.5 font-mono text-[10px] ${isAdd ? 'text-success' : 'text-destructive'}`}>
+        {isAdd ? '+' : '−'}{formatAmount(Math.abs(amount))}
+      </td>
+      <td className={`text-right py-0.5 font-mono text-[10px] ${isAdd ? 'text-success' : 'text-destructive'}`}>
+        {isAdd ? '+1' : '−1'}
+      </td>
+      <td className="text-right py-0.5 pr-2 font-mono text-[10px] text-muted-foreground">
+        —
       </td>
     </tr>
   );

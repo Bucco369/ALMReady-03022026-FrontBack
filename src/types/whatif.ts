@@ -7,6 +7,10 @@ export interface WhatIfModification {
   details?: string;
   notional?: number;
   currency?: string;
+  // Target category for placement in balance tree
+  category?: 'asset' | 'liability' | 'derivative';
+  subcategory?: string; // e.g., 'mortgages', 'bonds', 'sight-deposits'
+  rate?: number; // Interest rate for avg rate delta calculation
 }
 
 export interface ProductTemplate {

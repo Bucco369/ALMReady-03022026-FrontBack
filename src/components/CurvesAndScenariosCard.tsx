@@ -58,7 +58,7 @@ const SCENARIO_COLORS: Record<string, string> = {
 };
 
 // Generate placeholder curve data for all curves and scenarios
-const generatePlaceholderData = () => {
+const generatePlaceholderData = (customScenarios: { id: string; shockBps: number }[] = []) => {
   const tenors = ['1M', '3M', '6M', '1Y', '2Y', '5Y', '10Y', '20Y', '30Y'];
   const baseRates: Record<string, number[]> = {
     'risk-free': [3.25, 3.40, 3.55, 3.70, 3.85, 4.00, 4.15, 4.25, 4.30],
@@ -91,13 +91,19 @@ const generatePlaceholderData = () => {
       point[`${curve.id}_short-up`] = base + Math.max(0, (6 - idx) * 0.4);
       // Short Down: bigger impact on short tenors
       point[`${curve.id}_short-down`] = Math.max(0, base - Math.max(0, (6 - idx) * 0.4));
+      
+      // Generate data for each custom scenario (parallel shifts)
+      customScenarios.forEach(cs => {
+        const shiftAmount = cs.shockBps / 100; // Convert bps to percentage points
+        point[`${curve.id}_${cs.id}`] = Math.max(0, base + shiftAmount);
+      });
     });
     
     return point;
   });
 };
 
-const PLACEHOLDER_CURVE_DATA = generatePlaceholderData();
+const STATIC_PLACEHOLDER_CURVE_DATA = generatePlaceholderData();
 
 interface CurvesAndScenariosCardProps {
   scenarios: Scenario[];
@@ -119,6 +125,19 @@ export function CurvesAndScenariosCard({
   const [customBps, setCustomBps] = useState<string>('');
   const [showCurveUpload, setShowCurveUpload] = useState(false);
   const [uploadedCurves, setUploadedCurves] = useState<{ id: string; name: string; shortName: string; loaded: boolean }[]>([]);
+
+  // Extract custom scenarios for data generation
+  const customScenarios = useMemo(() => {
+    return scenarios.filter(s => s.id.startsWith('custom-')).map(s => ({
+      id: s.id,
+      shockBps: s.shockBps,
+    }));
+  }, [scenarios]);
+
+  // Generate curve data including custom scenarios
+  const curveData = useMemo(() => {
+    return generatePlaceholderData(customScenarios);
+  }, [customScenarios]);
 
   // All scenario keys including base
   const allScenarioKeys = useMemo(() => {
@@ -184,7 +203,7 @@ export function CurvesAndScenariosCard({
 
   const selectedCurvesCount = selectedCurves.length;
   const enabledScenariosCount = scenarios.filter(s => s.enabled).length;
-  const customScenarios = scenarios.filter(s => s.id.startsWith('custom-'));
+  const customScenariosList = scenarios.filter(s => s.id.startsWith('custom-'));
 
   const getCurveName = (curveId: string) => {
     return AVAILABLE_CURVES.find(c => c.id === curveId)?.shortName || curveId;
@@ -439,7 +458,7 @@ export function CurvesAndScenariosCard({
             {/* Chart */}
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={PLACEHOLDER_CURVE_DATA} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                <LineChart data={curveData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
                     dataKey="tenor" 
@@ -481,7 +500,11 @@ export function CurvesAndScenariosCard({
                     chartScenarios.map(scenarioKey => {
                       const dataKey = `${curveId}_${scenarioKey}`;
                       const isBase = scenarioKey === 'base';
-                      const color = isBase ? CURVE_COLORS[curveId] : SCENARIO_COLORS[scenarioKey];
+                      const isCustom = scenarioKey.startsWith('custom-');
+                      // Get color: base uses curve color, regulatory uses scenario color, custom uses orange
+                      let color = isBase 
+                        ? CURVE_COLORS[curveId] 
+                        : (SCENARIO_COLORS[scenarioKey] || SCENARIO_COLORS['custom']);
                       
                       return (
                         <Line
@@ -490,7 +513,7 @@ export function CurvesAndScenariosCard({
                           dataKey={dataKey}
                           stroke={color}
                           strokeWidth={isBase ? 2 : 1.5}
-                          strokeDasharray={isBase ? undefined : '5 5'}
+                          strokeDasharray={isBase ? undefined : (isCustom ? '3 3' : '5 5')}
                           dot={false}
                           name={dataKey}
                         />

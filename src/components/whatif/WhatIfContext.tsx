@@ -10,6 +10,13 @@ interface WhatIfContextType {
   applyModifications: () => void;
   addCount: number;
   removeCount: number;
+  // New: Analysis Date & CET1 Capital
+  analysisDate: Date | null;
+  setAnalysisDate: (date: Date | null) => void;
+  cet1Capital: number | null;
+  setCet1Capital: (value: number | null) => void;
+  // Reset all
+  resetAll: () => void;
 }
 
 const WhatIfContext = createContext<WhatIfContextType | null>(null);
@@ -17,6 +24,8 @@ const WhatIfContext = createContext<WhatIfContextType | null>(null);
 export function WhatIfProvider({ children }: { children: ReactNode }) {
   const [modifications, setModifications] = useState<WhatIfModification[]>([]);
   const [isApplied, setIsApplied] = useState(false);
+  const [analysisDate, setAnalysisDate] = useState<Date | null>(null);
+  const [cet1Capital, setCet1Capital] = useState<number | null>(null);
 
   const addModification = useCallback((mod: Omit<WhatIfModification, 'id'>) => {
     const id = `${mod.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -38,6 +47,13 @@ export function WhatIfProvider({ children }: { children: ReactNode }) {
     setIsApplied(true);
   }, []);
 
+  const resetAll = useCallback(() => {
+    setModifications([]);
+    setIsApplied(false);
+    setAnalysisDate(null);
+    setCet1Capital(null);
+  }, []);
+
   const addCount = modifications.filter(m => m.type === 'add').length;
   const removeCount = modifications.filter(m => m.type === 'remove').length;
 
@@ -51,6 +67,11 @@ export function WhatIfProvider({ children }: { children: ReactNode }) {
       applyModifications,
       addCount,
       removeCount,
+      analysisDate,
+      setAnalysisDate,
+      cet1Capital,
+      setCet1Capital,
+      resetAll,
     }}>
       {children}
     </WhatIfContext.Provider>

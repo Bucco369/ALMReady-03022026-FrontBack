@@ -36,6 +36,19 @@ export function WhatIfAddTab() {
     
     const notional = formValues.notional || '—';
     const currency = formValues.currency || 'USD';
+    const rate = parseFloat(formValues.coupon || formValues.depositRate || formValues.fixedRate || '0') / 100;
+    
+    // Map template to subcategory for balance tree placement
+    const subcategoryMap: Record<string, string> = {
+      'fixed-loan': 'loans',
+      'floating-loan': 'loans',
+      'bond-portfolio': 'bonds',
+      'nmd': 'sight-deposits',
+      'term-deposit': 'term-deposits',
+      'wholesale': 'wholesale-funding',
+      'irs-hedge': 'loans', // derivatives appear under appropriate category
+      'securitised': 'mortgages',
+    };
     
     addModification({
       type: 'add',
@@ -43,6 +56,9 @@ export function WhatIfAddTab() {
       details: `${notional} ${currency}`,
       notional: parseFloat(notional.replace(/,/g, '')) || 0,
       currency,
+      category: selectedTemplate.category,
+      subcategory: subcategoryMap[selectedTemplate.id] || 'loans',
+      rate,
     });
 
     // Reset form
