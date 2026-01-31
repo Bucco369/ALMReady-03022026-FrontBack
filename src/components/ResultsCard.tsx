@@ -212,47 +212,52 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
       </div>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <BarChart3 className="h-4 w-4 text-primary" />
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-auto p-6">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="flex items-center gap-2.5 text-lg font-semibold">
+              <BarChart3 className="h-5 w-5 text-primary" />
               Calculation Results – Full Details
             </DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div className="grid grid-cols-4 gap-3">
-              <SummaryCard label="Base EVE" value={formatCurrency(results.baseEve)} />
-              <SummaryCard label="Base NII" value={formatCurrency(results.baseNii)} />
-              <SummaryCard label="Worst EVE" value={formatCurrency(results.worstCaseEve)} />
+          <div className="space-y-6">
+            {/* Summary Cards Row */}
+            <div className="grid grid-cols-4 gap-4">
+              <SummaryCard label="BASE EVE" value={formatCurrency(results.baseEve)} />
+              <SummaryCard label="BASE NII" value={formatCurrency(results.baseNii)} />
+              <SummaryCard label="WORST EVE" value={formatCurrency(results.worstCaseEve)} />
               <SummaryCard 
-                label="ΔEVE (Worst)" 
-                value={`${results.worstCaseDeltaEve >= 0 ? '+' : ''}${formatCompact(results.worstCaseDeltaEve)}`} 
+                label="ΔEVE (WORST)" 
+                value={formatCompact(results.worstCaseDeltaEve)} 
                 variant={results.worstCaseDeltaEve >= 0 ? 'success' : 'destructive'}
               />
             </div>
 
+            {/* Scenario Results Table */}
             <div className="rounded-lg border border-border overflow-hidden">
-              <table className="data-table text-xs">
+              <table className="w-full">
                 <thead>
-                  <tr>
-                    <th>Scenario</th>
-                    <th className="text-right">EVE</th>
-                    <th className="text-right">ΔEVE</th>
+                  <tr className="bg-muted/40 border-b border-border">
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Scenario</th>
+                    <th className="text-right py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide">EVE</th>
+                    <th className="text-right py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide">ΔEVE</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr className="bg-muted/30">
-                    <td className="font-medium">Base Case</td>
-                    <td className="text-right font-mono">{formatCurrency(results.baseEve)}</td>
-                    <td className="text-right text-muted-foreground">—</td>
+                <tbody className="text-sm">
+                  <tr className="border-b border-border/50 hover:bg-muted/20">
+                    <td className="py-3 px-4 font-medium text-foreground">Base Case</td>
+                    <td className="text-right py-3 px-4 font-mono text-foreground">{formatCurrency(results.baseEve)}</td>
+                    <td className="text-right py-3 px-4 text-muted-foreground">—</td>
                   </tr>
-                  {results.scenarioResults.map((result) => (
-                    <tr key={result.scenarioId}>
-                      <td className="font-medium">{result.scenarioName}</td>
-                      <td className="text-right font-mono">{formatCurrency(result.eve)}</td>
+                  {results.scenarioResults.map((result, index) => (
+                    <tr 
+                      key={result.scenarioId} 
+                      className={`hover:bg-muted/20 ${index < results.scenarioResults.length - 1 ? 'border-b border-border/50' : ''}`}
+                    >
+                      <td className="py-3 px-4 font-medium text-foreground">{result.scenarioName}</td>
+                      <td className="text-right py-3 px-4 font-mono text-foreground">{formatCurrency(result.eve)}</td>
                       <td
-                        className={`text-right font-mono ${
+                        className={`text-right py-3 px-4 font-mono font-medium ${
                           result.deltaEve >= 0 ? 'text-success' : 'text-destructive'
                         }`}
                       >
@@ -278,9 +283,9 @@ function SummaryCard({ label, value, variant = 'default' }: { label: string; val
       : 'text-foreground';
   
   return (
-    <div className="rounded-lg bg-muted/50 p-3 text-center">
-      <div className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1">{label}</div>
-      <div className={`text-sm font-bold ${valueClass}`}>{value}</div>
+    <div className="rounded-xl bg-muted/40 p-4 text-center">
+      <div className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium mb-2">{label}</div>
+      <div className={`text-xl font-bold ${valueClass}`}>{value}</div>
     </div>
   );
 }
