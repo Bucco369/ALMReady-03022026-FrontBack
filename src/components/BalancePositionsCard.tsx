@@ -237,23 +237,27 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
             </div>
           ) : (
             <div className="flex flex-col flex-1 min-h-0">
-              {/* Analysis Date & CET1 Inputs */}
-              <div className="flex gap-2 mb-2 pb-2 border-b border-border/30">
-                {/* Analysis Date Picker */}
-                <div className="flex-1">
+              {/* Analysis Date & CET1 Inputs - Consistent visual design */}
+              <div className="flex gap-3 mb-2 pb-2 border-b border-border/30">
+                {/* Analysis Date */}
+                <AnalysisParameter
+                  label="Analysis Date"
+                  icon={<CalendarIcon className="h-3 w-3 text-muted-foreground" />}
+                >
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
+                      <button
                         className={cn(
-                          "h-7 w-full justify-start text-left text-xs font-normal",
+                          "h-7 px-2 flex items-center gap-1.5 rounded border text-xs transition-colors",
+                          "bg-background border-border hover:bg-muted/50",
                           !analysisDate && "text-muted-foreground"
                         )}
                       >
-                        <CalendarIcon className="mr-1.5 h-3 w-3" />
-                        {analysisDate ? format(analysisDate, "dd MMM yyyy") : "Analysis Date"}
-                      </Button>
+                        <CalendarIcon className="h-3 w-3" />
+                        <span className={analysisDate ? "font-medium text-foreground" : ""}>
+                          {analysisDate ? format(analysisDate, "dd MMM yyyy") : "Select date"}
+                        </span>
+                      </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
@@ -265,9 +269,9 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
                       />
                     </PopoverContent>
                   </Popover>
-                </div>
+                </AnalysisParameter>
                 
-                {/* CET1 Capital Input - Two-state component */}
+                {/* CET1 Capital */}
                 <CET1Input
                   value={cet1Capital}
                   onChange={setCet1Capital}
@@ -717,6 +721,24 @@ function WhatIfItemRow({ label, amount, type, formatAmount }: WhatIfItemRowProps
   );
 }
 
+// Analysis Parameter wrapper for consistent styling
+interface AnalysisParameterProps {
+  label: string;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+}
+
+function AnalysisParameter({ label, children }: AnalysisParameterProps) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">
+        {label}
+      </span>
+      {children}
+    </div>
+  );
+}
+
 // CET1 Capital Input - Two-state component (editable → locked)
 interface CET1InputProps {
   value: number | null;
@@ -746,10 +768,8 @@ function CET1Input({ value, onChange }: CET1InputProps) {
   }, [isEditing]);
 
   const formatCET1Display = (num: number) => {
-    if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
-    if (num >= 1e6) return `${(num / 1e6).toFixed(1)}M`;
-    if (num >= 1e3) return `${(num / 1e3).toFixed(1)}K`;
-    return num.toLocaleString();
+    // Just format with commas, no suffix
+    return num.toLocaleString('en-US');
   };
 
   const handleConfirm = () => {
@@ -775,51 +795,50 @@ function CET1Input({ value, onChange }: CET1InputProps) {
     setIsEditing(true);
   };
 
-  if (isEditing) {
-    return (
-      <div className="flex-1">
-        <div className="relative">
-          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-medium text-muted-foreground">
-            CET1:
-          </span>
-          <Input
+  // Consistent wrapper with label
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">
+        CET1
+      </span>
+      {isEditing ? (
+        <div className="flex flex-col">
+          <input
             ref={inputRef}
-            type="number"
-            placeholder="Enter CET1 capital"
+            type="text"
+            inputMode="numeric"
+            placeholder="Enter value"
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={(e) => setInputValue(e.target.value.replace(/[^0-9.]/g, ''))}
             onKeyDown={handleKeyDown}
             onBlur={() => {
-              // Only exit edit mode if we have a valid value
-              if (value !== null && inputValue === value.toString()) {
+              if (inputValue && value !== null && inputValue === value.toString()) {
                 setIsEditing(false);
+              } else if (inputValue) {
+                handleConfirm();
               }
             }}
-            className="h-7 text-xs pl-12 pr-2"
+            className={cn(
+              "h-7 px-2 w-28 rounded border text-xs font-mono",
+              "bg-background border-border focus:outline-none focus:ring-1 focus:ring-primary",
+              "placeholder:text-muted-foreground"
+            )}
           />
+          <span className="text-[8px] text-muted-foreground mt-0.5">Enter to confirm</span>
         </div>
-        <p className="text-[9px] text-muted-foreground mt-0.5 pl-1">Press Enter to confirm</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex-1">
-      <button
-        onClick={handleEditClick}
-        className={cn(
-          "h-7 w-full px-2 flex items-center justify-between rounded-md border text-xs",
-          "bg-muted/50 border-border/70 hover:bg-muted/80 transition-colors cursor-pointer",
-          "group"
-        )}
-        title="Click to edit CET1 Capital"
-      >
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-medium text-muted-foreground">CET1:</span>
-          <span className="font-semibold text-foreground">{formatCET1Display(value!)}</span>
-        </div>
-        <Pencil className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-      </button>
+      ) : (
+        <button
+          onClick={handleEditClick}
+          className={cn(
+            "h-7 px-2 flex items-center gap-1.5 rounded border text-xs transition-colors group",
+            "bg-muted/30 border-border/70 hover:bg-muted/50"
+          )}
+          title="Click to edit"
+        >
+          <span className="font-mono font-medium text-foreground">{formatCET1Display(value!)}</span>
+          <Pencil className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+        </button>
+      )}
     </div>
   );
 }
