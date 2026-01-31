@@ -212,7 +212,7 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
       </div>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-4xl max-h-[85vh] overflow-auto p-6">
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-auto p-6">
           <DialogHeader className="pb-4">
             <DialogTitle className="flex items-center gap-2.5 text-lg font-semibold">
               <BarChart3 className="h-5 w-5 text-primary" />
@@ -221,50 +221,84 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
           </DialogHeader>
           
           <div className="space-y-6">
-            {/* Summary Cards Row */}
+            {/* Summary Cards Row - 4 uniform rectangular cards */}
             <div className="grid grid-cols-4 gap-4">
-              <SummaryCard label="BASE EVE" value={formatCurrency(results.baseEve)} />
-              <SummaryCard label="BASE NII" value={formatCurrency(results.baseNii)} />
-              <SummaryCard label="WORST EVE" value={formatCurrency(results.worstCaseEve)} />
               <SummaryCard 
-                label="ΔEVE (WORST)" 
-                value={formatCompact(results.worstCaseDeltaEve)} 
+                label="BASE EVE" 
+                value={formatCurrency(results.baseEve)} 
+              />
+              <SummaryCard 
+                label="BASE NII" 
+                value={formatCurrency(results.baseNii)} 
+              />
+              <SummaryCard 
+                label="WORST EVE" 
+                value={formatCurrency(results.worstCaseEve)}
+                delta={formatCompact(results.worstCaseDeltaEve)}
+                deltaPercent={`${worstEvePercent >= 0 ? '+' : ''}${worstEvePercent.toFixed(1)}%`}
                 variant={results.worstCaseDeltaEve >= 0 ? 'success' : 'destructive'}
+              />
+              <SummaryCard 
+                label="WORST NII" 
+                value={formatCurrency(results.baseNii + worstNiiDelta)}
+                delta={formatCompact(worstNiiDelta)}
+                deltaPercent={`${worstNiiPercent >= 0 ? '+' : ''}${worstNiiPercent.toFixed(1)}%`}
+                variant={worstNiiDelta >= 0 ? 'success' : 'destructive'}
               />
             </div>
 
-            {/* Scenario Results Table */}
+            {/* Scenario Comparison Table - EVE and NII side by side */}
             <div className="rounded-lg border border-border overflow-hidden">
               <table className="w-full">
                 <thead>
                   <tr className="bg-muted/40 border-b border-border">
                     <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Scenario</th>
-                    <th className="text-right py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide">EVE</th>
-                    <th className="text-right py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide">ΔEVE</th>
+                    <th className="text-right py-3 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">EVE</th>
+                    <th className="text-right py-3 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">ΔEVE</th>
+                    <th className="text-right py-3 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">ΔEVE %</th>
+                    <th className="text-right py-3 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">NII</th>
+                    <th className="text-right py-3 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">ΔNII</th>
+                    <th className="text-right py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide">ΔNII %</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
-                  <tr className="border-b border-border/50 hover:bg-muted/20">
-                    <td className="py-3 px-4 font-medium text-foreground">Base Case</td>
-                    <td className="text-right py-3 px-4 font-mono text-foreground">{formatCurrency(results.baseEve)}</td>
+                  {/* Base Case Row */}
+                  <tr className="border-b border-border/50 hover:bg-muted/20 bg-muted/10">
+                    <td className="py-3 px-4 font-semibold text-foreground">Base Case</td>
+                    <td className="text-right py-3 px-3 font-mono text-foreground">{formatCurrency(results.baseEve)}</td>
+                    <td className="text-right py-3 px-3 text-muted-foreground">—</td>
+                    <td className="text-right py-3 px-3 text-muted-foreground">—</td>
+                    <td className="text-right py-3 px-3 font-mono text-foreground">{formatCurrency(results.baseNii)}</td>
+                    <td className="text-right py-3 px-3 text-muted-foreground">—</td>
                     <td className="text-right py-3 px-4 text-muted-foreground">—</td>
                   </tr>
-                  {results.scenarioResults.map((result, index) => (
-                    <tr 
-                      key={result.scenarioId} 
-                      className={`hover:bg-muted/20 ${index < results.scenarioResults.length - 1 ? 'border-b border-border/50' : ''}`}
-                    >
-                      <td className="py-3 px-4 font-medium text-foreground">{result.scenarioName}</td>
-                      <td className="text-right py-3 px-4 font-mono text-foreground">{formatCurrency(result.eve)}</td>
-                      <td
-                        className={`text-right py-3 px-4 font-mono font-medium ${
-                          result.deltaEve >= 0 ? 'text-success' : 'text-destructive'
-                        }`}
+                  {/* Scenario Rows */}
+                  {results.scenarioResults.map((result, index) => {
+                    const evePercent = (result.deltaEve / results.baseEve) * 100;
+                    const niiPercent = (result.deltaNii / results.baseNii) * 100;
+                    return (
+                      <tr 
+                        key={result.scenarioId} 
+                        className={`hover:bg-muted/20 ${index < results.scenarioResults.length - 1 ? 'border-b border-border/50' : ''}`}
                       >
-                        {result.deltaEve >= 0 ? '+' : ''}{formatCurrency(result.deltaEve).replace('$', '')}
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="py-3 px-4 font-medium text-foreground">{result.scenarioName}</td>
+                        <td className="text-right py-3 px-3 font-mono text-foreground">{formatCurrency(result.eve)}</td>
+                        <td className={`text-right py-3 px-3 font-mono font-medium ${result.deltaEve >= 0 ? 'text-success' : 'text-destructive'}`}>
+                          {result.deltaEve >= 0 ? '+' : ''}{formatCompact(result.deltaEve)}
+                        </td>
+                        <td className={`text-right py-3 px-3 font-mono text-xs ${result.deltaEve >= 0 ? 'text-success' : 'text-destructive'}`}>
+                          {evePercent >= 0 ? '+' : ''}{evePercent.toFixed(1)}%
+                        </td>
+                        <td className="text-right py-3 px-3 font-mono text-foreground">{formatCurrency(result.nii)}</td>
+                        <td className={`text-right py-3 px-3 font-mono font-medium ${result.deltaNii >= 0 ? 'text-success' : 'text-destructive'}`}>
+                          {result.deltaNii >= 0 ? '+' : ''}{formatCompact(result.deltaNii)}
+                        </td>
+                        <td className={`text-right py-3 px-4 font-mono text-xs ${result.deltaNii >= 0 ? 'text-success' : 'text-destructive'}`}>
+                          {niiPercent >= 0 ? '+' : ''}{niiPercent.toFixed(1)}%
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -275,17 +309,32 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
   );
 }
 
-function SummaryCard({ label, value, variant = 'default' }: { label: string; value: string; variant?: 'default' | 'success' | 'destructive' }) {
-  const valueClass = variant === 'success' 
+interface SummaryCardProps {
+  label: string;
+  value: string;
+  delta?: string;
+  deltaPercent?: string;
+  variant?: 'default' | 'success' | 'destructive';
+}
+
+function SummaryCard({ label, value, delta, deltaPercent, variant = 'default' }: SummaryCardProps) {
+  const deltaClass = variant === 'success' 
     ? 'text-success' 
     : variant === 'destructive' 
       ? 'text-destructive' 
-      : 'text-foreground';
+      : 'text-muted-foreground';
   
   return (
-    <div className="rounded-xl bg-muted/40 p-4 text-center">
+    <div className="rounded-xl bg-muted/40 p-4">
       <div className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium mb-2">{label}</div>
-      <div className={`text-xl font-bold ${valueClass}`}>{value}</div>
+      <div className="text-xl font-bold text-foreground">{value}</div>
+      {(delta || deltaPercent) && (
+        <div className={`text-xs font-medium mt-1 ${deltaClass}`}>
+          {delta && <span>{delta}</span>}
+          {delta && deltaPercent && <span className="mx-1">•</span>}
+          {deltaPercent && <span>{deltaPercent}</span>}
+        </div>
+      )}
     </div>
   );
 }

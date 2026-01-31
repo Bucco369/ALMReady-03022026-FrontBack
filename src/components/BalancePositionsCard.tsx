@@ -46,7 +46,7 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
   const [isDragging, setIsDragging] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set(['assets', 'liabilities']));
   const [showWhatIfBuilder, setShowWhatIfBuilder] = useState(false);
   const { modifications, isApplied } = useWhatIf();
 

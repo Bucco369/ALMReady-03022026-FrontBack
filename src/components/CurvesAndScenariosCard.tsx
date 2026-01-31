@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { TrendingUp, Eye, CheckCircle2, XCircle, CheckSquare, Plus, X } from 'lucide-react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { TrendingUp, Eye, CheckCircle2, XCircle, CheckSquare, Plus, X, Upload, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -117,6 +117,8 @@ export function CurvesAndScenariosCard({
   const [chartScenarios, setChartScenarios] = useState<string[]>(['base']);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customBps, setCustomBps] = useState<string>('');
+  const [showCurveUpload, setShowCurveUpload] = useState(false);
+  const [uploadedCurves, setUploadedCurves] = useState<{ id: string; name: string; shortName: string; loaded: boolean }[]>([]);
 
   // All scenario keys including base
   const allScenarioKeys = useMemo(() => {
@@ -221,6 +223,21 @@ export function CurvesAndScenariosCard({
     onScenariosChange(scenarios.filter(s => s.id !== scenarioId));
   };
 
+  const handleCurveFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Mock: Pretend to parse Excel and add curves
+      const mockCurves = [
+        { id: `uploaded-${Date.now()}-1`, name: file.name.replace('.xlsx', '') + ' - EUR', shortName: 'EUR Curve', loaded: true },
+        { id: `uploaded-${Date.now()}-2`, name: file.name.replace('.xlsx', '') + ' - USD', shortName: 'USD Curve', loaded: true },
+      ];
+      setUploadedCurves(prev => [...prev, ...mockCurves]);
+      setShowCurveUpload(false);
+    }
+  }, []);
+
+  const allDisplayCurves = useMemo(() => [...AVAILABLE_CURVES, ...uploadedCurves], [uploadedCurves]);
+
   return (
     <>
       <div className="dashboard-card">
@@ -243,7 +260,7 @@ export function CurvesAndScenariosCard({
               </div>
               <ScrollArea className="flex-1">
                 <div className="space-y-1 pr-2">
-                  {AVAILABLE_CURVES.map((curve) => (
+                  {allDisplayCurves.map((curve) => (
                     <label
                       key={curve.id}
                       className={`flex items-center gap-1.5 py-1 px-1.5 rounded cursor-pointer transition-colors text-xs ${
@@ -269,6 +286,41 @@ export function CurvesAndScenariosCard({
                   ))}
                 </div>
               </ScrollArea>
+              
+              {/* Load Curves Button */}
+              <Popover open={showCurveUpload} onOpenChange={setShowCurveUpload}>
+                <PopoverTrigger asChild>
+                  <button className="mt-1.5 text-[9px] text-primary hover:text-primary/80 transition-colors flex items-center gap-1 px-1.5 py-1 rounded hover:bg-primary/5">
+                    <Upload className="h-2.5 w-2.5" />
+                    Load curves (Excel)
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-3" align="start">
+                  <div className="space-y-2">
+                    <div className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                      <FileSpreadsheet className="h-3.5 w-3.5 text-primary" />
+                      Load Curves from Excel
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      Upload an Excel file (.xlsx) containing rate curve data.
+                    </div>
+                    <label className="block">
+                      <Input
+                        type="file"
+                        accept=".xlsx,.xls"
+                        className="hidden"
+                        onChange={handleCurveFileUpload}
+                      />
+                      <Button variant="outline" size="sm" asChild className="w-full h-7 text-xs">
+                        <span>
+                          <Upload className="mr-1.5 h-3 w-3" />
+                          Choose File
+                        </span>
+                      </Button>
+                    </label>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Vertical divider */}
