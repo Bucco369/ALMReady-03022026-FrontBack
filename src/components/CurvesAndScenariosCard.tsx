@@ -1,13 +1,19 @@
 import React, { useState, useMemo } from 'react';
-import { TrendingUp, Eye, CheckCircle2, XCircle, CheckSquare } from 'lucide-react';
+import { TrendingUp, Eye, CheckCircle2, XCircle, CheckSquare, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { Scenario } from '@/types/financial';
 import {
@@ -39,7 +45,7 @@ const CURVE_COLORS: Record<string, string> = {
   'govt-bond': 'hsl(340, 50%, 50%)',
 };
 
-// Color palette for scenarios
+// Color palette for scenarios (including custom)
 const SCENARIO_COLORS: Record<string, string> = {
   'base': 'hsl(215, 50%, 45%)',
   'parallel-up': 'hsl(0, 55%, 50%)',
@@ -48,6 +54,7 @@ const SCENARIO_COLORS: Record<string, string> = {
   'flattener': 'hsl(38, 70%, 50%)',
   'short-up': 'hsl(340, 50%, 50%)',
   'short-down': 'hsl(180, 45%, 42%)',
+  'custom': 'hsl(25, 80%, 50%)',
 };
 
 // Generate placeholder curve data for all curves and scenarios
@@ -108,6 +115,8 @@ export function CurvesAndScenariosCard({
   const [showDetails, setShowDetails] = useState(false);
   const [chartCurves, setChartCurves] = useState<string[]>(['risk-free']);
   const [chartScenarios, setChartScenarios] = useState<string[]>(['base']);
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customBps, setCustomBps] = useState<string>('');
 
   // All scenario keys including base
   const allScenarioKeys = useMemo(() => {
@@ -173,6 +182,7 @@ export function CurvesAndScenariosCard({
 
   const selectedCurvesCount = selectedCurves.length;
   const enabledScenariosCount = scenarios.filter(s => s.enabled).length;
+  const customScenarios = scenarios.filter(s => s.id.startsWith('custom-'));
 
   const getCurveName = (curveId: string) => {
     return AVAILABLE_CURVES.find(c => c.id === curveId)?.shortName || curveId;
@@ -188,6 +198,27 @@ export function CurvesAndScenariosCard({
     if (scenarioKey === 'base') return null;
     const scenario = scenarios.find(s => s.id === scenarioKey);
     return scenario ? scenario.shockBps : null;
+  };
+
+  const handleAddCustomScenario = () => {
+    const bps = parseInt(customBps, 10);
+    if (isNaN(bps)) return;
+    
+    const sign = bps >= 0 ? '+' : '';
+    const newScenario: Scenario = {
+      id: `custom-${Date.now()}`,
+      name: `Custom ${sign}${bps}bp`,
+      shockBps: bps,
+      enabled: true,
+    };
+    
+    onScenariosChange([...scenarios, newScenario]);
+    setCustomBps('');
+    setShowCustomInput(false);
+  };
+
+  const handleRemoveCustomScenario = (scenarioId: string) => {
+    onScenariosChange(scenarios.filter(s => s.id !== scenarioId));
   };
 
   return (
@@ -245,37 +276,84 @@ export function CurvesAndScenariosCard({
 
             {/* Right: Scenario Selection */}
             <div className="flex-1 flex flex-col min-w-0">
-              <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1.5">
-                Scenarios
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                  Scenarios
+                </span>
+                <Popover open={showCustomInput} onOpenChange={setShowCustomInput}>
+                  <PopoverTrigger asChild>
+                    <button className="text-[9px] text-primary hover:text-primary/80 transition-colors flex items-center gap-0.5">
+                      <Plus className="h-2.5 w-2.5" />
+                      Custom
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-2" align="end">
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium text-foreground">Add Custom Scenario</div>
+                      <div className="text-[10px] text-muted-foreground">Parallel shock (basis points)</div>
+                      <div className="flex gap-1.5">
+                        <Input
+                          type="number"
+                          placeholder="e.g. +150 or -100"
+                          value={customBps}
+                          onChange={(e) => setCustomBps(e.target.value)}
+                          className="h-7 text-xs"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={handleAddCustomScenario}
+                          disabled={!customBps || isNaN(parseInt(customBps, 10))}
+                          className="h-7 px-2 text-xs"
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
               <ScrollArea className="flex-1">
                 <div className="space-y-1 pr-2">
-                  {scenarios.map((scenario) => (
-                    <label
-                      key={scenario.id}
-                      className={`flex items-center gap-1.5 py-1 px-1.5 rounded cursor-pointer transition-colors text-xs ${
-                        scenario.enabled
-                          ? 'bg-primary/10'
-                          : 'hover:bg-muted/50'
-                      }`}
-                    >
-                      <Checkbox
-                        checked={scenario.enabled}
-                        onCheckedChange={() => handleScenarioToggle(scenario.id)}
-                        className="h-3 w-3"
-                      />
-                      <span className={`truncate ${scenario.enabled ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
-                        {scenario.name}
-                      </span>
-                      <span
-                        className={`shrink-0 ml-auto text-[9px] font-medium ${
-                          scenario.shockBps > 0 ? 'text-destructive' : 'text-success'
+                  {scenarios.map((scenario) => {
+                    const isCustom = scenario.id.startsWith('custom-');
+                    return (
+                      <label
+                        key={scenario.id}
+                        className={`flex items-center gap-1.5 py-1 px-1.5 rounded cursor-pointer transition-colors text-xs ${
+                          scenario.enabled
+                            ? 'bg-primary/10'
+                            : 'hover:bg-muted/50'
                         }`}
                       >
-                        {scenario.shockBps > 0 ? '+' : ''}{scenario.shockBps}bp
-                      </span>
-                    </label>
-                  ))}
+                        <Checkbox
+                          checked={scenario.enabled}
+                          onCheckedChange={() => handleScenarioToggle(scenario.id)}
+                          className="h-3 w-3"
+                        />
+                        <span className={`truncate ${scenario.enabled ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                          {scenario.name}
+                        </span>
+                        <span
+                          className={`shrink-0 text-[9px] font-medium ${
+                            scenario.shockBps > 0 ? 'text-destructive' : 'text-success'
+                          }`}
+                        >
+                          {scenario.shockBps > 0 ? '+' : ''}{scenario.shockBps}bp
+                        </span>
+                        {isCustom && (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleRemoveCustomScenario(scenario.id);
+                            }}
+                            className="shrink-0 ml-auto text-muted-foreground hover:text-destructive transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </label>
+                    );
+                  })}
                 </div>
               </ScrollArea>
             </div>

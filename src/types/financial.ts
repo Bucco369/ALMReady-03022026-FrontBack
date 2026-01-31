@@ -31,12 +31,13 @@ export type ScenarioType =
   | 'Steepener'
   | 'Flattener'
   | 'Short Up'
-  | 'Short Down';
+  | 'Short Down'
+  | string; // Allow custom scenario names
 
 export interface Scenario {
   id: string;
-  name: ScenarioType;
-  description: string;
+  name: string; // Changed from ScenarioType to string to support custom names
+  description?: string;
   shockBps: number; // basis points
   enabled: boolean;
 }

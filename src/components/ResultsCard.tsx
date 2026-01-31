@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, TrendingDown, TrendingUp, AlertTriangle, Eye, Clock } from 'lucide-react';
+import { BarChart3, Eye, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import type { CalculationResults } from '@/types/financial';
 import { EVEChart } from '@/components/results/EVEChart';
 import { NIIChart } from '@/components/results/NIIChart';
@@ -19,9 +20,11 @@ interface ResultsCardProps {
 
 export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
   const [showDetails, setShowDetails] = useState(false);
+  const [activeChart, setActiveChart] = useState<'eve' | 'nii'>('eve');
   const { modifications, isApplied } = useWhatIf();
   
   const hasModifications = modifications.length > 0 && isApplied;
+
   const formatCurrency = (num: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -39,9 +42,10 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
     return num.toString();
   };
 
-  const formatDelta = (num: number) => {
-    const formatted = formatCompact(Math.abs(num));
-    return num >= 0 ? `+${formatted}` : `-${formatted}`;
+  const formatPercentWithAbsolute = (percent: number, absolute: number) => {
+    const sign = percent >= 0 ? '+' : '';
+    const absSign = absolute >= 0 ? '+' : '';
+    return `${sign}${percent.toFixed(1)}% (${absSign}${formatCompact(absolute)})`;
   };
 
   if (isCalculating) {
@@ -81,6 +85,12 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
     );
   }
 
+  // Calculate worst case values
+  const worstEvePercent = (results.worstCaseDeltaEve / results.baseEve) * 100;
+  const worstNiiResult = results.scenarioResults.find(s => s.scenarioName === results.worstCaseScenario);
+  const worstNiiDelta = worstNiiResult?.deltaNii ?? 0;
+  const worstNiiPercent = (worstNiiDelta / results.baseNii) * 100;
+
   return (
     <>
       <div className="dashboard-card h-full">
@@ -106,11 +116,10 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
         </div>
 
         <div className="dashboard-card-content">
-          {/* Four quarters layout: 1/4 summary, 3/4 charts */}
+          {/* Four quarters layout: 1/4 summary, 3/4 single chart */}
           <div className="flex gap-3 h-full">
-            {/* First quarter: Numeric summary table */}
-            <div className="w-1/4 flex flex-col gap-2">
-              {/* Main Metrics Table - 3 columns */}
+            {/* First quarter: Clean summary table only */}
+            <div className="w-1/4 flex flex-col">
               <div className="rounded-lg border border-border overflow-hidden flex-1">
                 <table className="w-full text-[10px]">
                   <thead>
@@ -122,83 +131,81 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
                   </thead>
                   <tbody>
                     <tr className="border-b border-border/50 hover:bg-accent/30">
-                      <td className="py-1.5 px-2 font-medium text-foreground">Base EVE</td>
-                      <td className="text-right py-1.5 px-2 font-mono font-semibold text-foreground">
+                      <td className="py-2 px-2 font-medium text-foreground">Base EVE</td>
+                      <td className="text-right py-2 px-2 font-mono font-semibold text-foreground">
                         {formatCompact(results.baseEve)}
                       </td>
-                      <td className={`text-right py-1.5 px-2 font-mono ${hasModifications ? 'text-success' : 'text-muted-foreground'}`}>
+                      <td className={`text-right py-2 px-2 font-mono ${hasModifications ? 'text-success' : 'text-muted-foreground'}`}>
                         {hasModifications ? '+12.5M' : '—'}
                       </td>
                     </tr>
                     <tr className="border-b border-border/50 hover:bg-accent/30">
-                      <td className="py-1.5 px-2 font-medium text-foreground">Worst ΔEVE vs C1</td>
-                      <td className={`text-right py-1.5 px-2 font-mono font-semibold ${
-                        results.worstCaseDeltaEve >= 0 ? 'text-success' : 'text-destructive'
+                      <td className="py-2 px-2 font-medium text-foreground">Worst EVE vs C1</td>
+                      <td className={`text-right py-2 px-2 font-mono font-semibold ${
+                        worstEvePercent >= 0 ? 'text-success' : 'text-destructive'
                       }`}>
-                        {((results.worstCaseDeltaEve / results.baseEve) * 100).toFixed(1)}%
+                        {formatPercentWithAbsolute(worstEvePercent, results.worstCaseDeltaEve)}
                       </td>
-                      <td className={`text-right py-1.5 px-2 font-mono ${hasModifications ? 'text-success' : 'text-muted-foreground'}`}>
+                      <td className={`text-right py-2 px-2 font-mono ${hasModifications ? 'text-success' : 'text-muted-foreground'}`}>
                         {hasModifications ? '+0.3%' : '—'}
                       </td>
                     </tr>
                     <tr className="border-b border-border/50 hover:bg-accent/30">
-                      <td className="py-1.5 px-2 font-medium text-foreground">Base NII</td>
-                      <td className="text-right py-1.5 px-2 font-mono font-semibold text-foreground">
+                      <td className="py-2 px-2 font-medium text-foreground">Base NII</td>
+                      <td className="text-right py-2 px-2 font-mono font-semibold text-foreground">
                         {formatCompact(results.baseNii)}
                       </td>
-                      <td className={`text-right py-1.5 px-2 font-mono ${hasModifications ? 'text-destructive' : 'text-muted-foreground'}`}>
+                      <td className={`text-right py-2 px-2 font-mono ${hasModifications ? 'text-destructive' : 'text-muted-foreground'}`}>
                         {hasModifications ? '-2.1M' : '—'}
                       </td>
                     </tr>
                     <tr className="hover:bg-accent/30">
-                      <td className="py-1.5 px-2 font-medium text-foreground">Worst ΔNII vs C1</td>
-                      <td className={`text-right py-1.5 px-2 font-mono font-semibold ${
-                        (results.scenarioResults.find(s => s.scenarioName === results.worstCaseScenario)?.deltaNii ?? 0) >= 0 
-                          ? 'text-success' : 'text-destructive'
+                      <td className="py-2 px-2 font-medium text-foreground">Worst NII vs C1</td>
+                      <td className={`text-right py-2 px-2 font-mono font-semibold ${
+                        worstNiiPercent >= 0 ? 'text-success' : 'text-destructive'
                       }`}>
-                        {(((results.scenarioResults.find(s => s.scenarioName === results.worstCaseScenario)?.deltaNii ?? 0) / results.baseNii) * 100).toFixed(1)}%
+                        {formatPercentWithAbsolute(worstNiiPercent, worstNiiDelta)}
                       </td>
-                      <td className={`text-right py-1.5 px-2 font-mono ${hasModifications ? 'text-destructive' : 'text-muted-foreground'}`}>
+                      <td className={`text-right py-2 px-2 font-mono ${hasModifications ? 'text-destructive' : 'text-muted-foreground'}`}>
                         {hasModifications ? '-0.2%' : '—'}
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
-              
-              {/* Worst Case Box */}
-              <div className="rounded-lg border border-warning/30 bg-warning/5 p-2">
-                <div className="flex items-center gap-1 mb-1">
-                  <AlertTriangle className="h-3 w-3 text-warning" />
-                  <span className="text-[10px] font-semibold text-foreground">Worst Case</span>
-                </div>
-                <div className="text-[9px] text-muted-foreground mb-0.5">{results.worstCaseScenario}</div>
-                <div
-                  className={`flex items-center gap-1 text-xs font-bold ${
-                    results.worstCaseDeltaEve >= 0 ? 'text-success' : 'text-destructive'
-                  }`}
-                >
-                  {results.worstCaseDeltaEve >= 0 ? (
-                    <TrendingUp className="h-3 w-3" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3" />
-                  )}
-                  <span>ΔEVE {formatDelta(results.worstCaseDeltaEve)}</span>
-                </div>
-              </div>
             </div>
 
-            {/* Remaining 3/4: Charts side by side */}
-            <div className="w-3/4 flex gap-3">
-              {/* EVE Chart */}
-              <div className="flex-1 rounded-lg border border-border overflow-hidden">
-                <EVEChart />
-              </div>
-              
-              {/* NII Chart */}
-              <div className="flex-1 rounded-lg border border-border overflow-hidden">
-                <NIIChart />
-              </div>
+            {/* Remaining 3/4: Single tabbed chart */}
+            <div className="w-3/4 flex flex-col">
+              {/* Tab selector */}
+              <Tabs value={activeChart} onValueChange={(v) => setActiveChart(v as 'eve' | 'nii')} className="flex flex-col h-full">
+                <TabsList className="h-7 p-0.5 bg-muted/50 w-fit self-start mb-2">
+                  <TabsTrigger 
+                    value="eve" 
+                    className="h-6 px-4 text-[10px] font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                  >
+                    EVE
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="nii" 
+                    className="h-6 px-4 text-[10px] font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                  >
+                    NII
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="eve" className="flex-1 mt-0">
+                  <div className="rounded-lg border border-border overflow-hidden h-full">
+                    <EVEChart fullWidth />
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="nii" className="flex-1 mt-0">
+                  <div className="rounded-lg border border-border overflow-hidden h-full">
+                    <NIIChart fullWidth />
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         </div>
@@ -220,7 +227,7 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
               <SummaryCard label="Worst EVE" value={formatCurrency(results.worstCaseEve)} />
               <SummaryCard 
                 label="ΔEVE (Worst)" 
-                value={formatDelta(results.worstCaseDeltaEve)} 
+                value={`${results.worstCaseDeltaEve >= 0 ? '+' : ''}${formatCompact(results.worstCaseDeltaEve)}`} 
                 variant={results.worstCaseDeltaEve >= 0 ? 'success' : 'destructive'}
               />
             </div>
@@ -260,15 +267,6 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
         </DialogContent>
       </Dialog>
     </>
-  );
-}
-
-function ResultMetricCompact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg bg-muted/50 px-2.5 py-1.5">
-      <div className="text-[9px] text-muted-foreground uppercase tracking-wide">{label}</div>
-      <div className="text-base font-bold text-foreground">{value}</div>
-    </div>
   );
 }
 

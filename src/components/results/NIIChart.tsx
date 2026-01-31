@@ -72,9 +72,10 @@ const generateNIIData = (scenario: string) => {
 
 interface NIIChartProps {
   className?: string;
+  fullWidth?: boolean;
 }
 
-export function NIIChart({ className }: NIIChartProps) {
+export function NIIChart({ className, fullWidth = false }: NIIChartProps) {
   const [selectedScenario, setSelectedScenario] = useState('worst');
   const [isOpen, setIsOpen] = useState(false);
   
@@ -99,37 +100,40 @@ export function NIIChart({ className }: NIIChartProps) {
     );
   };
 
+  const chartHeight = fullWidth ? 'h-[calc(100%-60px)]' : 'h-[180px]';
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <div className={`cursor-pointer hover:bg-muted/30 rounded-lg transition-colors ${className}`}>
+        <div className={`cursor-pointer hover:bg-muted/30 rounded-lg transition-colors h-full flex flex-col ${className}`}>
           <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/50">
             <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
               Net Interest Income (NII)
             </span>
             <span className="text-[9px] text-muted-foreground">
-              {SCENARIOS.find(s => s.id === selectedScenario)?.label}
+              {SCENARIOS.find(s => s.id === selectedScenario)?.label} • Click to change
             </span>
           </div>
-          <div className="h-[180px] px-2">
+          <div className={`flex-1 px-2 ${fullWidth ? 'min-h-0' : chartHeight}`}>
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart
                 data={data}
-                margin={{ top: 10, right: 10, left: -10, bottom: 5 }}
+                margin={{ top: 10, right: 15, left: 0, bottom: 5 }}
                 stackOffset="sign"
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
                 <XAxis 
                   dataKey="month" 
-                  tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
+                  tick={{ fontSize: fullWidth ? 10 : 9, fill: 'hsl(var(--muted-foreground))' }}
                   axisLine={{ stroke: 'hsl(var(--border))' }}
                   tickLine={false}
                 />
                 <YAxis 
-                  tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
+                  tick={{ fontSize: fullWidth ? 10 : 9, fill: 'hsl(var(--muted-foreground))' }}
                   axisLine={{ stroke: 'hsl(var(--border))' }}
                   tickLine={false}
                   tickFormatter={(v) => `${Math.abs(v)}`}
+                  width={40}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1.5} />
@@ -150,24 +154,32 @@ export function NIIChart({ className }: NIIChartProps) {
                   dataKey="netNII" 
                   stroke="hsl(var(--primary))" 
                   strokeWidth={2}
-                  dot={{ r: 3, fill: 'hsl(var(--primary))' }}
+                  dot={{ r: fullWidth ? 4 : 3, fill: 'hsl(var(--primary))' }}
                 />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
           
           {/* Legend */}
-          <div className="flex items-center justify-center gap-4 px-3 py-1.5 text-[9px]">
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-sm bg-success opacity-80" />
-              <span className="text-muted-foreground">Asset Margin</span>
+          <div className="flex items-center justify-center gap-6 px-3 py-2 text-[9px] shrink-0">
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-0.5">
+                <div className="w-2.5 h-2.5 rounded-sm bg-success opacity-80" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-success opacity-50" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-success opacity-30" />
+              </div>
+              <span className="text-muted-foreground">Asset Margin (Base / Scenario / New)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-0.5">
+                <div className="w-2.5 h-2.5 rounded-sm bg-destructive opacity-80" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-destructive opacity-50" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-destructive opacity-30" />
+              </div>
+              <span className="text-muted-foreground">Liability Margin (Base / Scenario / New)</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-sm bg-destructive opacity-80" />
-              <span className="text-muted-foreground">Liability Margin</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-4 h-0.5 rounded bg-primary" />
+              <div className="w-5 h-0.5 rounded bg-primary" />
               <span className="text-muted-foreground">Net NII</span>
             </div>
           </div>
