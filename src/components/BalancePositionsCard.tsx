@@ -304,10 +304,49 @@ export function BalancePositionsCard({
   return <>
       <div className="dashboard-card">
         <div className="dashboard-card-header">
+          {/* Left: Title */}
           <div className="flex items-center gap-1.5">
             <FileSpreadsheet className="h-3.5 w-3.5 text-primary" />
             <span className="text-xs font-semibold text-foreground">Balance Positions</span>
           </div>
+          
+          {/* Center: Analysis Date & CET1 (when loaded) */}
+          {isLoaded && (
+            <div className="flex items-center gap-3">
+              {/* Analysis Date - Compact */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-medium text-muted-foreground">Date</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className={cn(
+                      "h-6 px-2 flex items-center gap-1 rounded border text-[11px] transition-colors",
+                      "bg-background border-border hover:bg-muted/50",
+                      !analysisDate && "text-muted-foreground"
+                    )}>
+                      <CalendarIcon className="h-2.5 w-2.5" />
+                      <span className={analysisDate ? "font-medium text-foreground" : ""}>
+                        {analysisDate ? format(analysisDate, "dd MMM yy") : "Select"}
+                      </span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar 
+                      mode="single" 
+                      selected={analysisDate || undefined} 
+                      onSelect={date => setAnalysisDate(date || null)} 
+                      initialFocus 
+                      className="p-3 pointer-events-auto" 
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              {/* CET1 Capital - Compact */}
+              <CompactCET1Input value={cet1Capital} onChange={setCet1Capital} />
+            </div>
+          )}
+          
+          {/* Right: Status indicator */}
           <StatusIndicator loaded={isLoaded} />
         </div>
 
@@ -328,29 +367,6 @@ export function BalancePositionsCard({
                 </Button>
               </div>
             </div> : <div className="flex flex-col flex-1 min-h-0">
-              {/* Analysis Date & CET1 Inputs - Consistent visual design */}
-              <div className="flex gap-3 mb-2 pb-2 border-b border-border/30">
-                {/* Analysis Date */}
-                <AnalysisParameter label="Analysis Date" icon={<CalendarIcon className="h-3 w-3 text-muted-foreground" />}>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <button className={cn("h-7 px-2 flex items-center gap-1.5 rounded border text-xs transition-colors", "bg-background border-border hover:bg-muted/50", !analysisDate && "text-muted-foreground")}>
-                        <CalendarIcon className="h-3 w-3" />
-                        <span className={analysisDate ? "font-medium text-foreground" : ""}>
-                          {analysisDate ? format(analysisDate, "dd MMM yyyy") : "Select date"}
-                        </span>
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar mode="single" selected={analysisDate || undefined} onSelect={date => setAnalysisDate(date || null)} initialFocus className="p-3 pointer-events-auto" />
-                    </PopoverContent>
-                  </Popover>
-                </AnalysisParameter>
-                
-                {/* CET1 Capital */}
-                <CET1Input value={cet1Capital} onChange={setCet1Capital} />
-              </div>
-
               {/* Scrollable Balance Table with Sticky Header */}
               <div className="flex-1 min-h-0 overflow-hidden rounded-md border border-border/50">
                 <div className="h-full overflow-auto balance-scroll-container">
@@ -367,7 +383,17 @@ export function BalancePositionsCard({
                       {/* Assets Row */}
                       <BalanceRowWithDelta id="assets" label="Assets" amount={PLACEHOLDER_DATA.assets.amount} positions={PLACEHOLDER_DATA.assets.positions} avgRate={PLACEHOLDER_DATA.assets.avgRate} delta={whatIfDeltas.assets} isExpanded={expandedRows.has('assets')} onToggle={() => toggleRow('assets')} formatAmount={formatAmount} formatPercent={formatPercent} variant="asset" />
                       {expandedRows.has('assets') && PLACEHOLDER_DATA.assets.subcategories.map(sub => <React.Fragment key={`asset-${sub.id}`}>
-                          <SubcategoryRowWithDelta id={sub.id} label={sub.name} amount={sub.amount} positions={sub.positions} avgRate={sub.avgRate} delta={whatIfDeltas[sub.id]} formatAmount={formatAmount} formatPercent={formatPercent} />
+                          <SubcategoryRowWithDelta 
+                            id={sub.id} 
+                            label={sub.name} 
+                            amount={sub.amount} 
+                            positions={sub.positions} 
+                            avgRate={sub.avgRate} 
+                            delta={whatIfDeltas[sub.id]} 
+                            formatAmount={formatAmount} 
+                            formatPercent={formatPercent}
+                            onViewDetails={() => openDetails(sub.id)}
+                          />
                           {/* Render What-If items under this subcategory */}
                           {whatIfDeltas[sub.id]?.items.map((mod: any) => <WhatIfItemRow key={mod.id} label={mod.label} amount={mod.notional || 0} type={mod.type} formatAmount={formatAmount} />)}
                         </React.Fragment>)}
@@ -375,7 +401,17 @@ export function BalancePositionsCard({
                       {/* Liabilities Row */}
                       <BalanceRowWithDelta id="liabilities" label="Liabilities" amount={PLACEHOLDER_DATA.liabilities.amount} positions={PLACEHOLDER_DATA.liabilities.positions} avgRate={PLACEHOLDER_DATA.liabilities.avgRate} delta={whatIfDeltas.liabilities} isExpanded={expandedRows.has('liabilities')} onToggle={() => toggleRow('liabilities')} formatAmount={formatAmount} formatPercent={formatPercent} variant="liability" />
                       {expandedRows.has('liabilities') && PLACEHOLDER_DATA.liabilities.subcategories.map(sub => <React.Fragment key={`liability-${sub.id}`}>
-                          <SubcategoryRowWithDelta id={sub.id} label={sub.name} amount={sub.amount} positions={sub.positions} avgRate={sub.avgRate} delta={whatIfDeltas[sub.id]} formatAmount={formatAmount} formatPercent={formatPercent} />
+                          <SubcategoryRowWithDelta 
+                            id={sub.id} 
+                            label={sub.name} 
+                            amount={sub.amount} 
+                            positions={sub.positions} 
+                            avgRate={sub.avgRate} 
+                            delta={whatIfDeltas[sub.id]} 
+                            formatAmount={formatAmount} 
+                            formatPercent={formatPercent}
+                            onViewDetails={() => openDetails(sub.id)}
+                          />
                           {/* Render What-If items under this subcategory */}
                           {whatIfDeltas[sub.id]?.items.map((mod: any) => <WhatIfItemRow key={mod.id} label={mod.label} amount={mod.notional || 0} type={mod.type} formatAmount={formatAmount} />)}
                         </React.Fragment>)}
@@ -384,12 +420,8 @@ export function BalancePositionsCard({
                 </div>
               </div>
               
-              {/* Action Buttons */}
+              {/* Action Buttons - Removed View details, kept What-If and Reset */}
               <div className="flex gap-1.5 pt-2 border-t border-border/30 mt-2">
-                <Button variant="outline" size="sm" onClick={() => openDetails()} className="flex-1 h-6 text-xs">
-                  <Eye className="mr-1 h-3 w-3" />
-                  View details
-                </Button>
                 <Button size="sm" onClick={() => setShowWhatIfBuilder(true)} className="flex-1 h-6 text-xs relative">
                   <FlaskConical className="mr-1 h-3 w-3" />
                   What-If
@@ -501,7 +533,7 @@ function BalanceRowWithDelta({
     </tr>;
 }
 
-// Subcategory Row Component with What-If delta display
+// Subcategory Row Component with What-If delta display and View Details icon
 interface SubcategoryRowWithDeltaProps {
   id: string;
   label: string;
@@ -516,6 +548,7 @@ interface SubcategoryRowWithDeltaProps {
   };
   formatAmount: (n: number) => string;
   formatPercent: (n: number) => string;
+  onViewDetails: () => void;
 }
 function SubcategoryRowWithDelta({
   label,
@@ -524,7 +557,8 @@ function SubcategoryRowWithDelta({
   avgRate,
   delta,
   formatAmount,
-  formatPercent
+  formatPercent,
+  onViewDetails
 }: SubcategoryRowWithDeltaProps) {
   const hasDelta = delta && (delta.amount !== 0 || delta.positions !== 0);
   const formatDelta = (n: number) => {
@@ -535,9 +569,21 @@ function SubcategoryRowWithDelta({
     if (Math.abs(n) >= 1e3) return `${sign}${(n / 1e3).toFixed(0)}K`;
     return `${sign}${n}`;
   };
-  return <tr className="bg-muted/20 text-muted-foreground">
+  return <tr className="bg-muted/20 text-muted-foreground group">
       <td className="py-1 pl-7">
-        <span className="text-[11px]">{label}</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px]">{label}</span>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewDetails();
+            }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-muted"
+            title={`View ${label} details`}
+          >
+            <Eye className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+          </button>
+        </div>
       </td>
       <td className="text-right py-1 font-mono text-[11px]">
         {formatAmount(amount)}
@@ -593,38 +639,16 @@ function WhatIfItemRow({
     </tr>;
 }
 
-// Analysis Parameter wrapper for consistent styling
-interface AnalysisParameterProps {
-  label: string;
-  icon?: React.ReactNode;
-  children: React.ReactNode;
-}
-function AnalysisParameter({
-  label,
-  children
-}: AnalysisParameterProps) {
-  return <div className="flex items-center gap-2">
-      <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">
-        {label}
-      </span>
-      {children}
-    </div>;
-}
-
-// CET1 Capital Input - Two-state component (editable → locked)
-interface CET1InputProps {
+// Compact CET1 Input for header row
+interface CompactCET1InputProps {
   value: number | null;
   onChange: (value: number | null) => void;
 }
-function CET1Input({
-  value,
-  onChange
-}: CET1InputProps) {
+function CompactCET1Input({ value, onChange }: CompactCET1InputProps) {
   const [isEditing, setIsEditing] = useState(value === null);
   const [inputValue, setInputValue] = useState(value?.toString() || '');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Sync internal state when external value changes (e.g., reset)
   useEffect(() => {
     if (value === null) {
       setIsEditing(true);
@@ -634,16 +658,18 @@ function CET1Input({
     }
   }, [value]);
 
-  // Focus input when entering edit mode
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
     }
   }, [isEditing]);
+
   const formatCET1Display = (num: number) => {
-    // Just format with commas, no suffix
+    if (num >= 1e9) return `${(num / 1e9).toFixed(1)}B`;
+    if (num >= 1e6) return `${(num / 1e6).toFixed(0)}M`;
     return num.toLocaleString('en-US');
   };
+
   const handleConfirm = () => {
     const parsed = parseFloat(inputValue);
     if (!isNaN(parsed) && parsed > 0) {
@@ -651,6 +677,7 @@ function CET1Input({
       setIsEditing(false);
     }
   };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleConfirm();
@@ -661,27 +688,45 @@ function CET1Input({
       }
     }
   };
-  const handleEditClick = () => {
-    setIsEditing(true);
-  };
 
-  // Consistent wrapper with label
-  return <div className="flex items-center gap-2">
-      <span className="text-[10px] font-medium text-muted-foreground whitespace-nowrap">
-        CET1
-      </span>
-      {isEditing ? <div className="flex flex-col">
-          <input ref={inputRef} type="text" inputMode="numeric" placeholder="Enter value" value={inputValue} onChange={e => setInputValue(e.target.value.replace(/[^0-9.]/g, ''))} onKeyDown={handleKeyDown} onBlur={() => {
-        if (inputValue && value !== null && inputValue === value.toString()) {
-          setIsEditing(false);
-        } else if (inputValue) {
-          handleConfirm();
-        }
-      }} className={cn("h-7 px-2 w-28 rounded border text-xs font-mono", "bg-background border-border focus:outline-none focus:ring-1 focus:ring-primary", "placeholder:text-muted-foreground")} />
-          
-        </div> : <button onClick={handleEditClick} className={cn("h-7 px-2 flex items-center gap-1.5 rounded border text-xs transition-colors group", "bg-muted/30 border-border/70 hover:bg-muted/50")} title="Click to edit">
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-[10px] font-medium text-muted-foreground">CET1</span>
+      {isEditing ? (
+        <input
+          ref={inputRef}
+          type="text"
+          inputMode="numeric"
+          placeholder="Value"
+          value={inputValue}
+          onChange={e => setInputValue(e.target.value.replace(/[^0-9.]/g, ''))}
+          onKeyDown={handleKeyDown}
+          onBlur={() => {
+            if (inputValue && value !== null && inputValue === value.toString()) {
+              setIsEditing(false);
+            } else if (inputValue) {
+              handleConfirm();
+            }
+          }}
+          className={cn(
+            "h-6 px-2 w-20 rounded border text-[11px] font-mono",
+            "bg-background border-border focus:outline-none focus:ring-1 focus:ring-primary",
+            "placeholder:text-muted-foreground"
+          )}
+        />
+      ) : (
+        <button
+          onClick={() => setIsEditing(true)}
+          className={cn(
+            "h-6 px-2 flex items-center gap-1 rounded border text-[11px] transition-colors group",
+            "bg-muted/30 border-border/70 hover:bg-muted/50"
+          )}
+          title="Click to edit"
+        >
           <span className="font-mono font-medium text-foreground">{formatCET1Display(value!)}</span>
-          <Pencil className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-        </button>}
-    </div>;
+          <Pencil className="h-2 w-2 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+        </button>
+      )}
+    </div>
+  );
 }
