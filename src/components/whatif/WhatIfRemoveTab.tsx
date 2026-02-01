@@ -34,34 +34,18 @@ export function WhatIfRemoveTab() {
 
   // Map node IDs to category and subcategory for balance tree placement
   const getCategoryFromNodeId = (nodeId: string): { category: 'asset' | 'liability'; subcategory: string } => {
-    const assetSubcategories = ['mortgages', 'bonds', 'loans', 'mtg-residential', 'mtg-commercial', 'bonds-govt', 'bonds-corp', 'loans-corp', 'loans-sme'];
-    const liabilitySubcategories = ['sight-deposits', 'term-deposits', 'wholesale-funding', 'sight-retail', 'sight-corp', 'term-retail', 'term-corp', 'wholesale-senior', 'wholesale-covered'];
-    
-    // Map child IDs to their parent subcategory
-    const subcategoryMap: Record<string, string> = {
-      'mtg-residential': 'mortgages',
-      'mtg-commercial': 'mortgages',
-      'bonds-govt': 'bonds',
-      'bonds-corp': 'bonds',
-      'loans-corp': 'loans',
-      'loans-sme': 'loans',
-      'sight-retail': 'sight-deposits',
-      'sight-corp': 'sight-deposits',
-      'term-retail': 'term-deposits',
-      'term-corp': 'term-deposits',
-      'wholesale-senior': 'wholesale-funding',
-      'wholesale-covered': 'wholesale-funding',
-    };
+    const assetSubcategories = ['mortgages', 'loans', 'securities', 'interbank', 'other-assets'];
+    const liabilitySubcategories = ['deposits', 'term-deposits', 'wholesale-funding', 'debt-issued', 'other-liabilities'];
     
     if (nodeId === 'assets' || assetSubcategories.includes(nodeId)) {
       return { 
         category: 'asset', 
-        subcategory: subcategoryMap[nodeId] || (assetSubcategories.includes(nodeId) ? nodeId : 'loans')
+        subcategory: assetSubcategories.includes(nodeId) ? nodeId : 'loans'
       };
     }
     return { 
       category: 'liability', 
-      subcategory: subcategoryMap[nodeId] || (liabilitySubcategories.includes(nodeId) ? nodeId : 'term-deposits')
+      subcategory: liabilitySubcategories.includes(nodeId) ? nodeId : 'term-deposits'
     };
   };
 
@@ -84,8 +68,8 @@ export function WhatIfRemoveTab() {
     const subcategoryMap: Record<string, string> = {
       'Fixed Rate Mortgage': 'mortgages',
       'Commercial Loan': 'loans',
-      'Government Bond': 'bonds',
-      'Corporate Bond': 'bonds',
+      'Government Bond': 'securities',
+      'Corporate Bond': 'securities',
       'Term Deposit': 'term-deposits',
     };
     

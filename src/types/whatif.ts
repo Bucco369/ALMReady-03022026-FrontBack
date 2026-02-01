@@ -155,39 +155,11 @@ export const BALANCE_HIERARCHY: BalanceNode[] = [
     amount: 2_450_000_000,
     count: 72,
     children: [
-      {
-        id: 'mortgages',
-        label: 'Mortgages',
-        type: 'subcategory',
-        amount: 1_200_000_000,
-        count: 34,
-        children: [
-          { id: 'mtg-residential', label: 'Residential Mortgages', type: 'group', amount: 850_000_000, count: 28 },
-          { id: 'mtg-commercial', label: 'Commercial Mortgages', type: 'group', amount: 350_000_000, count: 6 },
-        ],
-      },
-      {
-        id: 'bonds',
-        label: 'Bonds',
-        type: 'subcategory',
-        amount: 850_000_000,
-        count: 22,
-        children: [
-          { id: 'bonds-govt', label: 'Government Bonds', type: 'group', amount: 500_000_000, count: 12 },
-          { id: 'bonds-corp', label: 'Corporate Bonds', type: 'group', amount: 350_000_000, count: 10 },
-        ],
-      },
-      {
-        id: 'loans',
-        label: 'Loans',
-        type: 'subcategory',
-        amount: 400_000_000,
-        count: 16,
-        children: [
-          { id: 'loans-corp', label: 'Corporate Loans', type: 'group', amount: 300_000_000, count: 10 },
-          { id: 'loans-sme', label: 'SME Loans', type: 'group', amount: 100_000_000, count: 6 },
-        ],
-      },
+      { id: 'mortgages', label: 'Mortgages', type: 'subcategory', amount: 1_200_000_000, count: 34 },
+      { id: 'loans', label: 'Loans', type: 'subcategory', amount: 400_000_000, count: 16 },
+      { id: 'securities', label: 'Securities', type: 'subcategory', amount: 550_000_000, count: 12 },
+      { id: 'interbank', label: 'Interbank / Central Bank', type: 'subcategory', amount: 200_000_000, count: 6 },
+      { id: 'other-assets', label: 'Other assets', type: 'subcategory', amount: 100_000_000, count: 4 },
     ],
   },
   {
@@ -197,39 +169,11 @@ export const BALANCE_HIERARCHY: BalanceNode[] = [
     amount: 2_280_000_000,
     count: 52,
     children: [
-      {
-        id: 'sight-deposits',
-        label: 'Sight Deposits',
-        type: 'subcategory',
-        amount: 680_000_000,
-        count: 18,
-        children: [
-          { id: 'sight-retail', label: 'Retail Sight Deposits', type: 'group', amount: 450_000_000, count: 12 },
-          { id: 'sight-corp', label: 'Corporate Sight Deposits', type: 'group', amount: 230_000_000, count: 6 },
-        ],
-      },
-      {
-        id: 'term-deposits',
-        label: 'Term Deposits',
-        type: 'subcategory',
-        amount: 920_000_000,
-        count: 24,
-        children: [
-          { id: 'term-retail', label: 'Retail Term Deposits', type: 'group', amount: 620_000_000, count: 18 },
-          { id: 'term-corp', label: 'Corporate Term Deposits', type: 'group', amount: 300_000_000, count: 6 },
-        ],
-      },
-      {
-        id: 'wholesale-funding',
-        label: 'Wholesale Funding',
-        type: 'subcategory',
-        amount: 680_000_000,
-        count: 10,
-        children: [
-          { id: 'wholesale-senior', label: 'Senior Unsecured', type: 'group', amount: 400_000_000, count: 6 },
-          { id: 'wholesale-covered', label: 'Covered Bonds Issued', type: 'group', amount: 280_000_000, count: 4 },
-        ],
-      },
+      { id: 'deposits', label: 'Deposits', type: 'subcategory', amount: 680_000_000, count: 18 },
+      { id: 'term-deposits', label: 'Term deposits', type: 'subcategory', amount: 920_000_000, count: 24 },
+      { id: 'wholesale-funding', label: 'Wholesale funding', type: 'subcategory', amount: 480_000_000, count: 6 },
+      { id: 'debt-issued', label: 'Debt issued', type: 'subcategory', amount: 150_000_000, count: 3 },
+      { id: 'other-liabilities', label: 'Other liabilities', type: 'subcategory', amount: 50_000_000, count: 1 },
     ],
   },
 ];
