@@ -315,7 +315,7 @@ export function BalancePositionsCard({
             <div className="flex items-center gap-3">
               {/* Analysis Date - Compact */}
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-medium text-muted-foreground">Date</span>
+                <span className="text-[10px] font-medium text-muted-foreground">Analysis Date</span>
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className={cn(
