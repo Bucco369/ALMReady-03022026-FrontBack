@@ -4,12 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -18,6 +12,7 @@ import type { Position } from '@/types/financial';
 import { parsePositionsCSV, generateSamplePositionsCSV } from '@/lib/csvParser';
 import { WhatIfBuilder } from '@/components/whatif/WhatIfBuilder';
 import { useWhatIf } from '@/components/whatif/WhatIfContext';
+import { BalanceDetailsModal } from '@/components/BalanceDetailsModal';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -103,12 +98,19 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
   const [isDragging, setIsDragging] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [selectedCategoryForDetails, setSelectedCategoryForDetails] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set(['assets', 'liabilities']));
   const [showWhatIfBuilder, setShowWhatIfBuilder] = useState(false);
   const { modifications, isApplied, analysisDate, setAnalysisDate, cet1Capital, setCet1Capital, resetAll } = useWhatIf();
   
   // Compute What-If deltas
   const whatIfDeltas = useMemo(() => computeWhatIfDeltas(modifications), [modifications]);
+
+  // Open View Details with optional category context
+  const openDetails = (categoryId?: string) => {
+    setSelectedCategoryForDetails(categoryId || null);
+    setShowDetails(true);
+  };
 
   const handleFileUpload = useCallback(
     (file: File) => {
@@ -386,7 +388,7 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowDetails(true)}
+                  onClick={() => openDetails()}
                   className="flex-1 h-6 text-xs"
                 >
                   <Eye className="mr-1 h-3 w-3" />
@@ -425,113 +427,12 @@ export function BalancePositionsCard({ positions, onPositionsChange }: BalancePo
         </div>
       </div>
 
-      {/* Details Modal - Now shows expanded aggregated view */}
-      <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <FileSpreadsheet className="h-4 w-4 text-primary" />
-              Balance Positions - Aggregated View
-            </DialogTitle>
-          </DialogHeader>
-          <div className="overflow-auto flex-1">
-            <table className="w-full text-xs">
-              <thead className="sticky top-0 bg-card z-10">
-                <tr className="text-muted-foreground border-b border-border">
-                  <th className="text-left font-medium py-2 pl-3 bg-muted/50">Category</th>
-                  <th className="text-right font-medium py-2 bg-muted/50">Amount</th>
-                  <th className="text-right font-medium py-2 bg-muted/50">Positions</th>
-                  <th className="text-right font-medium py-2 pr-3 bg-muted/50">Avg Rate</th>
-                </tr>
-              </thead>
-              <tbody>
-                {/* Assets - Always expanded in details */}
-                <tr className="border-b border-border bg-success/5">
-                  <td className="py-2 pl-3">
-                    <span className="font-semibold text-success">Assets</span>
-                  </td>
-                  <td className="text-right py-2 font-mono font-semibold text-foreground">
-                    {formatCurrency(PLACEHOLDER_DATA.assets.amount)}
-                  </td>
-                  <td className="text-right py-2 font-mono text-muted-foreground">
-                    {PLACEHOLDER_DATA.assets.positions}
-                  </td>
-                  <td className="text-right py-2 pr-3 font-mono text-muted-foreground">
-                    {formatPercent(PLACEHOLDER_DATA.assets.avgRate)}
-                  </td>
-                </tr>
-                {PLACEHOLDER_DATA.assets.subcategories.map((sub, idx) => (
-                  <tr key={`modal-asset-${idx}`} className="border-b border-border/50">
-                    <td className="py-1.5 pl-8">
-                      <span className="text-muted-foreground">{sub.name}</span>
-                    </td>
-                    <td className="text-right py-1.5 font-mono text-sm">
-                      {formatCurrency(sub.amount)}
-                    </td>
-                    <td className="text-right py-1.5 font-mono text-muted-foreground">
-                      {sub.positions}
-                    </td>
-                    <td className="text-right py-1.5 pr-3 font-mono text-muted-foreground">
-                      {formatPercent(sub.avgRate)}
-                    </td>
-                  </tr>
-                ))}
-                
-                {/* Liabilities - Always expanded in details */}
-                <tr className="border-b border-border bg-destructive/5 mt-2">
-                  <td className="py-2 pl-3">
-                    <span className="font-semibold text-destructive">Liabilities</span>
-                  </td>
-                  <td className="text-right py-2 font-mono font-semibold text-foreground">
-                    {formatCurrency(PLACEHOLDER_DATA.liabilities.amount)}
-                  </td>
-                  <td className="text-right py-2 font-mono text-muted-foreground">
-                    {PLACEHOLDER_DATA.liabilities.positions}
-                  </td>
-                  <td className="text-right py-2 pr-3 font-mono text-muted-foreground">
-                    {formatPercent(PLACEHOLDER_DATA.liabilities.avgRate)}
-                  </td>
-                </tr>
-                {PLACEHOLDER_DATA.liabilities.subcategories.map((sub, idx) => (
-                  <tr key={`modal-liability-${idx}`} className="border-b border-border/50">
-                    <td className="py-1.5 pl-8">
-                      <span className="text-muted-foreground">{sub.name}</span>
-                    </td>
-                    <td className="text-right py-1.5 font-mono text-sm">
-                      {formatCurrency(sub.amount)}
-                    </td>
-                    <td className="text-right py-1.5 font-mono text-muted-foreground">
-                      {sub.positions}
-                    </td>
-                    <td className="text-right py-1.5 pr-3 font-mono text-muted-foreground">
-                      {formatPercent(sub.avgRate)}
-                    </td>
-                  </tr>
-                ))}
-
-                {/* Net Position Summary */}
-                <tr className="border-t-2 border-border bg-muted/30">
-                  <td className="py-2 pl-3">
-                    <span className="font-semibold text-foreground">Net Position</span>
-                  </td>
-                  <td className="text-right py-2 font-mono font-bold text-foreground">
-                    {formatCurrency(PLACEHOLDER_DATA.assets.amount - PLACEHOLDER_DATA.liabilities.amount)}
-                  </td>
-                  <td className="text-right py-2 font-mono text-muted-foreground">
-                    {PLACEHOLDER_DATA.assets.positions + PLACEHOLDER_DATA.liabilities.positions}
-                  </td>
-                  <td className="text-right py-2 pr-3 font-mono text-muted-foreground">
-                    —
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <p className="text-[10px] text-muted-foreground text-center pt-2 border-t border-border/30">
-            This aggregated view summarizes underlying position-level data
-          </p>
-        </DialogContent>
-      </Dialog>
+      {/* Balance Details Modal - Read-only aggregation explorer */}
+      <BalanceDetailsModal 
+        open={showDetails} 
+        onOpenChange={setShowDetails}
+        selectedCategory={selectedCategoryForDetails}
+      />
 
       {/* What-If Builder Side Panel */}
       <WhatIfBuilder open={showWhatIfBuilder} onOpenChange={setShowWhatIfBuilder} />
