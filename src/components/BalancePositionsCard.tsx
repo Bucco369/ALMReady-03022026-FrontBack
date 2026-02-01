@@ -34,8 +34,10 @@ const PLACEHOLDER_DATA = {
     avgRate: 0.0425,
     subcategories: [
       { id: 'mortgages', name: 'Mortgages', amount: 1_200_000_000, positions: 34, avgRate: 0.0385 },
-      { id: 'bonds', name: 'Bonds', amount: 850_000_000, positions: 22, avgRate: 0.0465 },
       { id: 'loans', name: 'Loans', amount: 400_000_000, positions: 16, avgRate: 0.0510 },
+      { id: 'securities', name: 'Securities', amount: 550_000_000, positions: 12, avgRate: 0.0465 },
+      { id: 'interbank', name: 'Interbank / Central Bank', amount: 200_000_000, positions: 6, avgRate: 0.0380 },
+      { id: 'other-assets', name: 'Other assets', amount: 100_000_000, positions: 4, avgRate: 0.0350 },
     ],
   },
   liabilities: {
@@ -43,9 +45,11 @@ const PLACEHOLDER_DATA = {
     positions: 52,
     avgRate: 0.0285,
     subcategories: [
-      { id: 'sight-deposits', name: 'Sight Deposits', amount: 680_000_000, positions: 18, avgRate: 0.0050 },
-      { id: 'term-deposits', name: 'Term Deposits', amount: 920_000_000, positions: 24, avgRate: 0.0320 },
-      { id: 'wholesale-funding', name: 'Wholesale Funding', amount: 680_000_000, positions: 10, avgRate: 0.0425 },
+      { id: 'deposits', name: 'Deposits', amount: 680_000_000, positions: 18, avgRate: 0.0050 },
+      { id: 'term-deposits', name: 'Term deposits', amount: 920_000_000, positions: 24, avgRate: 0.0320 },
+      { id: 'wholesale-funding', name: 'Wholesale funding', amount: 480_000_000, positions: 6, avgRate: 0.0425 },
+      { id: 'debt-issued', name: 'Debt issued', amount: 150_000_000, positions: 3, avgRate: 0.0480 },
+      { id: 'other-liabilities', name: 'Other liabilities', amount: 50_000_000, positions: 1, avgRate: 0.0300 },
     ],
   },
 };
@@ -56,11 +60,15 @@ function computeWhatIfDeltas(modifications: any[]) {
     assets: { amount: 0, positions: 0, rate: 0, items: [] },
     liabilities: { amount: 0, positions: 0, rate: 0, items: [] },
     mortgages: { amount: 0, positions: 0, rate: 0, items: [] },
-    bonds: { amount: 0, positions: 0, rate: 0, items: [] },
     loans: { amount: 0, positions: 0, rate: 0, items: [] },
-    'sight-deposits': { amount: 0, positions: 0, rate: 0, items: [] },
+    securities: { amount: 0, positions: 0, rate: 0, items: [] },
+    interbank: { amount: 0, positions: 0, rate: 0, items: [] },
+    'other-assets': { amount: 0, positions: 0, rate: 0, items: [] },
+    deposits: { amount: 0, positions: 0, rate: 0, items: [] },
     'term-deposits': { amount: 0, positions: 0, rate: 0, items: [] },
     'wholesale-funding': { amount: 0, positions: 0, rate: 0, items: [] },
+    'debt-issued': { amount: 0, positions: 0, rate: 0, items: [] },
+    'other-liabilities': { amount: 0, positions: 0, rate: 0, items: [] },
   };
 
   modifications.forEach(mod => {
