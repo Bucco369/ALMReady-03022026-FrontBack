@@ -21,9 +21,20 @@ interface ResultsCardProps {
 export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [activeChart, setActiveChart] = useState<'eve' | 'nii'>('eve');
-  const { modifications, isApplied } = useWhatIf();
+  const { modifications, isApplied, cet1Capital: contextCet1 } = useWhatIf();
   
   const hasModifications = modifications.length > 0 && isApplied;
+  
+  // CET1 capital for percentage calculations (default to 500M if not set)
+  const cet1Capital = contextCet1 || 500_000_000;
+  
+  // Mock What-If impact values (in real implementation, these would come from calculations)
+  const whatIfImpact = {
+    baseEve: hasModifications ? 12_500_000 : 0,
+    worstEve: hasModifications ? 8_200_000 : 0,
+    baseNii: hasModifications ? -2_100_000 : 0,
+    worstNii: hasModifications ? -1_800_000 : 0,
+  };
 
   const formatCurrency = (num: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -118,65 +129,79 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
         <div className="dashboard-card-content">
           {/* Four quarters layout: 1/4 summary, 3/4 single chart */}
           <div className="flex gap-3 h-full">
-            {/* First quarter: Clean summary table only */}
-            <div className="w-1/4 flex flex-col">
-              <div className="rounded-lg border border-border overflow-hidden flex-1">
-                <table className="w-full text-[10px]">
+            {/* First quarter: Grouped summary table */}
+            <div className="w-1/3 flex flex-col">
+              <div className="rounded-lg border border-border overflow-hidden flex-1 overflow-x-auto">
+                <table className="w-full text-[9px]">
                   <thead>
+                    {/* Group headers */}
                     <tr className="bg-muted/50 border-b border-border">
-                      <th className="text-left font-semibold py-1.5 px-2 text-muted-foreground">Metric</th>
-                      <th className="text-right font-semibold py-1.5 px-2 text-muted-foreground">Value</th>
-                      <th className="text-right font-semibold py-1.5 px-2 text-muted-foreground">Δ What-If</th>
+                      <th className="text-left font-semibold py-1 px-1.5 text-muted-foreground" rowSpan={2}></th>
+                      <th className="text-center font-semibold py-1 px-1 text-muted-foreground border-l border-border" colSpan={2}>Baseline</th>
+                      <th className="text-center font-semibold py-1 px-1 text-muted-foreground border-l border-border" colSpan={2}>What-If Impact</th>
+                      <th className="text-center font-semibold py-1 px-1 text-muted-foreground border-l border-border" colSpan={2}>Post What-If</th>
+                    </tr>
+                    {/* Subcolumn headers */}
+                    <tr className="bg-muted/30 border-b border-border">
+                      <th className="text-right font-medium py-1 px-1 text-muted-foreground/80 border-l border-border">Value</th>
+                      <th className="text-right font-medium py-1 px-1 text-muted-foreground/80">/ CET1</th>
+                      <th className="text-right font-medium py-1 px-1 text-muted-foreground/80 border-l border-border">Value</th>
+                      <th className="text-right font-medium py-1 px-1 text-muted-foreground/80">/ CET1</th>
+                      <th className="text-right font-medium py-1 px-1 text-muted-foreground/80 border-l border-border">Value</th>
+                      <th className="text-right font-medium py-1 px-1 text-muted-foreground/80">/ CET1</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b border-border/50 hover:bg-accent/30">
-                      <td className="py-2 px-2 font-medium text-foreground">Base EVE</td>
-                      <td className="text-right py-2 px-2 font-mono font-semibold text-foreground">
-                        {formatCompact(results.baseEve)}
-                      </td>
-                      <td className={`text-right py-2 px-2 font-mono ${hasModifications ? 'text-success' : 'text-muted-foreground'}`}>
-                        {hasModifications ? '+12.5M' : '—'}
-                      </td>
-                    </tr>
-                    <tr className="border-b border-border/50 hover:bg-accent/30">
-                      <td className="py-2 px-2 font-medium text-foreground">Worst EVE vs C1</td>
-                      <td className={`text-right py-2 px-2 font-mono font-semibold ${
-                        worstEvePercent >= 0 ? 'text-success' : 'text-destructive'
-                      }`}>
-                        {formatPercentWithAbsolute(worstEvePercent, results.worstCaseDeltaEve)}
-                      </td>
-                      <td className={`text-right py-2 px-2 font-mono ${hasModifications ? 'text-success' : 'text-muted-foreground'}`}>
-                        {hasModifications ? '+0.3%' : '—'}
-                      </td>
-                    </tr>
-                    <tr className="border-b border-border/50 hover:bg-accent/30">
-                      <td className="py-2 px-2 font-medium text-foreground">Base NII</td>
-                      <td className="text-right py-2 px-2 font-mono font-semibold text-foreground">
-                        {formatCompact(results.baseNii)}
-                      </td>
-                      <td className={`text-right py-2 px-2 font-mono ${hasModifications ? 'text-destructive' : 'text-muted-foreground'}`}>
-                        {hasModifications ? '-2.1M' : '—'}
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-accent/30">
-                      <td className="py-2 px-2 font-medium text-foreground">Worst NII vs C1</td>
-                      <td className={`text-right py-2 px-2 font-mono font-semibold ${
-                        worstNiiPercent >= 0 ? 'text-success' : 'text-destructive'
-                      }`}>
-                        {formatPercentWithAbsolute(worstNiiPercent, worstNiiDelta)}
-                      </td>
-                      <td className={`text-right py-2 px-2 font-mono ${hasModifications ? 'text-destructive' : 'text-muted-foreground'}`}>
-                        {hasModifications ? '-0.2%' : '—'}
-                      </td>
-                    </tr>
+                    <ResultsSummaryRow 
+                      label="Base EVE"
+                      baselineValue={results.baseEve}
+                      baselineCet1Pct={(results.baseEve / cet1Capital) * 100}
+                      impactValue={hasModifications ? whatIfImpact.baseEve : 0}
+                      impactCet1Pct={hasModifications ? (whatIfImpact.baseEve / cet1Capital) * 100 : 0}
+                      postValue={results.baseEve + (hasModifications ? whatIfImpact.baseEve : 0)}
+                      postCet1Pct={((results.baseEve + (hasModifications ? whatIfImpact.baseEve : 0)) / cet1Capital) * 100}
+                      hasModifications={hasModifications}
+                    />
+                    <ResultsSummaryRow 
+                      label="Worst scenario EVE"
+                      baselineValue={results.worstCaseEve}
+                      baselineCet1Pct={(results.worstCaseDeltaEve / cet1Capital) * 100}
+                      impactValue={hasModifications ? whatIfImpact.worstEve : 0}
+                      impactCet1Pct={hasModifications ? (whatIfImpact.worstEve / cet1Capital) * 100 : 0}
+                      postValue={results.worstCaseEve + (hasModifications ? whatIfImpact.worstEve : 0)}
+                      postCet1Pct={((results.worstCaseDeltaEve + (hasModifications ? whatIfImpact.worstEve : 0)) / cet1Capital) * 100}
+                      hasModifications={hasModifications}
+                      isWorst
+                    />
+                    <ResultsSummaryRow 
+                      label="Base NII"
+                      baselineValue={results.baseNii}
+                      baselineCet1Pct={(results.baseNii / cet1Capital) * 100}
+                      impactValue={hasModifications ? whatIfImpact.baseNii : 0}
+                      impactCet1Pct={hasModifications ? (whatIfImpact.baseNii / cet1Capital) * 100 : 0}
+                      postValue={results.baseNii + (hasModifications ? whatIfImpact.baseNii : 0)}
+                      postCet1Pct={((results.baseNii + (hasModifications ? whatIfImpact.baseNii : 0)) / cet1Capital) * 100}
+                      hasModifications={hasModifications}
+                    />
+                    <ResultsSummaryRow 
+                      label="Worst scenario NII"
+                      baselineValue={results.baseNii + worstNiiDelta}
+                      baselineCet1Pct={(worstNiiDelta / cet1Capital) * 100}
+                      impactValue={hasModifications ? whatIfImpact.worstNii : 0}
+                      impactCet1Pct={hasModifications ? (whatIfImpact.worstNii / cet1Capital) * 100 : 0}
+                      postValue={results.baseNii + worstNiiDelta + (hasModifications ? whatIfImpact.worstNii : 0)}
+                      postCet1Pct={((worstNiiDelta + (hasModifications ? whatIfImpact.worstNii : 0)) / cet1Capital) * 100}
+                      hasModifications={hasModifications}
+                      isWorst
+                      isLast
+                    />
                   </tbody>
                 </table>
               </div>
             </div>
 
-            {/* Remaining 3/4: Single tabbed chart */}
-            <div className="w-3/4 flex flex-col">
+            {/* Remaining 2/3: Single tabbed chart */}
+            <div className="w-2/3 flex flex-col">
               {/* Tab selector */}
               <Tabs value={activeChart} onValueChange={(v) => setActiveChart(v as 'eve' | 'nii')} className="flex flex-col h-full">
                 <TabsList className="h-7 p-0.5 bg-muted/50 w-fit self-start mb-2">
@@ -336,5 +361,78 @@ function SummaryCard({ label, value, delta, deltaPercent, variant = 'default' }:
         </div>
       )}
     </div>
+  );
+}
+
+// Helper component for summary table rows
+interface ResultsSummaryRowProps {
+  label: string;
+  baselineValue: number;
+  baselineCet1Pct: number;
+  impactValue: number;
+  impactCet1Pct: number;
+  postValue: number;
+  postCet1Pct: number;
+  hasModifications: boolean;
+  isWorst?: boolean;
+  isLast?: boolean;
+}
+
+function ResultsSummaryRow({
+  label,
+  baselineValue,
+  baselineCet1Pct,
+  impactValue,
+  impactCet1Pct,
+  postValue,
+  postCet1Pct,
+  hasModifications,
+  isWorst = false,
+  isLast = false,
+}: ResultsSummaryRowProps) {
+  const formatMillions = (num: number) => {
+    const abs = Math.abs(num);
+    if (abs >= 1e9) return `${(num / 1e9).toFixed(1)}B`;
+    if (abs >= 1e6) return `${(num / 1e6).toFixed(1)}M`;
+    if (abs >= 1e3) return `${(num / 1e3).toFixed(0)}K`;
+    return num.toFixed(0);
+  };
+
+  const formatImpact = (num: number) => {
+    if (num === 0) return '—';
+    const sign = num >= 0 ? '+' : '';
+    return `${sign}${formatMillions(num)}`;
+  };
+
+  const formatPct = (pct: number) => `${pct.toFixed(1)}%`;
+  
+  const formatImpactPct = (pct: number) => {
+    if (pct === 0) return '—';
+    const sign = pct >= 0 ? '+' : '';
+    return `${sign}${pct.toFixed(1)}%`;
+  };
+
+  const getImpactClass = (val: number) => {
+    if (val === 0) return 'text-muted-foreground';
+    return val >= 0 ? 'text-success' : 'text-destructive';
+  };
+
+  return (
+    <tr className={`hover:bg-accent/30 ${!isLast ? 'border-b border-border/50' : ''}`}>
+      <td className="py-1.5 px-1.5 font-medium text-foreground whitespace-nowrap">{label}</td>
+      {/* Baseline */}
+      <td className="text-right py-1.5 px-1 font-mono text-foreground border-l border-border">{formatMillions(baselineValue)}</td>
+      <td className="text-right py-1.5 px-1 font-mono text-muted-foreground">{formatPct(baselineCet1Pct)}</td>
+      {/* What-If Impact */}
+      <td className={`text-right py-1.5 px-1 font-mono border-l border-border ${getImpactClass(impactValue)}`}>
+        {hasModifications ? formatImpact(impactValue) : '—'}
+      </td>
+      <td className={`text-right py-1.5 px-1 font-mono ${getImpactClass(impactCet1Pct)}`}>
+        {hasModifications ? formatImpactPct(impactCet1Pct) : '—'}
+      </td>
+      {/* Post What-If */}
+      <td className="text-right py-1.5 px-1 font-mono font-semibold text-foreground border-l border-border">{formatMillions(postValue)}</td>
+      <td className="text-right py-1.5 px-1 font-mono text-foreground">{formatPct(postCet1Pct)}</td>
+    </tr>
   );
 }
