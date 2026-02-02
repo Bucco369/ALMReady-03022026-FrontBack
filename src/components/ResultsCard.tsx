@@ -104,13 +104,34 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
 
   return (
     <>
-      <div className="dashboard-card h-full">
-        <div className="dashboard-card-header">
+      <div className="dashboard-card h-full flex flex-col">
+        <div className="dashboard-card-header flex-shrink-0">
           <div className="flex items-center gap-1.5">
             <BarChart3 className="h-3.5 w-3.5 text-primary" />
             <span className="text-xs font-semibold text-foreground">Results</span>
           </div>
           <div className="flex items-center gap-2">
+            {/* EVE/NII Toggle moved to header, aligned with chart area */}
+            <div className="flex items-center">
+              <TabsList className="h-6 p-0.5 bg-muted/50">
+                <TabsTrigger 
+                  value="eve" 
+                  onClick={() => setActiveChart('eve')}
+                  data-state={activeChart === 'eve' ? 'active' : 'inactive'}
+                  className="h-5 px-3 text-[10px] font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                >
+                  EVE
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="nii" 
+                  onClick={() => setActiveChart('nii')}
+                  data-state={activeChart === 'nii' ? 'active' : 'inactive'}
+                  className="h-5 px-3 text-[10px] font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                >
+                  NII
+                </TabsTrigger>
+              </TabsList>
+            </div>
             <span className="text-[10px] text-muted-foreground">
               {new Date(results.calculatedAt).toLocaleTimeString()}
             </span>
@@ -126,29 +147,29 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
           </div>
         </div>
 
-        <div className="dashboard-card-content">
-          {/* Four quarters layout: 1/4 summary, 3/4 single chart */}
+        <div className="dashboard-card-content flex-1 min-h-0">
+          {/* Layout: 1/3 table, 2/3 chart - both fill available height */}
           <div className="flex gap-3 h-full">
-            {/* First quarter: Grouped summary table */}
-            <div className="w-1/3 flex flex-col">
-              <div className="rounded-lg border border-border overflow-hidden flex-1 overflow-x-auto">
-                <table className="w-full text-[9px]">
-                  <thead>
+            {/* Left: Grouped summary table - fills full height */}
+            <div className="w-1/3 flex flex-col min-h-0">
+              <div className="rounded-lg border border-border flex-1 min-h-0 overflow-auto">
+                <table className="w-full text-[9px] h-full">
+                  <thead className="sticky top-0 z-10">
                     {/* Group headers */}
                     <tr className="bg-muted/50 border-b border-border">
-                      <th className="text-center align-middle font-semibold py-1 px-1.5 text-muted-foreground" rowSpan={2}>Metric</th>
-                      <th className="text-center font-semibold py-1 px-1 text-muted-foreground border-l border-border" colSpan={2}>Baseline</th>
-                      <th className="text-center font-semibold py-1 px-1 text-muted-foreground border-l border-border" colSpan={2}>What-If Impact</th>
-                      <th className="text-center font-semibold py-1 px-1 text-muted-foreground border-l border-border" colSpan={2}>Post What-If</th>
+                      <th className="text-center align-middle font-semibold py-1.5 px-1.5 text-muted-foreground" rowSpan={2}>Metric</th>
+                      <th className="text-center font-semibold py-1.5 px-1 text-muted-foreground border-l border-border" colSpan={2}>Baseline</th>
+                      <th className="text-center font-semibold py-1.5 px-1 text-muted-foreground border-l border-border" colSpan={2}>What-If Impact</th>
+                      <th className="text-center font-semibold py-1.5 px-1 text-muted-foreground border-l border-border" colSpan={2}>Post What-If</th>
                     </tr>
                     {/* Subcolumn headers */}
                     <tr className="bg-muted/30 border-b border-border">
-                      <th className="text-right font-medium py-1 px-1 text-muted-foreground/80 border-l border-border">Value</th>
-                      <th className="text-right font-medium py-1 px-1 text-muted-foreground/80">/ CET1</th>
-                      <th className="text-right font-medium py-1 px-1 text-muted-foreground/80 border-l border-border">Value</th>
-                      <th className="text-right font-medium py-1 px-1 text-muted-foreground/80">/ CET1</th>
-                      <th className="text-right font-medium py-1 px-1 text-muted-foreground/80 border-l border-border">Value</th>
-                      <th className="text-right font-medium py-1 px-1 text-muted-foreground/80">/ CET1</th>
+                      <th className="text-right font-medium py-1.5 px-1 text-muted-foreground/80 border-l border-border">Value</th>
+                      <th className="text-right font-medium py-1.5 px-1 text-muted-foreground/80">/ CET1</th>
+                      <th className="text-right font-medium py-1.5 px-1 text-muted-foreground/80 border-l border-border">Value</th>
+                      <th className="text-right font-medium py-1.5 px-1 text-muted-foreground/80">/ CET1</th>
+                      <th className="text-right font-medium py-1.5 px-1 text-muted-foreground/80 border-l border-border">Value</th>
+                      <th className="text-right font-medium py-1.5 px-1 text-muted-foreground/80">/ CET1</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -200,37 +221,15 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
               </div>
             </div>
 
-            {/* Remaining 2/3: Single tabbed chart */}
-            <div className="w-2/3 flex flex-col">
-              {/* Tab selector */}
-              <Tabs value={activeChart} onValueChange={(v) => setActiveChart(v as 'eve' | 'nii')} className="flex flex-col h-full">
-                <TabsList className="h-7 p-0.5 bg-muted/50 w-fit self-start mb-2">
-                  <TabsTrigger 
-                    value="eve" 
-                    className="h-6 px-4 text-[10px] font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                  >
-                    EVE
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="nii" 
-                    className="h-6 px-4 text-[10px] font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                  >
-                    NII
-                  </TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="eve" className="flex-1 mt-0">
-                  <div className="rounded-lg border border-border overflow-hidden h-full">
-                    <EVEChart fullWidth />
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="nii" className="flex-1 mt-0">
-                  <div className="rounded-lg border border-border overflow-hidden h-full">
-                    <NIIChart fullWidth />
-                  </div>
-                </TabsContent>
-              </Tabs>
+            {/* Right: Chart area - fills full height */}
+            <div className="w-2/3 flex flex-col min-h-0">
+              <div className="rounded-lg border border-border overflow-hidden flex-1 min-h-0">
+                {activeChart === 'eve' ? (
+                  <EVEChart fullWidth />
+                ) : (
+                  <NIIChart fullWidth />
+                )}
+              </div>
             </div>
           </div>
         </div>
