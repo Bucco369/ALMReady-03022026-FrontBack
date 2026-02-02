@@ -18,8 +18,22 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useWhatIf } from '@/components/whatif/WhatIfContext';
+import { addMonths, addYears, format } from 'date-fns';
 
-const TENORS = ['1M', '3M', '6M', '1Y', '2Y', '3Y', '5Y', '7Y', '10Y', '15Y', '20Y', '30Y'];
+const TENORS = [
+  { label: '1M', months: 1 },
+  { label: '3M', months: 3 },
+  { label: '6M', months: 6 },
+  { label: '1Y', months: 12 },
+  { label: '2Y', months: 24 },
+  { label: '3Y', months: 36 },
+  { label: '5Y', months: 60 },
+  { label: '7Y', months: 84 },
+  { label: '10Y', months: 120 },
+  { label: '15Y', months: 180 },
+  { label: '20Y', months: 240 },
+  { label: '30Y', months: 360 },
+];
 
 const SCENARIOS = [
   { id: 'worst', label: 'Worst Case' },
@@ -50,10 +64,17 @@ function computeWhatIfImpact(modifications: any[]) {
   return { assetDelta, liabilityDelta };
 }
 
+// Generate calendar label from tenor and analysis date
+function getCalendarLabel(analysisDate: Date, monthsToAdd: number): string {
+  const targetDate = addMonths(analysisDate, monthsToAdd);
+  return format(targetDate, 'MMM yyyy');
+}
+
 // Generate placeholder data for EVE chart with What-If support
 const generateEVEData = (
   scenario: string, 
-  whatIfImpact: { assetDelta: number; liabilityDelta: number }
+  whatIfImpact: { assetDelta: number; liabilityDelta: number },
+  analysisDate: Date
 ) => {
   // Normalize what-if deltas to chart scale (convert from actual values to display units)
   const assetWhatIfNormalized = whatIfImpact.assetDelta / 1e7; // Scale to M units
@@ -93,9 +114,13 @@ const generateEVEData = (
     const totalAssets = assetBase + Math.abs(assetScenario) + assetNewPosition;
     const totalLiabilities = liabilityBase + liabilityScenario + adjustedLiabilityNewPosition;
     const netEV = totalAssets + totalLiabilities;
+
+    // Calendar label for this tenor
+    const calendarLabel = getCalendarLabel(analysisDate, tenor.months);
     
     return {
-      tenor,
+      tenor: tenor.label,
+      calendarLabel,
       assetBase,
       assetScenario: Math.abs(assetScenario),
       assetNewPosition: Math.max(0, assetNewPosition), // Only show positive for stacking
@@ -112,9 +137,10 @@ const generateEVEData = (
 interface EVEChartProps {
   className?: string;
   fullWidth?: boolean;
+  analysisDate?: Date;
 }
 
-export function EVEChart({ className, fullWidth = false }: EVEChartProps) {
+export function EVEChart({ className, fullWidth = false, analysisDate = new Date() }: EVEChartProps) {
   const [selectedScenario, setSelectedScenario] = useState('worst');
   const [isOpen, setIsOpen] = useState(false);
   const { modifications } = useWhatIf();
@@ -124,13 +150,44 @@ export function EVEChart({ className, fullWidth = false }: EVEChartProps) {
   const hasWhatIf = modifications.length > 0;
   
   const data = useMemo(
-    () => generateEVEData(selectedScenario, whatIfImpact), 
-    [selectedScenario, whatIfImpact]
+    () => generateEVEData(selectedScenario, whatIfImpact, analysisDate), 
+    [selectedScenario, whatIfImpact, analysisDate]
   );
   
   const formatValue = (value: number) => {
     if (Math.abs(value) >= 1000) return `${(value / 1000).toFixed(0)}B`;
     return `${value.toFixed(0)}M`;
+  };
+
+  // Custom X-axis tick with dual labels
+  const CustomXAxisTick = ({ x, y, payload }: any) => {
+    const dataPoint = data.find(d => d.tenor === payload.value);
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text
+          x={0}
+          y={0}
+          dy={10}
+          textAnchor="middle"
+          fill="hsl(var(--muted-foreground))"
+          fontSize={fullWidth ? 10 : 9}
+          fontWeight={500}
+        >
+          {payload.value}
+        </text>
+        <text
+          x={0}
+          y={0}
+          dy={22}
+          textAnchor="middle"
+          fill="hsl(var(--muted-foreground))"
+          fontSize={fullWidth ? 8 : 7}
+          opacity={0.7}
+        >
+          {dataPoint?.calendarLabel}
+        </text>
+      </g>
+    );
   };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -143,13 +200,16 @@ export function EVEChart({ className, fullWidth = false }: EVEChartProps) {
     const liabilityNew = payload.find((p: any) => p.dataKey === 'liabilityNewPosition')?.value || 0;
     const liabilityNewPos = payload.find((p: any) => p.dataKey === 'liabilityNewPositionPos')?.value || 0;
     const netEV = payload.find((p: any) => p.dataKey === 'netEV')?.value || 0;
+    const dataPoint = data.find(d => d.tenor === label);
     
     const totalAssetWhatIf = assetNew + assetNewNeg;
     const totalLiabilityWhatIf = liabilityNew + liabilityNewPos;
     
     return (
       <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
-        <div className="font-medium text-foreground mb-1.5">{label}</div>
+        <div className="font-medium text-foreground mb-1.5">
+          {label} <span className="text-muted-foreground font-normal">({dataPoint?.calendarLabel})</span>
+        </div>
         <div className="space-y-1">
           <div className="text-success">Assets: {formatValue(assetBase)}</div>
           <div className="text-destructive">Liabilities: {formatValue(Math.abs(liabilityBase))}</div>
@@ -189,15 +249,16 @@ export function EVEChart({ className, fullWidth = false }: EVEChartProps) {
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart
                 data={data}
-                margin={{ top: 10, right: 15, left: 0, bottom: 5 }}
+                margin={{ top: 10, right: 15, left: 0, bottom: 25 }}
                 stackOffset="sign"
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
                 <XAxis 
                   dataKey="tenor" 
-                  tick={{ fontSize: fullWidth ? 10 : 9, fill: 'hsl(var(--muted-foreground))' }}
+                  tick={<CustomXAxisTick />}
                   axisLine={{ stroke: 'hsl(var(--border))' }}
                   tickLine={false}
+                  height={35}
                 />
                 <YAxis 
                   tick={{ fontSize: fullWidth ? 10 : 9, fill: 'hsl(var(--muted-foreground))' }}
@@ -209,24 +270,24 @@ export function EVEChart({ className, fullWidth = false }: EVEChartProps) {
                 <Tooltip content={<CustomTooltip />} />
                 <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1.5} />
                 
-                {/* Asset columns (positive) */}
-                <Bar dataKey="assetBase" stackId="assets" fill="hsl(var(--success))" opacity={0.8} />
-                <Bar dataKey="assetScenario" stackId="assets" fill="hsl(var(--success))" opacity={0.5} />
-                <Bar dataKey="assetNewPosition" stackId="assets" fill="hsl(var(--success))" opacity={0.3} />
+                {/* Asset bars (positive, stacked) */}
+                <Bar dataKey="assetBase" stackId="main" fill="hsl(var(--success))" opacity={0.8} />
+                <Bar dataKey="assetScenario" stackId="main" fill="hsl(var(--success))" opacity={0.5} />
+                <Bar dataKey="assetNewPosition" stackId="main" fill="hsl(var(--success))" opacity={0.3} />
                 
-                {/* Asset reduction from sell (shown separately) */}
+                {/* Asset reduction from sell (shown in same stack) */}
                 {hasWhatIf && whatIfImpact.assetDelta < 0 && (
-                  <Bar dataKey="assetNewPositionNeg" stackId="assets" fill="hsl(var(--warning))" opacity={0.6} />
+                  <Bar dataKey="assetNewPositionNeg" stackId="main" fill="hsl(var(--warning))" opacity={0.6} />
                 )}
                 
-                {/* Liability columns (negative) */}
-                <Bar dataKey="liabilityBase" stackId="liabilities" fill="hsl(var(--destructive))" opacity={0.8} />
-                <Bar dataKey="liabilityScenario" stackId="liabilities" fill="hsl(var(--destructive))" opacity={0.5} />
-                <Bar dataKey="liabilityNewPosition" stackId="liabilities" fill="hsl(var(--destructive))" opacity={0.3} />
+                {/* Liability bars (negative, same stack for vertical alignment) */}
+                <Bar dataKey="liabilityBase" stackId="main" fill="hsl(var(--destructive))" opacity={0.8} />
+                <Bar dataKey="liabilityScenario" stackId="main" fill="hsl(var(--destructive))" opacity={0.5} />
+                <Bar dataKey="liabilityNewPosition" stackId="main" fill="hsl(var(--destructive))" opacity={0.3} />
                 
                 {/* Liability reduction from sell (positive effect) */}
                 {hasWhatIf && whatIfImpact.liabilityDelta < 0 && (
-                  <Bar dataKey="liabilityNewPositionPos" stackId="liabilities" fill="hsl(var(--warning))" opacity={0.6} />
+                  <Bar dataKey="liabilityNewPositionPos" stackId="main" fill="hsl(var(--warning))" opacity={0.6} />
                 )}
                 
                 {/* Net EV line */}
