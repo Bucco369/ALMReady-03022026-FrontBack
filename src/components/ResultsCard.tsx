@@ -136,7 +136,7 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
                   <thead>
                     {/* Group headers */}
                     <tr className="bg-muted/50 border-b border-border">
-                      <th className="text-left font-semibold py-1 px-1.5 text-muted-foreground" rowSpan={2}></th>
+                      <th className="text-left font-semibold py-1 px-1.5 text-muted-foreground" rowSpan={2}>Metric</th>
                       <th className="text-center font-semibold py-1 px-1 text-muted-foreground border-l border-border" colSpan={2}>Baseline</th>
                       <th className="text-center font-semibold py-1 px-1 text-muted-foreground border-l border-border" colSpan={2}>What-If Impact</th>
                       <th className="text-center font-semibold py-1 px-1 text-muted-foreground border-l border-border" colSpan={2}>Post What-If</th>
