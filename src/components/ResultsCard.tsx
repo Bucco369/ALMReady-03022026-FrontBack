@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+
 import type { CalculationResults } from '@/types/financial';
 import { EVEChart } from '@/components/results/EVEChart';
 import { NIIChart } from '@/components/results/NIIChart';
@@ -112,25 +112,27 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
           </div>
           <div className="flex items-center gap-2">
             {/* EVE/NII Toggle moved to header, aligned with chart area */}
-            <div className="flex items-center">
-              <TabsList className="h-6 p-0.5 bg-muted/50">
-                <TabsTrigger 
-                  value="eve" 
-                  onClick={() => setActiveChart('eve')}
-                  data-state={activeChart === 'eve' ? 'active' : 'inactive'}
-                  className="h-5 px-3 text-[10px] font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                >
-                  EVE
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="nii" 
-                  onClick={() => setActiveChart('nii')}
-                  data-state={activeChart === 'nii' ? 'active' : 'inactive'}
-                  className="h-5 px-3 text-[10px] font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                >
-                  NII
-                </TabsTrigger>
-              </TabsList>
+            <div className="flex items-center h-6 p-0.5 bg-muted/50 rounded-md">
+              <button
+                onClick={() => setActiveChart('eve')}
+                className={`h-5 px-3 text-[10px] font-medium rounded-sm transition-all ${
+                  activeChart === 'eve' 
+                    ? 'bg-background text-foreground shadow-sm' 
+                    : 'text-muted-foreground'
+                }`}
+              >
+                EVE
+              </button>
+              <button
+                onClick={() => setActiveChart('nii')}
+                className={`h-5 px-3 text-[10px] font-medium rounded-sm transition-all ${
+                  activeChart === 'nii' 
+                    ? 'bg-background text-foreground shadow-sm' 
+                    : 'text-muted-foreground'
+                }`}
+              >
+                NII
+              </button>
             </div>
             <span className="text-[10px] text-muted-foreground">
               {new Date(results.calculatedAt).toLocaleTimeString()}
