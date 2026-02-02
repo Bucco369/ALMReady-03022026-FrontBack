@@ -43,9 +43,10 @@ function getCalendarLabel(analysisDate: Date, monthsToAdd: number): string {
 // Generate placeholder data for NII chart (lines only)
 const generateNIIData = (scenario: string, analysisDate: Date | null) => {
   return MONTHS.map((month, index) => {
-    // Base values - asset margin positive, liability margin negative (shown as positive for lines)
-    const assetMargin = 25 + Math.sin(index * 0.4) * 8 + index * 0.5;
-    const liabilityMargin = 18 + Math.cos(index * 0.3) * 5 + index * 0.3;
+    // Base values - Interest Income (what bank earns from assets)
+    const interestIncome = 25 + Math.sin(index * 0.4) * 8 + index * 0.5;
+    // Interest Expense (what bank pays on liabilities)
+    const interestExpense = 18 + Math.cos(index * 0.3) * 5 + index * 0.3;
     
     // Scenario adjustments
     const scenarioMultiplier = scenario === 'parallel-up' ? 0.8 
@@ -57,15 +58,16 @@ const generateNIIData = (scenario: string, analysisDate: Date | null) => {
       : scenario === 'worst' ? -0.7
       : 0;
     
-    const assetScenarioAdj = scenarioMultiplier * (3 + index * 0.3);
-    const liabilityScenarioAdj = scenarioMultiplier * (2 + index * 0.2);
+    const incomeScenarioAdj = scenarioMultiplier * (3 + index * 0.3);
+    const expenseScenarioAdj = scenarioMultiplier * (2 + index * 0.2);
     
     // Final values for lines
-    const assetTotal = assetMargin + assetScenarioAdj;
-    const liabilityTotal = liabilityMargin + liabilityScenarioAdj;
+    const incomeTotal = interestIncome + incomeScenarioAdj;
+    const expenseTotal = interestExpense + expenseScenarioAdj;
     
-    // Net NII = asset margin - liability margin
-    const netNII = assetTotal - liabilityTotal;
+    // Net Interest Income = Interest Income (Assets) - Interest Expense (Liabilities)
+    // This is the TRUE NII margin, mechanically derived
+    const netNII = incomeTotal - expenseTotal;
 
     // Calendar label for this month (only if analysisDate is set)
     const calendarLabel = analysisDate ? getCalendarLabel(analysisDate, month.monthsToAdd) : null;
@@ -73,8 +75,8 @@ const generateNIIData = (scenario: string, analysisDate: Date | null) => {
     return {
       month: month.label,
       calendarLabel,
-      assetMargin: assetTotal,
-      liabilityMargin: liabilityTotal,
+      interestIncome: incomeTotal,
+      interestExpense: expenseTotal,
       netNII,
     };
   });
@@ -136,9 +138,10 @@ export function NIIChart({ className, fullWidth = false, analysisDate }: NIIChar
     if (!active || !payload?.length) return null;
     const dataPoint = data.find(d => d.month === label);
     
-    const assetMargin = payload.find((p: any) => p.dataKey === 'assetMargin')?.value || 0;
-    const liabilityMargin = payload.find((p: any) => p.dataKey === 'liabilityMargin')?.value || 0;
-    const netNII = payload.find((p: any) => p.dataKey === 'netNII')?.value || 0;
+    const interestIncome = payload.find((p: any) => p.dataKey === 'interestIncome')?.value || 0;
+    const interestExpense = payload.find((p: any) => p.dataKey === 'interestExpense')?.value || 0;
+    // Calculate NII as the difference to ensure accuracy
+    const calculatedNII = interestIncome - interestExpense;
     
     return (
       <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
@@ -146,9 +149,9 @@ export function NIIChart({ className, fullWidth = false, analysisDate }: NIIChar
           {label} {dataPoint?.calendarLabel && <span className="text-muted-foreground font-normal">({dataPoint.calendarLabel})</span>}
         </div>
         <div className="space-y-1">
-          <div className="text-success">Asset Margin: {formatValue(assetMargin)}</div>
-          <div className="text-destructive">Liability Margin: {formatValue(liabilityMargin)}</div>
-          <div className="text-primary font-medium">Net NII: {formatValue(netNII)}</div>
+          <div className="text-success">Interest Income (Assets): {formatValue(interestIncome)}</div>
+          <div className="text-destructive">Interest Expense (Liabilities): {formatValue(interestExpense)}</div>
+          <div className="text-warning font-medium">Net Interest Income (NII): {formatValue(calculatedNII)}</div>
         </div>
       </div>
     );
@@ -192,36 +195,36 @@ export function NIIChart({ className, fullWidth = false, analysisDate }: NIIChar
                 <Tooltip content={<CustomTooltip />} />
                 <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1.5} />
                 
-                {/* Asset Margin line */}
+                {/* Interest Income (Assets) line - Green */}
                 <Line 
                   type="monotone" 
-                  dataKey="assetMargin" 
-                  name="Asset Margin"
+                  dataKey="interestIncome" 
+                  name="Interest Income (Assets)"
                   stroke="hsl(var(--success))" 
                   strokeWidth={2}
                   dot={{ r: fullWidth ? 3 : 2, fill: 'hsl(var(--success))' }}
                   activeDot={{ r: fullWidth ? 5 : 4 }}
                 />
                 
-                {/* Liability Margin line */}
+                {/* Interest Expense (Liabilities) line - Red */}
                 <Line 
                   type="monotone" 
-                  dataKey="liabilityMargin" 
-                  name="Liability Margin"
+                  dataKey="interestExpense" 
+                  name="Interest Expense (Liabilities)"
                   stroke="hsl(var(--destructive))" 
                   strokeWidth={2}
                   dot={{ r: fullWidth ? 3 : 2, fill: 'hsl(var(--destructive))' }}
                   activeDot={{ r: fullWidth ? 5 : 4 }}
                 />
                 
-                {/* Net NII line */}
+                {/* Net Interest Income (NII) line - Orange */}
                 <Line 
                   type="monotone" 
                   dataKey="netNII" 
-                  name="Net NII"
-                  stroke="hsl(var(--primary))" 
+                  name="Net Interest Income (NII)"
+                  stroke="hsl(var(--warning))" 
                   strokeWidth={2.5}
-                  dot={{ r: fullWidth ? 4 : 3, fill: 'hsl(var(--primary))' }}
+                  dot={{ r: fullWidth ? 4 : 3, fill: 'hsl(var(--warning))' }}
                   activeDot={{ r: fullWidth ? 6 : 5 }}
                 />
               </ComposedChart>
@@ -229,18 +232,18 @@ export function NIIChart({ className, fullWidth = false, analysisDate }: NIIChar
           </div>
           
           {/* Legend */}
-          <div className="flex items-center justify-center gap-6 px-3 py-2 text-[9px] shrink-0">
+          <div className="flex items-center justify-center gap-4 px-3 py-2 text-[8px] shrink-0">
             <div className="flex items-center gap-1.5">
               <div className="w-4 h-0.5 rounded bg-success" />
-              <span className="text-muted-foreground">Asset Margin</span>
+              <span className="text-muted-foreground">Interest Income (Assets)</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-4 h-0.5 rounded bg-destructive" />
-              <span className="text-muted-foreground">Liability Margin</span>
+              <span className="text-muted-foreground">Interest Expense (Liabilities)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-5 h-0.5 rounded bg-primary" />
-              <span className="text-muted-foreground">Net NII</span>
+              <div className="w-5 h-0.5 rounded bg-warning" />
+              <span className="text-muted-foreground">Net Interest Income (NII)</span>
             </div>
           </div>
         </div>
