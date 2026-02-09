@@ -417,7 +417,7 @@ export function CurvesAndScenariosCard({
             <Button variant="outline" size="sm" onClick={handleResetCurves} className="h-6 w-6 p-0 shrink-0 rounded-full" title="Reset curves">
               <RotateCcw className="h-3 w-3" />
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowDetails(true)} className="flex-1 h-6 text-xs">
+            <Button size="sm" onClick={() => setShowDetails(true)} className="flex-1 h-6 text-xs">
               <Eye className="mr-1 h-3 w-3" />
               View details
             </Button>

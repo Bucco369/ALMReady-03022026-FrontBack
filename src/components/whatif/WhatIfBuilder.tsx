@@ -8,17 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { useWhatIf } from './WhatIfContext';
 import { WhatIfAddTab } from './WhatIfAddTab';
 import { WhatIfRemoveTab } from './WhatIfRemoveTab';
-import type { BalanceUiRow } from '@/lib/balanceUi';
 
 interface WhatIfBuilderProps {
-  sessionId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  balanceRows: BalanceUiRow[];
-  sampleRows: Record<string, Record<string, unknown>[]>;
 }
 
-export function WhatIfBuilder({ sessionId, open, onOpenChange, balanceRows, sampleRows }: WhatIfBuilderProps) {
+export function WhatIfBuilder({ open, onOpenChange }: WhatIfBuilderProps) {
   const [activeTab, setActiveTab] = useState<'add' | 'remove'>('add');
   const { 
     modifications, 
@@ -109,14 +105,11 @@ export function WhatIfBuilder({ sessionId, open, onOpenChange, balanceRows, samp
           </TabsList>
 
           <TabsContent value="add" className="flex-1 px-4 py-3 m-0 min-h-0">
-            <WhatIfAddTab balanceRows={balanceRows} sampleRows={sampleRows} />
+            <WhatIfAddTab />
           </TabsContent>
 
           <TabsContent value="remove" className="flex-1 px-4 py-3 m-0 min-h-0">
-            <WhatIfRemoveTab
-              sessionId={sessionId}
-              balanceRows={balanceRows}
-            />
+            <WhatIfRemoveTab />
           </TabsContent>
         </Tabs>
 

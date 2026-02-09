@@ -1,223 +1,332 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Upload,
-  FileSpreadsheet,
-  RefreshCw,
-  CheckCircle2,
-  XCircle,
-  FlaskConical,
-  CalendarIcon,
-  Pencil,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import type { Position } from "@/types/financial";
-import {
-  getBalanceSummary,
-  uploadBalanceExcel,
-  type BalanceSummaryResponse,
-} from "@/lib/api";
-import { useWhatIf } from "@/components/whatif/WhatIfContext";
-import { WhatIfBuilder } from "@/components/whatif/WhatIfBuilder";
-import { format } from "date-fns";
-import { mapBalanceSummaryToUiRows, type BalanceUiRow } from "@/lib/balanceUi";
-
+import React, { useCallback, useState, useMemo, useRef, useEffect } from 'react';
+import { Upload, FileSpreadsheet, Eye, RotateCcw, Download, CheckCircle2, XCircle, ChevronRight, ChevronDown, FlaskConical, CalendarIcon, Pencil, Brain } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import type { Position } from '@/types/financial';
+import { parsePositionsCSV, generateSamplePositionsCSV } from '@/lib/csvParser';
+import { WhatIfBuilder } from '@/components/whatif/WhatIfBuilder';
+import { useWhatIf } from '@/components/whatif/WhatIfContext';
+import { BalanceDetailsModal } from '@/components/BalanceDetailsModal';
+import { BehaviouralAssumptionsModal } from '@/components/behavioural/BehaviouralAssumptionsModal';
+import { useBehavioural } from '@/components/behavioural/BehaviouralContext';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 interface BalancePositionsCardProps {
-  sessionId: string;
   positions: Position[];
   onPositionsChange: (positions: Position[]) => void;
 }
 
-function formatAmountShort(num: number) {
-  const abs = Math.abs(num);
-  if (abs >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
-  if (abs >= 1e6) return `${(num / 1e6).toFixed(0)}M`;
-  if (abs >= 1e3) return `${(num / 1e3).toFixed(0)}K`;
-  return `${num.toFixed(0)}`;
-}
+// Static placeholder data for the aggregated view
+const PLACEHOLDER_DATA = {
+  assets: {
+    amount: 2_450_000_000,
+    positions: 72,
+    avgRate: 0.0425,
+    subcategories: [{
+      id: 'mortgages',
+      name: 'Mortgages',
+      amount: 1_200_000_000,
+      positions: 34,
+      avgRate: 0.0385
+    }, {
+      id: 'loans',
+      name: 'Loans',
+      amount: 400_000_000,
+      positions: 16,
+      avgRate: 0.0510
+    }, {
+      id: 'securities',
+      name: 'Securities',
+      amount: 550_000_000,
+      positions: 12,
+      avgRate: 0.0465
+    }, {
+      id: 'interbank',
+      name: 'Interbank / Central Bank',
+      amount: 200_000_000,
+      positions: 6,
+      avgRate: 0.0380
+    }, {
+      id: 'other-assets',
+      name: 'Other assets',
+      amount: 100_000_000,
+      positions: 4,
+      avgRate: 0.0350
+    }]
+  },
+  liabilities: {
+    amount: 2_280_000_000,
+    positions: 52,
+    avgRate: 0.0285,
+    subcategories: [{
+      id: 'deposits',
+      name: 'Deposits',
+      amount: 680_000_000,
+      positions: 18,
+      avgRate: 0.0050
+    }, {
+      id: 'term-deposits',
+      name: 'Term deposits',
+      amount: 920_000_000,
+      positions: 24,
+      avgRate: 0.0320
+    }, {
+      id: 'wholesale-funding',
+      name: 'Wholesale funding',
+      amount: 480_000_000,
+      positions: 6,
+      avgRate: 0.0425
+    }, {
+      id: 'debt-issued',
+      name: 'Debt issued',
+      amount: 150_000_000,
+      positions: 3,
+      avgRate: 0.0480
+    }, {
+      id: 'other-liabilities',
+      name: 'Other liabilities',
+      amount: 50_000_000,
+      positions: 1,
+      avgRate: 0.0300
+    }]
+  }
+};
 
-function formatOptionalAmount(num: number) {
-  if (Number.isNaN(num)) return "—";
-  return formatAmountShort(num);
-}
+// Helper to compute What-If deltas per category
+function computeWhatIfDeltas(modifications: any[]) {
+  const deltas: Record<string, {
+    amount: number;
+    positions: number;
+    rate: number;
+    items: any[];
+  }> = {
+    assets: {
+      amount: 0,
+      positions: 0,
+      rate: 0,
+      items: []
+    },
+    liabilities: {
+      amount: 0,
+      positions: 0,
+      rate: 0,
+      items: []
+    },
+    mortgages: {
+      amount: 0,
+      positions: 0,
+      rate: 0,
+      items: []
+    },
+    loans: {
+      amount: 0,
+      positions: 0,
+      rate: 0,
+      items: []
+    },
+    securities: {
+      amount: 0,
+      positions: 0,
+      rate: 0,
+      items: []
+    },
+    interbank: {
+      amount: 0,
+      positions: 0,
+      rate: 0,
+      items: []
+    },
+    'other-assets': {
+      amount: 0,
+      positions: 0,
+      rate: 0,
+      items: []
+    },
+    deposits: {
+      amount: 0,
+      positions: 0,
+      rate: 0,
+      items: []
+    },
+    'term-deposits': {
+      amount: 0,
+      positions: 0,
+      rate: 0,
+      items: []
+    },
+    'wholesale-funding': {
+      amount: 0,
+      positions: 0,
+      rate: 0,
+      items: []
+    },
+    'debt-issued': {
+      amount: 0,
+      positions: 0,
+      rate: 0,
+      items: []
+    },
+    'other-liabilities': {
+      amount: 0,
+      positions: 0,
+      rate: 0,
+      items: []
+    }
+  };
+  modifications.forEach(mod => {
+    const multiplier = mod.type === 'add' ? 1 : -1;
+    const notional = (mod.notional || 0) * multiplier;
+    const posCount = multiplier;
+    const rate = (mod.rate || 0) * multiplier;
 
-function formatOptionalPercent(rate: number | null) {
-  if (rate === null || Number.isNaN(rate)) return "—";
-  return `${(rate * 100).toFixed(2)}%`;
-}
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  return String(error);
-}
-
-export function BalancePositionsCard({ sessionId, onPositionsChange }: BalancePositionsCardProps) {
-  const [isDragging, setIsDragging] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const [summary, setSummary] = useState<BalanceSummaryResponse | null>(null);
-  const [showWhatIfBuilder, setShowWhatIfBuilder] = useState(false);
-
-  const { analysisDate, setAnalysisDate, cet1Capital, setCet1Capital, modifications, isApplied } = useWhatIf();
-
-  useEffect(() => {
-    let alive = true;
-
-    async function load() {
-      setErr(null);
-      try {
-        const s = await getBalanceSummary(sessionId);
-        if (!alive) return;
-        setSummary(s);
-      } catch (e: unknown) {
-        if (!alive) return;
-        const msg = getErrorMessage(e);
-        if (!msg.includes("No balance uploaded")) setErr(msg);
-        setSummary(null);
-      }
+    // Determine parent category
+    const category = mod.category === 'asset' ? 'assets' : mod.category === 'liability' ? 'liabilities' : null;
+    if (category) {
+      deltas[category].amount += notional;
+      deltas[category].positions += posCount;
+      deltas[category].rate += rate;
+      deltas[category].items.push(mod);
     }
 
-    if (sessionId) void load();
-    return () => {
-      alive = false;
+    // Subcategory
+    if (mod.subcategory && deltas[mod.subcategory]) {
+      deltas[mod.subcategory].amount += notional;
+      deltas[mod.subcategory].positions += posCount;
+      deltas[mod.subcategory].rate += rate;
+      deltas[mod.subcategory].items.push(mod);
+    }
+  });
+  return deltas;
+}
+export function BalancePositionsCard({
+  positions,
+  onPositionsChange
+}: BalancePositionsCardProps) {
+  const [isDragging, setIsDragging] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const [selectedCategoryForDetails, setSelectedCategoryForDetails] = useState<string | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set(['assets', 'liabilities']));
+  const [showWhatIfBuilder, setShowWhatIfBuilder] = useState(false);
+  const [showBehaviouralModal, setShowBehaviouralModal] = useState(false);
+  const {
+    modifications,
+    isApplied,
+    analysisDate,
+    setAnalysisDate,
+    cet1Capital,
+    setCet1Capital,
+    resetAll
+  } = useWhatIf();
+  const { hasCustomAssumptions } = useBehavioural();
+
+  // Compute What-If deltas
+  const whatIfDeltas = useMemo(() => computeWhatIfDeltas(modifications), [modifications]);
+
+  // Open View Details with optional category context
+  const openDetails = (categoryId?: string) => {
+    setSelectedCategoryForDetails(categoryId || null);
+    setShowDetails(true);
+  };
+  const handleFileUpload = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const content = e.target?.result as string;
+      const parsed = parsePositionsCSV(content);
+      onPositionsChange(parsed);
+      setFileName(file.name);
     };
-  }, [sessionId]);
-
-  const isLoaded = summary !== null;
-
-  const handleFileUpload = useCallback(
-    async (file: File) => {
-      setErr(null);
-      setUploading(true);
-      try {
-        onPositionsChange([]);
-        const s = await uploadBalanceExcel(sessionId, file);
-        setSummary(s);
-      } catch (e: unknown) {
-        setErr(getErrorMessage(e));
-      } finally {
-        setUploading(false);
-      }
-    },
-    [sessionId, onPositionsChange]
-  );
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setIsDragging(false);
-      const file = e.dataTransfer.files?.[0];
-      if (!file) return;
-      if (!file.name.toLowerCase().endsWith(".xlsx") && !file.name.toLowerCase().endsWith(".xls")) {
-        setErr("Only .xlsx/.xls files are supported");
-        return;
-      }
-      void handleFileUpload(file);
-    },
-    [handleFileUpload]
-  );
-
+    reader.readAsText(file);
+  }, [onPositionsChange]);
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.name.endsWith('.csv')) {
+      handleFileUpload(file);
+    }
+  }, [handleFileUpload]);
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
   }, []);
-
   const handleDragLeave = useCallback(() => {
     setIsDragging(false);
   }, []);
-
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) void handleFileUpload(file);
-    },
-    [handleFileUpload]
-  );
-
-  const refreshSummary = useCallback(async () => {
-    setErr(null);
-    try {
-      const s = await getBalanceSummary(sessionId);
-      setSummary(s);
-    } catch (e: unknown) {
-      const msg = getErrorMessage(e);
-      if (!msg.includes("No balance uploaded")) setErr(msg);
-      setSummary(null);
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
     }
-  }, [sessionId]);
-
-  const whatIfCount = useMemo(() => modifications.length, [modifications]);
-  const balanceRows = useMemo(() => (summary ? mapBalanceSummaryToUiRows(summary) : []), [summary]);
-
-  return (
-    <>
-    <div className="dashboard-card">
-      <div className="dashboard-card-header">
-        <div className="flex items-center gap-1.5">
-          <FileSpreadsheet className="h-3.5 w-3.5 text-primary" />
-          <span className="text-xs font-semibold text-foreground">Balance Positions</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <StatusIndicator loaded={isLoaded} />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 px-2"
-            title="Refresh from backend"
-            onClick={refreshSummary}
-          >
-            <RefreshCw className={cn("h-3 w-3", uploading && "animate-spin")} />
-          </Button>
-        </div>
-      </div>
-
-      <div className="dashboard-card-content">
-        {!isLoaded ? (
-          <div
-            className={cn("compact-upload-zone", isDragging && "active")}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-          >
-            <Upload className="h-5 w-5 text-muted-foreground mb-1" />
-            <p className="text-xs text-muted-foreground mb-2">Drop Excel (.xlsx) or click to upload</p>
-
-            <label>
-              <Input
-                type="file"
-                accept=".xlsx,.xls"
-                className="hidden"
-                onChange={handleInputChange}
-                disabled={uploading}
-              />
-              <Button variant="outline" size="sm" asChild className="h-6 text-xs px-2">
-                <span>{uploading ? "Uploading..." : "Browse"}</span>
-              </Button>
-            </label>
-
-            {err && <div className="mt-2 text-[11px] text-destructive whitespace-pre-wrap">{err}</div>}
-          </div>
-        ) : (
-          <div className="flex flex-col flex-1 min-h-0">
-            {err && <div className="mb-2 text-[11px] text-destructive whitespace-pre-wrap">{err}</div>}
-
-            <div className="mb-2 flex items-center justify-between gap-2">
+  }, [handleFileUpload]);
+  const handleDownloadSample = useCallback(() => {
+    const content = generateSamplePositionsCSV();
+    const blob = new Blob([content], {
+      type: 'text/csv'
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sample_positions.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }, []);
+  const handleReplace = useCallback(() => {
+    onPositionsChange([]);
+    setFileName(null);
+    setExpandedRows(new Set());
+  }, [onPositionsChange]);
+  const toggleRow = (rowId: string) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(rowId)) {
+        next.delete(rowId);
+      } else {
+        next.add(rowId);
+      }
+      return next;
+    });
+  };
+  const formatAmount = (num: number) => {
+    if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
+    if (num >= 1e6) return `${(num / 1e6).toFixed(0)}M`;
+    if (num >= 1e3) return `${(num / 1e3).toFixed(0)}K`;
+    return num.toString();
+  };
+  const formatPercent = (num: number) => (num * 100).toFixed(2) + '%';
+  const formatCurrency = (num: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(num);
+  };
+  const isLoaded = positions.length > 0;
+  return <>
+      <div className="dashboard-card">
+        <div className="dashboard-card-header justify-between">
+          {/* Left: Title + Analysis Date & CET1 */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <FileSpreadsheet className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-semibold text-foreground">Balance Positions</span>
+            </div>
+            
+            {isLoaded && (
               <div className="flex items-center gap-3">
+                {/* Analysis Date - Compact */}
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] font-medium text-muted-foreground">Analysis Date</span>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <button
-                        className={cn(
-                          "h-6 px-2 flex items-center gap-1 rounded border text-[11px] transition-colors",
-                          "bg-background border-border hover:bg-muted/50",
-                          !analysisDate && "text-muted-foreground"
-                        )}
-                      >
+                      <button className={cn(
+                        "h-6 px-2 flex items-center gap-1 rounded border text-[11px] transition-colors",
+                        "bg-background border-border hover:bg-muted/50",
+                        !analysisDate && "text-muted-foreground"
+                      )}>
                         <CalendarIcon className="h-2.5 w-2.5" />
                         <span className={analysisDate ? "font-medium text-foreground" : ""}>
                           {analysisDate ? format(analysisDate, "dd MMM yy") : "Select"}
@@ -225,135 +334,378 @@ export function BalancePositionsCard({ sessionId, onPositionsChange }: BalancePo
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={analysisDate ?? undefined}
-                        onSelect={(date) => setAnalysisDate(date ?? null)}
-                        initialFocus
-                        className="p-3 pointer-events-auto"
+                      <Calendar 
+                        mode="single" 
+                        selected={analysisDate || undefined} 
+                        onSelect={date => setAnalysisDate(date || null)} 
+                        initialFocus 
+                        className="p-3 pointer-events-auto" 
                       />
                     </PopoverContent>
                   </Popover>
                 </div>
-
+                
+                {/* CET1 Capital - Compact */}
                 <CompactCET1Input value={cet1Capital} onChange={setCet1Capital} />
               </div>
-
-              <Button size="sm" className="h-6 text-xs px-2 relative" onClick={() => setShowWhatIfBuilder(true)}>
-                <FlaskConical className="mr-1 h-3 w-3" />
-                What-If
-                {whatIfCount > 0 && (
-                  <span
-                    className={cn(
-                      "absolute -top-1 -right-1 h-3.5 min-w-[14px] rounded-full text-[9px] font-bold flex items-center justify-center px-1",
-                      isApplied ? "bg-success text-success-foreground" : "bg-warning text-warning-foreground"
-                    )}
-                  >
-                    {whatIfCount}
-                  </span>
-                )}
-              </Button>
-            </div>
-
-            <div className="flex-1 min-h-0 overflow-hidden rounded-md border border-border/50">
-              <div className="h-full overflow-auto balance-scroll-container">
-                <table className="w-full text-xs">
-                  <thead className="sticky top-0 z-10 bg-card">
-                    <tr className="text-muted-foreground border-b border-border">
-                      <th className="text-left font-medium py-1.5 pl-2 bg-muted/50">Category</th>
-                      <th className="text-right font-medium py-1.5 bg-muted/50">Amount</th>
-                      <th className="text-right font-medium py-1.5 bg-muted/50">Pos.</th>
-                      <th className="text-right font-medium py-1.5 pr-2 bg-muted/50">Avg Rate</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {balanceRows.length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="py-3 text-center text-muted-foreground">
-                          No sheets parsed.
-                        </td>
-                      </tr>
-                    ) : (
-                      balanceRows.map((row) => <SheetRow key={row.id} row={row} />)
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            )}
           </div>
-        )}
+          
+          {/* Right: Status indicator */}
+          <StatusIndicator loaded={isLoaded} />
+        </div>
+
+        <div className="dashboard-card-content">
+          {!isLoaded ? <div className={`compact-upload-zone ${isDragging ? 'active' : ''}`} onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave}>
+              <Upload className="h-5 w-5 text-muted-foreground mb-1" />
+              <p className="text-xs text-muted-foreground mb-2">Drop CSV or click to upload</p>
+              <div className="flex gap-1.5">
+                <label>
+                  <Input type="file" accept=".csv" className="hidden" onChange={handleInputChange} />
+                  <Button variant="outline" size="sm" asChild className="h-6 text-xs px-2">
+                    <span>Browse</span>
+                  </Button>
+                </label>
+                <Button variant="ghost" size="sm" onClick={handleDownloadSample} className="h-6 text-xs px-2">
+                  <Download className="mr-1 h-3 w-3" />
+                  Sample
+                </Button>
+              </div>
+            </div> : <div className="flex flex-col flex-1 min-h-0">
+              {/* Scrollable Balance Table with Sticky Header - Apple Style */}
+              <div className="flex-1 min-h-0 overflow-hidden rounded-xl border border-border/40">
+                <div className="h-full overflow-auto balance-scroll-container">
+                  <table className="w-full text-xs">
+                    <thead className="sticky top-0 z-10">
+                      <tr className="text-muted-foreground">
+                        <th className="text-left text-[10px] font-medium uppercase tracking-wide py-2 pl-3 bg-card border-b border-border/40">Category</th>
+                        <th className="text-right text-[10px] font-medium uppercase tracking-wide py-2 bg-card border-b border-border/40">Amount</th>
+                        <th className="text-right text-[10px] font-medium uppercase tracking-wide py-2 bg-card border-b border-border/40">Pos.</th>
+                        <th className="text-right text-[10px] font-medium uppercase tracking-wide py-2 pr-3 bg-card border-b border-border/40">Avg Rate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* Assets Row */}
+                      <BalanceRowWithDelta id="assets" label="Assets" amount={PLACEHOLDER_DATA.assets.amount} positions={PLACEHOLDER_DATA.assets.positions} avgRate={PLACEHOLDER_DATA.assets.avgRate} delta={whatIfDeltas.assets} isExpanded={expandedRows.has('assets')} onToggle={() => toggleRow('assets')} formatAmount={formatAmount} formatPercent={formatPercent} variant="asset" />
+                      {expandedRows.has('assets') && PLACEHOLDER_DATA.assets.subcategories.map(sub => <React.Fragment key={`asset-${sub.id}`}>
+                          <SubcategoryRowWithDelta 
+                            id={sub.id} 
+                            label={sub.name} 
+                            amount={sub.amount} 
+                            positions={sub.positions} 
+                            avgRate={sub.avgRate} 
+                            delta={whatIfDeltas[sub.id]} 
+                            formatAmount={formatAmount} 
+                            formatPercent={formatPercent}
+                            onViewDetails={() => openDetails(sub.id)}
+                          />
+                          {/* Render What-If items under this subcategory */}
+                          {whatIfDeltas[sub.id]?.items.map((mod: any) => <WhatIfItemRow key={mod.id} label={mod.label} amount={mod.notional || 0} type={mod.type} formatAmount={formatAmount} />)}
+                        </React.Fragment>)}
+                      
+                      {/* Liabilities Row */}
+                      <BalanceRowWithDelta id="liabilities" label="Liabilities" amount={PLACEHOLDER_DATA.liabilities.amount} positions={PLACEHOLDER_DATA.liabilities.positions} avgRate={PLACEHOLDER_DATA.liabilities.avgRate} delta={whatIfDeltas.liabilities} isExpanded={expandedRows.has('liabilities')} onToggle={() => toggleRow('liabilities')} formatAmount={formatAmount} formatPercent={formatPercent} variant="liability" />
+                      {expandedRows.has('liabilities') && PLACEHOLDER_DATA.liabilities.subcategories.map(sub => <React.Fragment key={`liability-${sub.id}`}>
+                          <SubcategoryRowWithDelta 
+                            id={sub.id} 
+                            label={sub.name} 
+                            amount={sub.amount} 
+                            positions={sub.positions} 
+                            avgRate={sub.avgRate} 
+                            delta={whatIfDeltas[sub.id]} 
+                            formatAmount={formatAmount} 
+                            formatPercent={formatPercent}
+                            onViewDetails={() => openDetails(sub.id)}
+                          />
+                          {/* Render What-If items under this subcategory */}
+                          {whatIfDeltas[sub.id]?.items.map((mod: any) => <WhatIfItemRow key={mod.id} label={mod.label} amount={mod.notional || 0} type={mod.type} formatAmount={formatAmount} />)}
+                        </React.Fragment>)}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              {/* Action Buttons - What-If, Behavioural and Reset */}
+              <div className="flex gap-2 pt-2 border-t border-border/30 mt-2">
+                <Button size="sm" onClick={() => setShowWhatIfBuilder(true)} className="flex-1 h-6 text-xs relative">
+                  <FlaskConical className="mr-1 h-3 w-3" />
+                  What-If
+                  {modifications.length > 0 && <span className={`absolute -top-1 -right-1 h-3.5 min-w-[14px] rounded-full text-[9px] font-bold flex items-center justify-center px-1 ${isApplied ? 'bg-success text-success-foreground' : 'bg-warning text-warning-foreground'}`}>
+                      {modifications.length}
+                    </span>}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setShowBehaviouralModal(true)}
+                  className="flex-1 h-6 text-xs gap-1 relative"
+                >
+                  <Brain className="h-3 w-3" />
+                  Behavioural
+                  {hasCustomAssumptions && (
+                    <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-background border border-primary-foreground" />
+                  )}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => {
+              resetAll();
+              handleReplace();
+            }} className="h-6 w-6 p-0 shrink-0 rounded-full" title="Reset all">
+                  <RotateCcw className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>}
+        </div>
       </div>
-    </div>
-    <WhatIfBuilder
-      sessionId={sessionId}
-      open={showWhatIfBuilder}
-      onOpenChange={setShowWhatIfBuilder}
-      balanceRows={balanceRows}
-      sampleRows={summary?.sample_rows ?? {}}
-    />
-    </>
-  );
+
+      {/* Balance Details Modal - Read-only aggregation explorer */}
+      <BalanceDetailsModal open={showDetails} onOpenChange={setShowDetails} selectedCategory={selectedCategoryForDetails} />
+
+      {/* What-If Builder Side Panel */}
+      <WhatIfBuilder open={showWhatIfBuilder} onOpenChange={setShowWhatIfBuilder} />
+
+      {/* Behavioural Assumptions Modal */}
+      <BehaviouralAssumptionsModal open={showBehaviouralModal} onOpenChange={setShowBehaviouralModal} />
+    </>;
 }
 
-function StatusIndicator({ loaded }: { loaded: boolean }) {
-  return loaded ? (
-    <div className="flex items-center gap-1 text-success">
+// Status Indicator Component
+function StatusIndicator({
+  loaded
+}: {
+  loaded: boolean;
+}) {
+  return loaded ? <div className="flex items-center gap-1 text-success">
       <CheckCircle2 className="h-3 w-3" />
       <span className="text-[10px] font-medium">Loaded</span>
-    </div>
-  ) : (
-    <div className="flex items-center gap-1 text-muted-foreground">
+    </div> : <div className="flex items-center gap-1 text-muted-foreground">
       <XCircle className="h-3 w-3" />
       <span className="text-[10px] font-medium">Not loaded</span>
-    </div>
-  );
+    </div>;
 }
 
-function SheetRow({ row }: { row: BalanceUiRow }) {
-  return (
-    <tr className="border-b border-border/30 hover:bg-muted/20 transition-colors">
-      <td className="py-1.5 pl-2 font-medium text-foreground">{row.label}</td>
-      <td className="text-right py-1.5 pr-2 font-mono text-muted-foreground">
-        {formatOptionalAmount(row.amount)}
+// Balance Row Component with What-If delta display
+interface BalanceRowWithDeltaProps {
+  id: string;
+  label: string;
+  amount: number;
+  positions: number;
+  avgRate: number;
+  delta: {
+    amount: number;
+    positions: number;
+    rate: number;
+    items: any[];
+  };
+  isExpanded: boolean;
+  onToggle: () => void;
+  formatAmount: (n: number) => string;
+  formatPercent: (n: number) => string;
+  variant: 'asset' | 'liability';
+}
+function BalanceRowWithDelta({
+  label,
+  amount,
+  positions,
+  avgRate,
+  delta,
+  isExpanded,
+  onToggle,
+  formatAmount,
+  formatPercent,
+  variant
+}: BalanceRowWithDeltaProps) {
+  const ChevronIcon = isExpanded ? ChevronDown : ChevronRight;
+  const labelColor = variant === 'asset' ? 'text-success' : 'text-destructive';
+  const hasDelta = delta.amount !== 0 || delta.positions !== 0;
+  const formatDelta = (n: number) => {
+    if (n === 0) return '';
+    const sign = n > 0 ? '+' : '';
+    if (Math.abs(n) >= 1e9) return `${sign}${(n / 1e9).toFixed(1)}B`;
+    if (Math.abs(n) >= 1e6) return `${sign}${(n / 1e6).toFixed(0)}M`;
+    if (Math.abs(n) >= 1e3) return `${sign}${(n / 1e3).toFixed(0)}K`;
+    return `${sign}${n}`;
+  };
+  return <tr className="group cursor-pointer hover:bg-accent/50 transition-colors duration-150 border-b border-border/30" onClick={onToggle}>
+      <td className="py-2 pl-3">
+        <div className="flex items-center gap-1.5">
+          <ChevronIcon className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition-colors" />
+          <span className={`font-semibold ${labelColor}`}>{label}</span>
+        </div>
       </td>
-      <td className="text-right py-1.5 font-mono text-muted-foreground">{row.positions}</td>
-      <td className="text-right py-1.5 pr-2 font-mono text-muted-foreground">
-        {formatOptionalPercent(row.avgRate)}
+      <td className="text-right py-2 font-mono font-medium text-foreground">
+        {formatAmount(amount)}
+        {hasDelta && delta.amount !== 0 && <span className={`ml-1 text-[9px] ${delta.amount > 0 ? 'text-success' : 'text-destructive'}`}>
+            ({formatDelta(delta.amount)})
+          </span>}
       </td>
-    </tr>
-  );
+      <td className="text-right py-2 font-mono text-muted-foreground">
+        {positions}
+        {hasDelta && delta.positions !== 0 && <span className={`ml-1 text-[9px] ${delta.positions > 0 ? 'text-success' : 'text-destructive'}`}>
+            ({delta.positions > 0 ? '+' : ''}{delta.positions})
+          </span>}
+      </td>
+      <td className="text-right py-2 pr-3 font-mono text-muted-foreground">
+        {formatPercent(avgRate)}
+        {hasDelta && delta.rate !== 0 && <span className={`ml-1 text-[9px] ${delta.rate > 0 ? 'text-success' : 'text-destructive'}`}>
+            ({delta.rate > 0 ? '+' : ''}{(delta.rate * 100).toFixed(2)}%)
+          </span>}
+      </td>
+    </tr>;
 }
 
-function CompactCET1Input({
-  value,
-  onChange,
-}: {
+// Subcategory Row Component with What-If delta display and View Details icon
+interface SubcategoryRowWithDeltaProps {
+  id: string;
+  label: string;
+  amount: number;
+  positions: number;
+  avgRate: number;
+  delta?: {
+    amount: number;
+    positions: number;
+    rate: number;
+    items: any[];
+  };
+  formatAmount: (n: number) => string;
+  formatPercent: (n: number) => string;
+  onViewDetails: () => void;
+}
+function SubcategoryRowWithDelta({
+  label,
+  amount,
+  positions,
+  avgRate,
+  delta,
+  formatAmount,
+  formatPercent,
+  onViewDetails
+}: SubcategoryRowWithDeltaProps) {
+  const hasDelta = delta && (delta.amount !== 0 || delta.positions !== 0);
+  const formatDelta = (n: number) => {
+    if (n === 0) return '';
+    const sign = n > 0 ? '+' : '';
+    if (Math.abs(n) >= 1e9) return `${sign}${(n / 1e9).toFixed(1)}B`;
+    if (Math.abs(n) >= 1e6) return `${sign}${(n / 1e6).toFixed(0)}M`;
+    if (Math.abs(n) >= 1e3) return `${sign}${(n / 1e3).toFixed(0)}K`;
+    return `${sign}${n}`;
+  };
+  return <tr className="text-muted-foreground group hover:bg-accent/40 transition-colors duration-150 border-b border-border/20">
+      <td className="py-1.5 pl-8">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px]">{label}</span>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewDetails();
+            }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded-md hover:bg-muted/60"
+            title={`View ${label} details`}
+          >
+            <Eye className="h-3 w-3 text-muted-foreground hover:text-foreground transition-colors" />
+          </button>
+        </div>
+      </td>
+      <td className="text-right py-1.5 font-mono text-[11px]">
+        {formatAmount(amount)}
+        {hasDelta && delta.amount !== 0 && <span className={`ml-1 text-[9px] ${delta.amount > 0 ? 'text-success' : 'text-destructive'}`}>
+            ({formatDelta(delta.amount)})
+          </span>}
+      </td>
+      <td className="text-right py-1.5 font-mono text-[11px]">
+        {positions}
+        {hasDelta && delta.positions !== 0 && <span className={`ml-1 text-[9px] ${delta.positions > 0 ? 'text-success' : 'text-destructive'}`}>
+            ({delta.positions > 0 ? '+' : ''}{delta.positions})
+          </span>}
+      </td>
+      <td className="text-right py-1.5 pr-3 font-mono text-[11px]">
+        {formatPercent(avgRate)}
+        {hasDelta && delta.rate !== 0 && <span className={`ml-1 text-[9px] ${delta.rate > 0 ? 'text-success' : 'text-destructive'}`}>
+            ({delta.rate > 0 ? '+' : ''}{(delta.rate * 100).toFixed(2)}%)
+          </span>}
+      </td>
+    </tr>;
+}
+
+// What-If Item Row (shows individual What-If positions)
+interface WhatIfItemRowProps {
+  label: string;
+  amount: number;
+  type: 'add' | 'remove';
+  formatAmount: (n: number) => string;
+}
+function WhatIfItemRow({
+  label,
+  amount,
+  type,
+  formatAmount
+}: WhatIfItemRowProps) {
+  const isAdd = type === 'add';
+  return <tr className={`${isAdd ? 'bg-success/5' : 'bg-destructive/5'} border-b border-border/10`}>
+      <td className="py-1 pl-11">
+        <span className={`text-[10px] font-medium ${isAdd ? 'text-success' : 'text-destructive'}`}>
+          {isAdd ? '+ ' : '− '}{label}
+          <span className="ml-1 text-[8px] opacity-60">(What-If)</span>
+        </span>
+      </td>
+      <td className={`text-right py-1 font-mono text-[10px] ${isAdd ? 'text-success' : 'text-destructive'}`}>
+        {isAdd ? '+' : '−'}{formatAmount(Math.abs(amount))}
+      </td>
+      <td className={`text-right py-1 font-mono text-[10px] ${isAdd ? 'text-success' : 'text-destructive'}`}>
+        {isAdd ? '+1' : '−1'}
+      </td>
+      <td className="text-right py-1 pr-3 font-mono text-[10px] text-muted-foreground">
+        —
+      </td>
+    </tr>;
+}
+
+// Compact CET1 Input for header row
+interface CompactCET1InputProps {
   value: number | null;
   onChange: (value: number | null) => void;
-}) {
+}
+function CompactCET1Input({ value, onChange }: CompactCET1InputProps) {
   const [isEditing, setIsEditing] = useState(value === null);
-  const [inputValue, setInputValue] = useState(value?.toString() ?? "");
+  const [inputValue, setInputValue] = useState(value?.toString() || '');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (value === null) {
-      setInputValue("");
       setIsEditing(true);
-      return;
+      setInputValue('');
+    } else {
+      setInputValue(value.toString());
     }
-    setInputValue(value.toString());
   }, [value]);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isEditing]);
 
   const formatCET1Display = (num: number) => {
     if (num >= 1e9) return `${(num / 1e9).toFixed(1)}B`;
     if (num >= 1e6) return `${(num / 1e6).toFixed(0)}M`;
-    return num.toLocaleString("en-US");
+    return num.toLocaleString('en-US');
   };
 
-  const confirmValue = () => {
-    const parsed = Number(inputValue);
-    if (Number.isNaN(parsed) || parsed <= 0) return;
-    onChange(parsed);
-    setIsEditing(false);
+  const handleConfirm = () => {
+    const parsed = parseFloat(inputValue);
+    if (!isNaN(parsed) && parsed > 0) {
+      onChange(parsed);
+      setIsEditing(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleConfirm();
+    } else if (e.key === 'Escape') {
+      if (value !== null) {
+        setInputValue(value.toString());
+        setIsEditing(false);
+      }
+    }
   };
 
   return (
@@ -361,21 +713,19 @@ function CompactCET1Input({
       <span className="text-[10px] font-medium text-muted-foreground">CET1</span>
       {isEditing ? (
         <input
+          ref={inputRef}
           type="text"
           inputMode="numeric"
           placeholder="Value"
           value={inputValue}
-          onChange={(e) => setInputValue(e.target.value.replace(/[^0-9.]/g, ""))}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") confirmValue();
-            if (e.key === "Escape" && value !== null) {
-              setInputValue(value.toString());
-              setIsEditing(false);
-            }
-          }}
+          onChange={e => setInputValue(e.target.value.replace(/[^0-9.]/g, ''))}
+          onKeyDown={handleKeyDown}
           onBlur={() => {
-            if (inputValue.trim() === "") return;
-            confirmValue();
+            if (inputValue && value !== null && inputValue === value.toString()) {
+              setIsEditing(false);
+            } else if (inputValue) {
+              handleConfirm();
+            }
           }}
           className={cn(
             "h-6 px-2 w-20 rounded border text-[11px] font-mono",
@@ -393,7 +743,7 @@ function CompactCET1Input({
           title="Click to edit"
         >
           <span className="font-mono font-medium text-foreground">{formatCET1Display(value!)}</span>
-          <Pencil className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+          <Pencil className="h-2 w-2 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
         </button>
       )}
     </div>

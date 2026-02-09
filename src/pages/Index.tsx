@@ -3,22 +3,15 @@ import { BalancePositionsCard } from '@/components/BalancePositionsCard';
 import { CurvesAndScenariosCard } from '@/components/CurvesAndScenariosCard';
 import { ResultsCard } from '@/components/ResultsCard';
 import { WhatIfProvider } from '@/components/whatif/WhatIfContext';
+import { BehaviouralProvider } from '@/components/behavioural/BehaviouralContext';
 import { runCalculation } from '@/lib/calculationEngine';
 import type { Position, YieldCurve, Scenario, CalculationResults } from '@/types/financial';
 import { DEFAULT_SCENARIOS, SAMPLE_POSITIONS, SAMPLE_YIELD_CURVE } from '@/types/financial';
 import { Button } from '@/components/ui/button';
 import { FileSpreadsheet, Calculator, TrendingUp } from 'lucide-react';
 
-import { useSession } from '../hooks/useSession';
-
 const Index = () => {
-  // 🔥 PRUEBA DEFINITIVA: si NO ves esto en Console, este archivo NO se está renderizando
-  console.log('[Index] render');
-
-  // ✅ Hook de sesión SIEMPRE arriba
-  const { sessionId, loading, error } = useSession();
-
-  // ✅ Todos los hooks SIEMPRE antes de cualquier return
+  // State management
   const [positions, setPositions] = useState<Position[]>([]);
   const [curves, setCurves] = useState<YieldCurve[]>([]);
   const [selectedCurves, setSelectedCurves] = useState<string[]>(['risk-free', 'euribor-3m']);
@@ -26,19 +19,23 @@ const Index = () => {
   const [results, setResults] = useState<CalculationResults | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
-  const canCalculate =
-    positions.length > 0 &&
+  // Check if calculation is possible
+  const canCalculate = 
+    positions.length > 0 && 
     selectedCurves.length > 0 &&
     scenarios.some((s) => s.enabled);
 
+  // Handle calculation
   const handleCalculate = useCallback(() => {
     if (!canCalculate) return;
 
+    // Use sample curve for calculation (placeholder)
     const baseCurve = curves.length > 0 ? curves[0] : SAMPLE_YIELD_CURVE;
     const discountCurve = baseCurve;
 
     setIsCalculating(true);
-
+    
+    // Simulate async calculation
     setTimeout(() => {
       const calculationResults = runCalculation(
         positions,
@@ -51,69 +48,48 @@ const Index = () => {
     }, 500);
   }, [canCalculate, positions, curves, scenarios]);
 
+  // Load sample data
   const handleLoadSampleData = useCallback(() => {
     setPositions(SAMPLE_POSITIONS);
     setCurves([SAMPLE_YIELD_CURVE]);
   }, []);
 
-  // ✅ Gating: ahora además mostramos el motivo para debug
-  if (loading) {
-    return (
-      <div className="p-4">
-        <div className="font-semibold">Initializing session…</div>
-        <div className="text-xs text-muted-foreground mt-1">
-          (If you keep seeing the dashboard, this Index.tsx is not the active route)
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !sessionId) {
-    return (
-      <div className="p-4">
-        <div className="font-semibold">Backend not available</div>
-        <div className="text-xs text-muted-foreground mt-1">
-          error: {error ? String(error) : 'no sessionId'}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <WhatIfProvider>
+    <BehaviouralProvider>
+      <WhatIfProvider>
       <div className="h-screen flex flex-col bg-background overflow-hidden">
-        <header className="shrink-0 border-b border-border bg-card">
-          <div className="flex items-center justify-between px-4 py-2">
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
-                <TrendingUp className="h-3.5 w-3.5 text-primary-foreground" />
+        {/* Apple-style Glass Header */}
+        <header className="shrink-0 bg-white/70 backdrop-blur-xl border-b border-border/50 sticky top-0 z-50">
+          <div className="flex items-center justify-between px-5 py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary shadow-sm">
+                <TrendingUp className="h-4 w-4 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-sm font-semibold text-foreground leading-tight">EVE/NII Calculator</h1>
-                <p className="text-[10px] text-muted-foreground leading-tight">IRRBB Analysis Dashboard</p>
+                <h1 className="text-sm font-semibold text-foreground leading-tight tracking-tight">EVE/NII Calculator</h1>
+                <p className="text-[11px] text-muted-foreground leading-tight">IRRBB Analysis Dashboard</p>
               </div>
             </div>
-
-            <div className="flex items-center gap-2">
+            
+            <div className="flex items-center gap-2.5">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleLoadSampleData}
-                className="h-7 text-xs gap-1.5"
+                className="h-8 text-xs gap-2 text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded-lg transition-all duration-200"
               >
                 <FileSpreadsheet className="h-3.5 w-3.5" />
                 Load Sample
               </Button>
-
               <Button
                 size="sm"
-                className="h-7 text-xs gap-1.5"
+                className="h-8 text-xs gap-2 rounded-lg shadow-sm transition-all duration-200 hover:shadow-md"
                 onClick={handleCalculate}
                 disabled={!canCalculate || isCalculating}
               >
                 {isCalculating ? (
                   <>
-                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
                     Calculating...
                   </>
                 ) : (
@@ -127,22 +103,24 @@ const Index = () => {
           </div>
         </header>
 
+        {/* Dashboard Grid - 3 quadrants: 1 left, 2 stacked right */}
         <main className="flex-1 p-3 overflow-hidden">
           <div className="grid grid-cols-2 grid-rows-2 gap-3 h-full">
+            {/* Top-left: Balance Positions */}
             <BalancePositionsCard
-              sessionId={sessionId}
               positions={positions}
               onPositionsChange={setPositions}
             />
-
-
+            
+            {/* Top-right: Curves & Scenarios (merged) */}
             <CurvesAndScenariosCard
               scenarios={scenarios}
               onScenariosChange={setScenarios}
               selectedCurves={selectedCurves}
               onSelectedCurvesChange={setSelectedCurves}
             />
-
+            
+            {/* Bottom: Results (spans full width) */}
             <div className="col-span-2">
               <ResultsCard
                 results={results}
@@ -152,13 +130,15 @@ const Index = () => {
           </div>
         </main>
 
-        <footer className="shrink-0 border-t border-border bg-card py-1.5 px-4">
-          <p className="text-[10px] text-muted-foreground text-center">
+        {/* Apple-style Footer */}
+        <footer className="shrink-0 border-t border-border/40 bg-white/50 backdrop-blur-sm py-2 px-5">
+          <p className="text-[11px] text-muted-foreground text-center font-normal">
             Illustrative IRRBB prototype • Results are indicative only
           </p>
         </footer>
       </div>
-    </WhatIfProvider>
+      </WhatIfProvider>
+    </BehaviouralProvider>
   );
 };
 

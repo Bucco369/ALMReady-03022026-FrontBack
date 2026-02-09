@@ -7,6 +7,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Libre+Caslon+Text&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -16,137 +19,143 @@
 
 @layer base {
   :root {
-    /* Core backgrounds - warm neutral */
-    --background: 0 0% 96%;
-    --foreground: 0 0% 9%;
+    /* Apple-style backgrounds */
+    --background: 240 9% 97%;
+    --foreground: 217 32.5843% 17.451%;
 
-    /* Card surfaces - clean white */
-    --card: 0 0% 98%;
-    --card-foreground: 0 0% 9%;
+    /* Card surfaces - pure white */
+    --card: 0 0% 100%;
+    --card-foreground: 217 32.5843% 17.451%;
 
-    --popover: 0 0% 89%;
-    --popover-foreground: 0 0% 9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 3% 12%;
 
-    /* Primary - Muted professional blue */
-    --primary: 20 90% 48%;
-    --primary-foreground: 33 100% 96%;
+    /* Primary - Graphite (Apple Pro style) */
+    --primary: 215 25% 26.6667%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Soft neutral */
-    --secondary: 0 0% 32%;
-    --secondary-foreground: 0 0% 98%;
+    /* Secondary - Soft graphite */
+    --secondary: 240 9% 97%;
+    --secondary-foreground: 240 3% 12%;
 
-    /* Muted - For subtle text and backgrounds */
-    --muted: 0 0% 63%;
-    --muted-foreground: 0 0% 9%;
+    /* Muted - Apple gray */
+    --muted: 240 8% 91%;
+    --muted-foreground: 240 2% 44%;
 
-    /* Accent - Highlight interactions */
-    --accent: 47 100% 96%;
-    --accent-foreground: 37 92% 50%;
+    /* Accent - Light selection */
+    --accent: 240 9% 95%;
+    --accent-foreground: 240 3% 12%;
 
-    /* Destructive - Soft red for negative values */
-    --destructive: 0 72% 50%;
-    --destructive-foreground: 0 85% 97%;
+    /* Destructive - Elegant carmine for stress/negative */
+    --destructive: 349 82% 35%;
+    --destructive-foreground: 0 0% 100%;
 
-    /* Success - Soft green for positive values */
-    --success: 152 45% 42%;
+    /* Success - Subtle green */
+    --success: 142 45% 38%;
     --success-foreground: 0 0% 100%;
 
-    /* Warning - Soft amber */
-    --warning: 38 70% 50%;
+    /* Warning - Muted amber */
+    --warning: 38 60% 45%;
     --warning-foreground: 0 0% 100%;
 
-    /* Border and inputs */
-    --border: 0 0% 83%;
-    --input: 0 0% 83%;
-    --ring: 20 90% 48%;
+    /* Border - Apple hairline */
+    --border: 240 8% 91%;
+    --input: 240 8% 91%;
+    --ring: 240 3% 18%;
 
-    --radius: 0.75rem;
+    --radius: 0.875rem;
 
-    /* Table specific */
-    --table-header: 220 14% 97%;
-    --table-row-hover: 215 50% 98%;
-    --table-border: 220 14% 90%;
+    /* Table specific - minimal */
+    --table-header: 240 9% 98%;
+    --table-row-hover: 240 9% 96%;
+    --table-border: 240 8% 93%;
 
     /* Sidebar */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 9%;
-    --sidebar-primary: 20 90% 48%;
-    --sidebar-primary-foreground: 33 100% 96%;
-    --sidebar-accent: 0 0% 32%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 83%;
-    --sidebar-ring: 20 90% 48%;
-    --chart-1: 27 95% 60%;
-    --chart-2: 43 96% 56%;
-    --chart-3: 47 95% 53%;
-    --chart-4: 24 94% 53%;
-    --chart-5: 0 0% 45%;
-    --sidebar: 0 0% 98%;
-    --font-sans: 'Roboto', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-    --font-serif: 'Libre Caslon Text', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-    --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-    --tracking-normal: 0em;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 3% 12%;
+    --sidebar-primary: 240 3% 18%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 9% 95%;
+    --sidebar-accent-foreground: 240 3% 12%;
+    --sidebar-border: 240 8% 91%;
+    --sidebar-ring: 240 3% 18%;
+
+    /* Charts - Graphite/neutral palette */
+    --chart-1: 240 3% 18%;
+    --chart-2: 240 2% 44%;
+    --chart-3: 240 3% 65%;
+    --chart-4: 0 42% 56%;
+    --chart-5: 240 8% 85%;
+    --sidebar: 0 0% 100%;
+
+    /* Apple-style typography */
+    --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+    --font-serif: 'New York', 'Georgia', ui-serif, serif;
+    --font-mono: 'SF Mono', 'Menlo', 'Monaco', ui-monospace, monospace;
+
+    /* Subtle Apple shadows */
+    --shadow-2xs: 0 0.5px 1px 0 hsl(0 0% 0% / 0.02);
+    --shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.03);
+    --shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.04), 0 1px 2px -1px hsl(0 0% 0% / 0.02);
+    --shadow: 0 2px 8px 0 hsl(0 0% 0% / 0.04), 0 1px 3px -1px hsl(0 0% 0% / 0.03);
+    --shadow-md: 0 4px 12px 0 hsl(0 0% 0% / 0.05), 0 2px 4px -2px hsl(0 0% 0% / 0.03);
+    --shadow-lg: 0 8px 24px 0 hsl(0 0% 0% / 0.06), 0 4px 8px -4px hsl(0 0% 0% / 0.04);
+    --shadow-xl: 0 16px 48px 0 hsl(0 0% 0% / 0.08), 0 8px 16px -8px hsl(0 0% 0% / 0.05);
+    --shadow-2xl: 0 24px 64px 0 hsl(0 0% 0% / 0.12);
+    --tracking-normal: -0.01em;
     --spacing: 0.25rem;
   }
 
   .dark {
-    --background: 0 0% 9%;
+    --background: 0 0% 7%;
     --foreground: 0 0% 98%;
-    --card: 0 0% 14%;
+    --card: 0 0% 11%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 25%;
+    --popover: 0 0% 13%;
     --popover-foreground: 0 0% 98%;
-    --primary: 27 95% 60%;
-    --primary-foreground: 12 81% 14%;
-    --secondary: 0 0% 45%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 18%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 45%;
-    --muted-foreground: 0 0% 98%;
-    --accent: 20 91% 14%;
-    --accent-foreground: 43 96% 56%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 85% 97%;
-    --success: 152 45% 38%;
-    --success-foreground: 220 14% 96%;
-    --warning: 38 70% 45%;
-    --warning-foreground: 220 14% 96%;
-    --border: 0 0% 32%;
-    --input: 0 0% 32%;
-    --ring: 27 95% 60%;
-    --table-header: 220 20% 13%;
-    --table-row-hover: 220 20% 15%;
-    --table-border: 220 14% 22%;
-    --sidebar-background: 220 20% 8%;
+    --muted: 0 0% 22%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 0 0% 16%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 349 82% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 45% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 60% 50%;
+    --warning-foreground: 0 0% 100%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 0% 80%;
+    --table-header: 0 0% 13%;
+    --table-row-hover: 0 0% 14%;
+    --table-border: 0 0% 18%;
+    --sidebar-background: 0 0% 9%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 27 95% 60%;
-    --sidebar-primary-foreground: 12 81% 14%;
-    --sidebar-accent: 43 96% 56%;
-    --sidebar-accent-foreground: 20 91% 14%;
-    --sidebar-border: 0 0% 32%;
-    --sidebar-ring: 27 95% 60%;
-    --chart-1: 30 97% 72%;
-    --chart-2: 45 96% 64%;
-    --chart-3: 48 96% 76%;
-    --chart-4: 27 95% 60%;
-    --chart-5: 0 0% 45%;
-    --sidebar: 0 0% 14%;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-    --radius: 0rem;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 0 0% 9%;
+    --sidebar-accent: 0 0% 16%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 0 0% 80%;
+    --chart-1: 0 0% 90%;
+    --chart-2: 0 0% 70%;
+    --chart-3: 0 0% 50%;
+    --chart-4: 349 82% 50%;
+    --chart-5: 0 0% 35%;
+    --sidebar: 0 0% 11%;
+    --shadow-2xs: 0 0.5px 1px 0 hsl(0 0% 0% / 0.1);
+    --shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.15);
+    --shadow-sm: 0 1px 3px 0 hsl(0 0% 0% / 0.2), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow: 0 2px 8px 0 hsl(0 0% 0% / 0.2), 0 1px 3px -1px hsl(0 0% 0% / 0.15);
+    --shadow-md: 0 4px 12px 0 hsl(0 0% 0% / 0.25), 0 2px 4px -2px hsl(0 0% 0% / 0.15);
+    --shadow-lg: 0 8px 24px 0 hsl(0 0% 0% / 0.3), 0 4px 8px -4px hsl(0 0% 0% / 0.2);
+    --shadow-xl: 0 16px 48px 0 hsl(0 0% 0% / 0.35), 0 8px 16px -8px hsl(0 0% 0% / 0.25);
+    --shadow-2xl: 0 24px 64px 0 hsl(0 0% 0% / 0.4);
+    --radius: 0.875rem;
   }
 }
 
@@ -157,33 +166,42 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+    font-feature-settings: "kern", "liga", "calt";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
   }
 }
 
 @layer components {
-  /* Dashboard card - compact executive style */
+  /* Apple-style glass header */
+  .glass-header {
+    @apply bg-white/70 backdrop-blur-xl border-b border-border/50;
+  }
+
+  /* Dashboard card - Apple style */
   .dashboard-card {
-    @apply flex flex-col rounded-lg border border-border bg-card shadow-sm overflow-hidden;
+    @apply flex flex-col rounded-2xl border border-border/60 bg-card overflow-hidden;
+    box-shadow: 0 2px 8px 0 hsl(0 0% 0% / 0.04), 0 0 0 1px hsl(0 0% 0% / 0.02);
   }
 
   .dashboard-card-header {
-    @apply flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30 shrink-0;
+    @apply flex items-center justify-between px-4 py-3 border-b border-border/40 bg-card shrink-0;
   }
 
   .dashboard-card-content {
-    @apply flex-1 p-3 flex flex-col min-h-0;
+    @apply flex-1 p-4 flex flex-col min-h-0;
   }
 
-  /* Balance scroll container with custom scrollbar */
+  /* Apple-style scrollbar */
   .balance-scroll-container {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--border)) transparent;
+    scrollbar-color: hsl(240 3% 75% / 0.5) transparent;
   }
 
   .balance-scroll-container::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
 
   .balance-scroll-container::-webkit-scrollbar-track {
@@ -191,42 +209,52 @@
   }
 
   .balance-scroll-container::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--border));
-    border-radius: 3px;
+    background-color: hsl(240 3% 75% / 0.5);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
   }
 
   .balance-scroll-container::-webkit-scrollbar-thumb:hover {
-    background-color: hsl(var(--muted-foreground) / 0.3);
+    background-color: hsl(240 3% 60% / 0.6);
   }
 
-  /* Compact upload zone */
+  /* Upload zone - Apple style */
   .compact-upload-zone {
-    @apply flex flex-col items-center justify-center flex-1 rounded-md border border-dashed border-border bg-muted/20 p-3 transition-all duration-200;
+    @apply flex flex-col items-center justify-center flex-1 rounded-xl border-2 border-dashed border-border/60 bg-muted/30 p-4 transition-all duration-300 ease-out;
   }
 
   .compact-upload-zone:hover {
-    @apply border-primary/40 bg-accent/50;
+    @apply border-primary/30 bg-accent/40;
   }
 
   .compact-upload-zone.active {
-    @apply border-primary bg-accent;
+    @apply border-primary/50 bg-accent/60;
   }
 
-  /* Data table styling - compact */
+  /* Data table - minimal Apple style */
   .data-table {
     @apply w-full border-collapse text-sm;
   }
 
   .data-table th {
-    @apply bg-muted/50 px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground;
+    @apply px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground bg-transparent border-b border-border/40;
   }
 
   .data-table td {
-    @apply border-t border-border px-3 py-2;
+    @apply px-4 py-2.5 border-b border-border/30;
+  }
+
+  .data-table tr {
+    @apply transition-colors duration-150;
   }
 
   .data-table tr:hover td {
     @apply bg-accent/50;
+  }
+
+  .data-table tr.selected td {
+    @apply bg-primary/5;
   }
 
   /* Value display utilities */
@@ -238,72 +266,88 @@
     @apply text-destructive;
   }
 
-  /* Legacy quadrant card (for backwards compat) */
+  /* Apple-style quadrant card */
   .quadrant-card {
-    @apply rounded-xl border border-border bg-card shadow-sm transition-shadow duration-200 hover:shadow-md;
+    @apply rounded-2xl border border-border/60 bg-card transition-all duration-300;
+    box-shadow: 0 2px 8px 0 hsl(0 0% 0% / 0.04), 0 0 0 1px hsl(0 0% 0% / 0.02);
+  }
+
+  .quadrant-card:hover {
+    box-shadow: 0 4px 16px 0 hsl(0 0% 0% / 0.06), 0 0 0 1px hsl(0 0% 0% / 0.03);
   }
 
   .quadrant-header {
-    @apply flex items-center justify-between border-b border-border px-5 py-4;
+    @apply flex items-center justify-between border-b border-border/40 px-5 py-4;
   }
 
   .quadrant-title {
-    @apply flex items-center gap-2.5 text-base font-semibold text-foreground;
+    @apply flex items-center gap-2.5 text-base font-semibold text-foreground tracking-tight;
   }
 
   .quadrant-content {
     @apply p-5;
   }
 
-  /* Metric display */
+  /* Metric display - Apple style */
   .metric-row {
-    @apply flex items-center justify-between py-2;
+    @apply flex items-center justify-between py-2.5;
   }
 
   .metric-label {
-    @apply text-sm text-muted-foreground;
+    @apply text-sm text-muted-foreground font-normal;
   }
 
   .metric-value {
-    @apply text-sm font-semibold text-foreground tabular-nums;
+    @apply text-sm font-semibold text-foreground tabular-nums tracking-tight;
   }
 
   /* Empty state */
   .empty-state {
-    @apply flex flex-col items-center justify-center py-8 text-center;
+    @apply flex flex-col items-center justify-center py-10 text-center;
   }
 
   .empty-state-icon {
-    @apply mb-3 h-12 w-12 text-muted-foreground/40;
+    @apply mb-4 h-12 w-12 text-muted-foreground/30;
   }
 
   .empty-state-text {
-    @apply text-sm text-muted-foreground;
+    @apply text-sm text-muted-foreground font-normal;
   }
 
-  /* Scenario card */
+  /* Scenario card - Apple selection style */
   .scenario-card {
-    @apply flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-all cursor-pointer;
+    @apply flex items-center gap-3 rounded-xl border border-border/50 bg-card p-3.5 transition-all duration-200 cursor-pointer;
   }
 
   .scenario-card:hover {
-    @apply border-primary/30 bg-accent/30;
+    @apply bg-accent/40;
   }
 
   .scenario-card.selected {
-    @apply border-primary bg-primary/5;
+    @apply border-primary/20 bg-primary/5;
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.1);
   }
 
-  /* Upload zone (legacy) */
+  /* Upload zone - Apple style */
   .upload-zone {
-    @apply flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/20 p-8 transition-all duration-200;
+    @apply flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/50 bg-muted/20 p-10 transition-all duration-300 ease-out;
   }
 
   .upload-zone:hover {
-    @apply border-primary/40 bg-accent/50;
+    @apply border-primary/30 bg-accent/30;
   }
 
   .upload-zone.active {
-    @apply border-primary bg-accent;
+    @apply border-primary/40 bg-accent/50;
+  }
+
+  /* Stress/negative badges - carmine accent */
+  .badge-stress {
+    @apply bg-destructive/10 text-destructive border-destructive/20;
+  }
+
+  /* Apple-style focus rings */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary/20 ring-offset-2 ring-offset-background;
   }
 }

@@ -1,50 +1,47 @@
 import React, { useState } from 'react';
 import { BarChart3, Eye, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { CalculationResults } from '@/types/financial';
 import { EVEChart } from '@/components/results/EVEChart';
 import { NIIChart } from '@/components/results/NIIChart';
 import { useWhatIf } from '@/components/whatif/WhatIfContext';
-
 interface ResultsCardProps {
   results: CalculationResults | null;
   isCalculating: boolean;
 }
-
-export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
+export function ResultsCard({
+  results,
+  isCalculating
+}: ResultsCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [activeChart, setActiveChart] = useState<'eve' | 'nii'>('eve');
-  const { modifications, isApplied, cet1Capital: contextCet1, analysisDate } = useWhatIf();
-  
+  const {
+    modifications,
+    isApplied,
+    cet1Capital: contextCet1,
+    analysisDate
+  } = useWhatIf();
   const hasModifications = modifications.length > 0 && isApplied;
-  
+
   // CET1 capital for percentage calculations (default to 500M if not set)
   const cet1Capital = contextCet1 || 500_000_000;
-  
+
   // Mock What-If impact values (in real implementation, these would come from calculations)
   const whatIfImpact = {
     baseEve: hasModifications ? 12_500_000 : 0,
     worstEve: hasModifications ? 8_200_000 : 0,
     baseNii: hasModifications ? -2_100_000 : 0,
-    worstNii: hasModifications ? -1_800_000 : 0,
+    worstNii: hasModifications ? -1_800_000 : 0
   };
-
   const formatCurrency = (num: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
+      maximumFractionDigits: 0
     }).format(num);
   };
-
   const formatCompact = (num: number) => {
     const abs = Math.abs(num);
     if (abs >= 1e9) return `${(num / 1e9).toFixed(1)}B`;
@@ -52,16 +49,13 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
     if (abs >= 1e3) return `${(num / 1e3).toFixed(0)}K`;
     return num.toString();
   };
-
   const formatPercentWithAbsolute = (percent: number, absolute: number) => {
     const sign = percent >= 0 ? '+' : '';
     const absSign = absolute >= 0 ? '+' : '';
     return `${sign}${percent.toFixed(1)}% (${absSign}${formatCompact(absolute)})`;
   };
-
   if (isCalculating) {
-    return (
-      <div className="dashboard-card h-full">
+    return <div className="dashboard-card h-full">
         <div className="dashboard-card-header">
           <div className="flex items-center gap-1.5">
             <BarChart3 className="h-3.5 w-3.5 text-primary" />
@@ -74,13 +68,10 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
             <span className="text-sm text-muted-foreground">Running IRRBB calculation...</span>
           </div>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (!results) {
-    return (
-      <div className="dashboard-card h-full">
+    return <div className="dashboard-card h-full">
         <div className="dashboard-card-header">
           <div className="flex items-center gap-1.5">
             <BarChart3 className="h-3.5 w-3.5 text-primary" />
@@ -92,60 +83,37 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
           <p className="text-sm text-muted-foreground font-medium">Not calculated yet</p>
           <p className="text-xs text-muted-foreground/70">Upload data and click Calculate to run IRRBB analysis</p>
         </div>
-      </div>
-    );
+      </div>;
   }
 
   // Calculate worst case values
-  const worstEvePercent = (results.worstCaseDeltaEve / results.baseEve) * 100;
+  const worstEvePercent = results.worstCaseDeltaEve / results.baseEve * 100;
   const worstNiiResult = results.scenarioResults.find(s => s.scenarioName === results.worstCaseScenario);
   const worstNiiDelta = worstNiiResult?.deltaNii ?? 0;
-  const worstNiiPercent = (worstNiiDelta / results.baseNii) * 100;
-
-  return (
-    <>
+  const worstNiiPercent = worstNiiDelta / results.baseNii * 100;
+  return <>
       <div className="dashboard-card h-full flex flex-col">
         <div className="dashboard-card-header flex-shrink-0">
-          <div className="flex items-center gap-1.5">
-            <BarChart3 className="h-3.5 w-3.5 text-primary" />
-            <span className="text-xs font-semibold text-foreground">Results</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* EVE/NII Toggle moved to header, aligned with chart area */}
-            <div className="flex items-center h-6 p-0.5 bg-muted/50 rounded-md">
-              <button
-                onClick={() => setActiveChart('eve')}
-                className={`h-5 px-3 text-[10px] font-medium rounded-sm transition-all ${
-                  activeChart === 'eve' 
-                    ? 'bg-background text-foreground shadow-sm' 
-                    : 'text-muted-foreground'
-                }`}
-              >
-                EVE
-              </button>
-              <button
-                onClick={() => setActiveChart('nii')}
-                className={`h-5 px-3 text-[10px] font-medium rounded-sm transition-all ${
-                  activeChart === 'nii' 
-                    ? 'bg-background text-foreground shadow-sm' 
-                    : 'text-muted-foreground'
-                }`}
-              >
-                NII
-              </button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <BarChart3 className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-semibold text-foreground">Results</span>
             </div>
-            <span className="text-[10px] text-muted-foreground">
-              {new Date(results.calculatedAt).toLocaleTimeString()}
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowDetails(true)}
-              className="h-5 px-2 text-[10px]"
-            >
+            <Button size="sm" onClick={() => setShowDetails(true)} className="h-5 px-2 text-[10px]">
               <Eye className="mr-1 h-3 w-3" />
               Details
             </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* EVE/NII Toggle - Primary style */}
+            <div className="flex items-center h-6 p-0.5 bg-primary rounded-md">
+              <button onClick={() => setActiveChart('eve')} className={`h-5 px-3 text-[10px] font-medium rounded-sm transition-all ${activeChart === 'eve' ? 'bg-background text-foreground shadow-sm' : 'text-primary-foreground/70 hover:text-primary-foreground'}`}>
+                EVE
+              </button>
+              <button onClick={() => setActiveChart('nii')} className={`h-5 px-3 text-[10px] font-medium rounded-sm transition-all ${activeChart === 'nii' ? 'bg-background text-foreground shadow-sm' : 'text-primary-foreground/70 hover:text-primary-foreground'}`}>
+                NII
+              </button>
+            </div>
           </div>
         </div>
 
@@ -154,70 +122,31 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
           <div className="flex gap-3 h-full">
             {/* Left: Grouped summary table - fills full height */}
             <div className="w-1/3 flex flex-col min-h-0">
-              <div className="rounded-lg border border-border flex-1 min-h-0 overflow-auto">
-                <table className="w-full text-[9px] h-full">
+              <div className="rounded-xl border border-border/40 flex-1 min-h-0 overflow-auto">
+                <table className="w-full text-[11px] h-full">
                   <thead className="sticky top-0 z-10">
                     {/* Group headers */}
-                    <tr className="bg-muted/50 border-b border-border">
-                      <th className="text-center align-middle font-semibold py-1.5 px-1.5 text-muted-foreground" rowSpan={2}>Metric</th>
-                      <th className="text-center font-semibold py-1.5 px-1 text-muted-foreground border-l border-border" colSpan={2}>Baseline</th>
-                      <th className="text-center font-semibold py-1.5 px-1 text-muted-foreground border-l border-border" colSpan={2}>What-If Impact</th>
-                      <th className="text-center font-semibold py-1.5 px-1 text-muted-foreground border-l border-border" colSpan={2}>Post What-If</th>
+                    <tr className="bg-card border-b border-border/40">
+                      <th className="text-center align-middle font-medium py-2 px-2 text-muted-foreground" rowSpan={2}>Metric</th>
+                      <th className="text-center font-medium py-2 px-1.5 text-muted-foreground border-l border-border/40" colSpan={2}>Baseline</th>
+                      <th className="text-center font-medium py-2 px-1.5 text-muted-foreground border-l border-border/40" colSpan={2}>What-If</th>
+                      <th className="text-center font-medium py-2 px-1.5 text-muted-foreground border-l border-border/40" colSpan={2}>Post W-I</th>
                     </tr>
                     {/* Subcolumn headers */}
-                    <tr className="bg-muted/30 border-b border-border">
-                      <th className="text-right font-medium py-1.5 px-1 text-muted-foreground/80 border-l border-border">Value</th>
-                      <th className="text-right font-medium py-1.5 px-1 text-muted-foreground/80">/ CET1</th>
-                      <th className="text-right font-medium py-1.5 px-1 text-muted-foreground/80 border-l border-border">Value</th>
-                      <th className="text-right font-medium py-1.5 px-1 text-muted-foreground/80">/ CET1</th>
-                      <th className="text-right font-medium py-1.5 px-1 text-muted-foreground/80 border-l border-border">Value</th>
-                      <th className="text-right font-medium py-1.5 px-1 text-muted-foreground/80">/ CET1</th>
+                    <tr className="bg-card border-b border-border/40">
+                      <th className="text-right font-medium py-1.5 px-1.5 text-muted-foreground/80 border-l border-border/40">Value</th>
+                      <th className="text-right font-medium py-1.5 px-1.5 text-muted-foreground/80">%CET1</th>
+                      <th className="text-right font-medium py-1.5 px-1.5 text-muted-foreground/80 border-l border-border/40">Value</th>
+                      <th className="text-right font-medium py-1.5 px-1.5 text-muted-foreground/80">%CET1</th>
+                      <th className="text-right font-medium py-1.5 px-1.5 text-muted-foreground/80 border-l border-border/40">Value</th>
+                      <th className="text-right font-medium py-1.5 px-1.5 text-muted-foreground/80">%CET1</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <ResultsSummaryRow 
-                      label="Base EVE"
-                      baselineValue={results.baseEve}
-                      baselineCet1Pct={(results.baseEve / cet1Capital) * 100}
-                      impactValue={hasModifications ? whatIfImpact.baseEve : 0}
-                      impactCet1Pct={hasModifications ? (whatIfImpact.baseEve / cet1Capital) * 100 : 0}
-                      postValue={results.baseEve + (hasModifications ? whatIfImpact.baseEve : 0)}
-                      postCet1Pct={((results.baseEve + (hasModifications ? whatIfImpact.baseEve : 0)) / cet1Capital) * 100}
-                      hasModifications={hasModifications}
-                    />
-                    <ResultsSummaryRow 
-                      label="Worst scenario EVE"
-                      baselineValue={results.worstCaseEve}
-                      baselineCet1Pct={(results.worstCaseDeltaEve / cet1Capital) * 100}
-                      impactValue={hasModifications ? whatIfImpact.worstEve : 0}
-                      impactCet1Pct={hasModifications ? (whatIfImpact.worstEve / cet1Capital) * 100 : 0}
-                      postValue={results.worstCaseEve + (hasModifications ? whatIfImpact.worstEve : 0)}
-                      postCet1Pct={((results.worstCaseDeltaEve + (hasModifications ? whatIfImpact.worstEve : 0)) / cet1Capital) * 100}
-                      hasModifications={hasModifications}
-                      isWorst
-                    />
-                    <ResultsSummaryRow 
-                      label="Base NII"
-                      baselineValue={results.baseNii}
-                      baselineCet1Pct={(results.baseNii / cet1Capital) * 100}
-                      impactValue={hasModifications ? whatIfImpact.baseNii : 0}
-                      impactCet1Pct={hasModifications ? (whatIfImpact.baseNii / cet1Capital) * 100 : 0}
-                      postValue={results.baseNii + (hasModifications ? whatIfImpact.baseNii : 0)}
-                      postCet1Pct={((results.baseNii + (hasModifications ? whatIfImpact.baseNii : 0)) / cet1Capital) * 100}
-                      hasModifications={hasModifications}
-                    />
-                    <ResultsSummaryRow 
-                      label="Worst scenario NII"
-                      baselineValue={results.baseNii + worstNiiDelta}
-                      baselineCet1Pct={(worstNiiDelta / cet1Capital) * 100}
-                      impactValue={hasModifications ? whatIfImpact.worstNii : 0}
-                      impactCet1Pct={hasModifications ? (whatIfImpact.worstNii / cet1Capital) * 100 : 0}
-                      postValue={results.baseNii + worstNiiDelta + (hasModifications ? whatIfImpact.worstNii : 0)}
-                      postCet1Pct={((worstNiiDelta + (hasModifications ? whatIfImpact.worstNii : 0)) / cet1Capital) * 100}
-                      hasModifications={hasModifications}
-                      isWorst
-                      isLast
-                    />
+                    <ResultsSummaryRow label="Base EVE" baselineValue={results.baseEve} baselineCet1Pct={results.baseEve / cet1Capital * 100} impactValue={hasModifications ? whatIfImpact.baseEve : 0} impactCet1Pct={hasModifications ? whatIfImpact.baseEve / cet1Capital * 100 : 0} postValue={results.baseEve + (hasModifications ? whatIfImpact.baseEve : 0)} postCet1Pct={(results.baseEve + (hasModifications ? whatIfImpact.baseEve : 0)) / cet1Capital * 100} hasModifications={hasModifications} />
+                    <ResultsSummaryRow label="Worst scenario EVE" baselineValue={results.worstCaseEve} baselineCet1Pct={results.worstCaseDeltaEve / cet1Capital * 100} impactValue={hasModifications ? whatIfImpact.worstEve : 0} impactCet1Pct={hasModifications ? whatIfImpact.worstEve / cet1Capital * 100 : 0} postValue={results.worstCaseEve + (hasModifications ? whatIfImpact.worstEve : 0)} postCet1Pct={(results.worstCaseDeltaEve + (hasModifications ? whatIfImpact.worstEve : 0)) / cet1Capital * 100} hasModifications={hasModifications} isWorst />
+                    <ResultsSummaryRow label="Base NII" baselineValue={results.baseNii} baselineCet1Pct={results.baseNii / cet1Capital * 100} impactValue={hasModifications ? whatIfImpact.baseNii : 0} impactCet1Pct={hasModifications ? whatIfImpact.baseNii / cet1Capital * 100 : 0} postValue={results.baseNii + (hasModifications ? whatIfImpact.baseNii : 0)} postCet1Pct={(results.baseNii + (hasModifications ? whatIfImpact.baseNii : 0)) / cet1Capital * 100} hasModifications={hasModifications} />
+                    <ResultsSummaryRow label="Worst scenario NII" baselineValue={results.baseNii + worstNiiDelta} baselineCet1Pct={worstNiiDelta / cet1Capital * 100} impactValue={hasModifications ? whatIfImpact.worstNii : 0} impactCet1Pct={hasModifications ? whatIfImpact.worstNii / cet1Capital * 100 : 0} postValue={results.baseNii + worstNiiDelta + (hasModifications ? whatIfImpact.worstNii : 0)} postCet1Pct={(worstNiiDelta + (hasModifications ? whatIfImpact.worstNii : 0)) / cet1Capital * 100} hasModifications={hasModifications} isWorst isLast />
                   </tbody>
                 </table>
               </div>
@@ -226,11 +155,7 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
             {/* Right: Chart area - fills full height */}
             <div className="w-2/3 flex flex-col min-h-0">
               <div className="rounded-lg border border-border overflow-hidden flex-1 min-h-0">
-                {activeChart === 'eve' ? (
-                  <EVEChart fullWidth analysisDate={analysisDate} />
-                ) : (
-                  <NIIChart fullWidth analysisDate={analysisDate} />
-                )}
+                {activeChart === 'eve' ? <EVEChart fullWidth analysisDate={analysisDate} /> : <NIIChart fullWidth analysisDate={analysisDate} />}
               </div>
             </div>
           </div>
@@ -249,28 +174,10 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
           <div className="space-y-6">
             {/* Summary Cards Row - 4 uniform rectangular cards */}
             <div className="grid grid-cols-4 gap-4">
-              <SummaryCard 
-                label="BASE EVE" 
-                value={formatCurrency(results.baseEve)} 
-              />
-              <SummaryCard 
-                label="BASE NII" 
-                value={formatCurrency(results.baseNii)} 
-              />
-              <SummaryCard 
-                label="WORST EVE" 
-                value={formatCurrency(results.worstCaseEve)}
-                delta={formatCompact(results.worstCaseDeltaEve)}
-                deltaPercent={`${worstEvePercent >= 0 ? '+' : ''}${worstEvePercent.toFixed(1)}%`}
-                variant={results.worstCaseDeltaEve >= 0 ? 'success' : 'destructive'}
-              />
-              <SummaryCard 
-                label="WORST NII" 
-                value={formatCurrency(results.baseNii + worstNiiDelta)}
-                delta={formatCompact(worstNiiDelta)}
-                deltaPercent={`${worstNiiPercent >= 0 ? '+' : ''}${worstNiiPercent.toFixed(1)}%`}
-                variant={worstNiiDelta >= 0 ? 'success' : 'destructive'}
-              />
+              <SummaryCard label="BASE EVE" value={formatCurrency(results.baseEve)} />
+              <SummaryCard label="BASE NII" value={formatCurrency(results.baseNii)} />
+              <SummaryCard label="WORST EVE" value={formatCurrency(results.worstCaseEve)} delta={formatCompact(results.worstCaseDeltaEve)} deltaPercent={`${worstEvePercent >= 0 ? '+' : ''}${worstEvePercent.toFixed(1)}%`} variant={results.worstCaseDeltaEve >= 0 ? 'success' : 'destructive'} />
+              <SummaryCard label="WORST NII" value={formatCurrency(results.baseNii + worstNiiDelta)} delta={formatCompact(worstNiiDelta)} deltaPercent={`${worstNiiPercent >= 0 ? '+' : ''}${worstNiiPercent.toFixed(1)}%`} variant={worstNiiDelta >= 0 ? 'success' : 'destructive'} />
             </div>
 
             {/* Scenario Comparison Table - EVE and NII side by side */}
@@ -300,13 +207,9 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
                   </tr>
                   {/* Scenario Rows */}
                   {results.scenarioResults.map((result, index) => {
-                    const evePercent = (result.deltaEve / results.baseEve) * 100;
-                    const niiPercent = (result.deltaNii / results.baseNii) * 100;
-                    return (
-                      <tr 
-                        key={result.scenarioId} 
-                        className={`hover:bg-muted/20 ${index < results.scenarioResults.length - 1 ? 'border-b border-border/50' : ''}`}
-                      >
+                  const evePercent = result.deltaEve / results.baseEve * 100;
+                  const niiPercent = result.deltaNii / results.baseNii * 100;
+                  return <tr key={result.scenarioId} className={`hover:bg-muted/20 ${index < results.scenarioResults.length - 1 ? 'border-b border-border/50' : ''}`}>
                         <td className="py-3 px-4 font-medium text-foreground">{result.scenarioName}</td>
                         <td className="text-right py-3 px-3 font-mono text-foreground">{formatCurrency(result.eve)}</td>
                         <td className={`text-right py-3 px-3 font-mono font-medium ${result.deltaEve >= 0 ? 'text-success' : 'text-destructive'}`}>
@@ -322,19 +225,16 @@ export function ResultsCard({ results, isCalculating }: ResultsCardProps) {
                         <td className={`text-right py-3 px-4 font-mono text-xs ${result.deltaNii >= 0 ? 'text-success' : 'text-destructive'}`}>
                           {niiPercent >= 0 ? '+' : ''}{niiPercent.toFixed(1)}%
                         </td>
-                      </tr>
-                    );
-                  })}
+                      </tr>;
+                })}
                 </tbody>
               </table>
             </div>
           </div>
         </DialogContent>
       </Dialog>
-    </>
-  );
+    </>;
 }
-
 interface SummaryCardProps {
   label: string;
   value: string;
@@ -342,27 +242,23 @@ interface SummaryCardProps {
   deltaPercent?: string;
   variant?: 'default' | 'success' | 'destructive';
 }
-
-function SummaryCard({ label, value, delta, deltaPercent, variant = 'default' }: SummaryCardProps) {
-  const deltaClass = variant === 'success' 
-    ? 'text-success' 
-    : variant === 'destructive' 
-      ? 'text-destructive' 
-      : 'text-muted-foreground';
-  
-  return (
-    <div className="rounded-xl bg-muted/40 p-4">
+function SummaryCard({
+  label,
+  value,
+  delta,
+  deltaPercent,
+  variant = 'default'
+}: SummaryCardProps) {
+  const deltaClass = variant === 'success' ? 'text-success' : variant === 'destructive' ? 'text-destructive' : 'text-muted-foreground';
+  return <div className="rounded-xl bg-muted/40 p-4">
       <div className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium mb-2">{label}</div>
       <div className="text-xl font-bold text-foreground">{value}</div>
-      {(delta || deltaPercent) && (
-        <div className={`text-xs font-medium mt-1 ${deltaClass}`}>
+      {(delta || deltaPercent) && <div className={`text-xs font-medium mt-1 ${deltaClass}`}>
           {delta && <span>{delta}</span>}
           {delta && deltaPercent && <span className="mx-1">•</span>}
           {deltaPercent && <span>{deltaPercent}</span>}
-        </div>
-      )}
-    </div>
-  );
+        </div>}
+    </div>;
 }
 
 // Helper component for summary table rows
@@ -378,7 +274,6 @@ interface ResultsSummaryRowProps {
   isWorst?: boolean;
   isLast?: boolean;
 }
-
 function ResultsSummaryRow({
   label,
   baselineValue,
@@ -389,7 +284,7 @@ function ResultsSummaryRow({
   postCet1Pct,
   hasModifications,
   isWorst = false,
-  isLast = false,
+  isLast = false
 }: ResultsSummaryRowProps) {
   const formatMillions = (num: number) => {
     const abs = Math.abs(num);
@@ -398,42 +293,35 @@ function ResultsSummaryRow({
     if (abs >= 1e3) return `${(num / 1e3).toFixed(0)}K`;
     return num.toFixed(0);
   };
-
   const formatImpact = (num: number) => {
     if (num === 0) return '—';
     const sign = num >= 0 ? '+' : '';
     return `${sign}${formatMillions(num)}`;
   };
-
   const formatPct = (pct: number) => `${pct.toFixed(1)}%`;
-  
   const formatImpactPct = (pct: number) => {
     if (pct === 0) return '—';
     const sign = pct >= 0 ? '+' : '';
     return `${sign}${pct.toFixed(1)}%`;
   };
-
   const getImpactClass = (val: number) => {
     if (val === 0) return 'text-muted-foreground';
     return val >= 0 ? 'text-success' : 'text-destructive';
   };
-
-  return (
-    <tr className={`hover:bg-accent/30 ${!isLast ? 'border-b border-border/50' : ''}`}>
-      <td className="py-1.5 px-1.5 font-medium text-foreground whitespace-nowrap">{label}</td>
+  return <tr className={`hover:bg-accent/40 transition-colors duration-150 ${!isLast ? 'border-b border-border/30' : ''}`}>
+      <td className="py-2 px-2 font-medium text-foreground whitespace-nowrap">{label}</td>
       {/* Baseline */}
-      <td className="text-right py-1.5 px-1 font-mono text-foreground border-l border-border">{formatMillions(baselineValue)}</td>
-      <td className="text-right py-1.5 px-1 font-mono text-muted-foreground">{formatPct(baselineCet1Pct)}</td>
+      <td className="text-right py-2 px-1.5 font-mono text-foreground border-l border-border/40">{formatMillions(baselineValue)}</td>
+      <td className="text-right py-2 px-1.5 font-mono text-muted-foreground">{formatPct(baselineCet1Pct)}</td>
       {/* What-If Impact */}
-      <td className={`text-right py-1.5 px-1 font-mono border-l border-border ${getImpactClass(impactValue)}`}>
+      <td className={`text-right py-2 px-1.5 font-mono border-l border-border/40 ${getImpactClass(impactValue)}`}>
         {hasModifications ? formatImpact(impactValue) : '—'}
       </td>
-      <td className={`text-right py-1.5 px-1 font-mono ${getImpactClass(impactCet1Pct)}`}>
+      <td className={`text-right py-2 px-1.5 font-mono ${getImpactClass(impactCet1Pct)}`}>
         {hasModifications ? formatImpactPct(impactCet1Pct) : '—'}
       </td>
       {/* Post What-If */}
-      <td className="text-right py-1.5 px-1 font-mono font-semibold text-foreground border-l border-border">{formatMillions(postValue)}</td>
-      <td className="text-right py-1.5 px-1 font-mono text-foreground">{formatPct(postCet1Pct)}</td>
-    </tr>
-  );
+      <td className="text-right py-2 px-1.5 font-mono font-semibold text-foreground border-l border-border/40">{formatMillions(postValue)}</td>
+      <td className="text-right py-2 px-1.5 font-mono text-foreground">{formatPct(postCet1Pct)}</td>
+    </tr>;
 }

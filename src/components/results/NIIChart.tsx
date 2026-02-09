@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   ComposedChart,
+  Bar,
   Line,
   XAxis,
   YAxis,
@@ -8,7 +9,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-  Legend,
 } from 'recharts';
 import {
   Popover,
@@ -34,21 +34,17 @@ const SCENARIOS = [
   { id: 'short-down', label: 'Short Down' },
 ];
 
-// Generate calendar label from month offset and analysis date
 function getCalendarLabel(analysisDate: Date, monthsToAdd: number): string {
   const targetDate = addMonths(analysisDate, monthsToAdd);
   return format(targetDate, 'MMM yyyy');
 }
 
-// Generate placeholder data for NII chart (lines only)
-const generateNIIData = (scenario: string, analysisDate: Date | null) => {
+// Generate raw data for NII chart
+const generateRawNIIData = (scenario: string, analysisDate: Date | null) => {
   return MONTHS.map((month, index) => {
-    // Base values - Interest Income (what bank earns from assets)
-    const interestIncome = 25 + Math.sin(index * 0.4) * 8 + index * 0.5;
-    // Interest Expense (what bank pays on liabilities)
-    const interestExpense = 18 + Math.cos(index * 0.3) * 5 + index * 0.3;
+    const income = 25 + Math.sin(index * 0.4) * 8 + index * 0.5;
+    const expense = 18 + Math.cos(index * 0.3) * 5 + index * 0.3;
     
-    // Scenario adjustments
     const scenarioMultiplier = scenario === 'parallel-up' ? 0.8 
       : scenario === 'parallel-down' ? -0.6 
       : scenario === 'steepener' ? (index / MONTHS.length) * 0.7
@@ -58,26 +54,16 @@ const generateNIIData = (scenario: string, analysisDate: Date | null) => {
       : scenario === 'worst' ? -0.7
       : 0;
     
-    const incomeScenarioAdj = scenarioMultiplier * (3 + index * 0.3);
-    const expenseScenarioAdj = scenarioMultiplier * (2 + index * 0.2);
+    const incomeAdj = scenarioMultiplier * (3 + index * 0.3);
+    const expenseAdj = scenarioMultiplier * (2 + index * 0.2);
     
-    // Final values for lines
-    const incomeTotal = interestIncome + incomeScenarioAdj;
-    const expenseTotal = interestExpense + expenseScenarioAdj;
-    
-    // Net Interest Income = Interest Income (Assets) - Interest Expense (Liabilities)
-    // This is the TRUE NII margin, mechanically derived
-    const netNII = incomeTotal - expenseTotal;
-
-    // Calendar label for this month (only if analysisDate is set)
     const calendarLabel = analysisDate ? getCalendarLabel(analysisDate, month.monthsToAdd) : null;
     
     return {
       month: month.label,
       calendarLabel,
-      interestIncome: incomeTotal,
-      interestExpense: expenseTotal,
-      netNII,
+      income: income + incomeAdj,
+      expense: expense + expenseAdj,
     };
   });
 };
@@ -92,16 +78,22 @@ export function NIIChart({ className, fullWidth = false, analysisDate }: NIIChar
   const [selectedScenario, setSelectedScenario] = useState('worst');
   const [isOpen, setIsOpen] = useState(false);
   
-  const data = useMemo(
-    () => generateNIIData(selectedScenario, analysisDate ?? null),
-    [selectedScenario, analysisDate]
-  );
+  // Transform data: create expenseNeg and nii
+  const data = useMemo(() => {
+    const rawData = generateRawNIIData(selectedScenario, analysisDate ?? null);
+    return rawData.map(d => {
+      const expenseNeg = -Math.abs(d.expense);
+      return {
+        ...d,
+        expenseNeg,
+        nii: d.income + expenseNeg, // income - expense
+      };
+    });
+  }, [selectedScenario, analysisDate]);
   
-  const formatValue = (value: number) => {
-    return `${value.toFixed(1)}M`;
-  };
+  const formatValue = (value: number) => `${value.toFixed(1)}M`;
 
-  // Custom X-axis tick with dual labels (only show calendar label if analysisDate is set)
+  // Custom X-axis tick with dual labels
   const CustomXAxisTick = ({ x, y, payload }: any) => {
     const dataPoint = data.find(d => d.month === payload.value);
     return (
@@ -138,10 +130,9 @@ export function NIIChart({ className, fullWidth = false, analysisDate }: NIIChar
     if (!active || !payload?.length) return null;
     const dataPoint = data.find(d => d.month === label);
     
-    const interestIncome = payload.find((p: any) => p.dataKey === 'interestIncome')?.value || 0;
-    const interestExpense = payload.find((p: any) => p.dataKey === 'interestExpense')?.value || 0;
-    // Calculate NII as the difference to ensure accuracy
-    const calculatedNII = interestIncome - interestExpense;
+    const income = dataPoint?.income ?? 0;
+    const expense = dataPoint?.expense ?? 0;
+    const nii = dataPoint?.nii ?? 0;
     
     return (
       <div className="rounded-lg border border-border/50 bg-background px-3 py-2 text-xs shadow-xl">
@@ -149,9 +140,14 @@ export function NIIChart({ className, fullWidth = false, analysisDate }: NIIChar
           {label} {dataPoint?.calendarLabel && <span className="text-muted-foreground font-normal">({dataPoint.calendarLabel})</span>}
         </div>
         <div className="space-y-1">
-          <div className="text-success">Interest Income (Assets): {formatValue(interestIncome)}</div>
-          <div className="text-destructive">Interest Expense (Liabilities): {formatValue(interestExpense)}</div>
-          <div className="text-warning font-medium">Net Interest Income (NII): {formatValue(calculatedNII)}</div>
+          <div className="text-success">Interest Income (Assets): {formatValue(income)}</div>
+          <div className="text-destructive">
+            Interest Expense (Liabilities): {formatValue(expense)}
+            <span className="text-muted-foreground ml-1">(plotted as −{expense.toFixed(1)})</span>
+          </div>
+          <div className="text-warning font-medium border-t border-border/50 pt-1 mt-1">
+            Net Interest Income (NII): {formatValue(nii)}
+          </div>
         </div>
       </div>
     );
@@ -177,7 +173,12 @@ export function NIIChart({ className, fullWidth = false, analysisDate }: NIIChar
                 data={data}
                 margin={{ top: 10, right: 15, left: 0, bottom: 25 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                <CartesianGrid 
+                  strokeDasharray="3 3" 
+                  stroke="hsl(var(--border))" 
+                  opacity={0.4}
+                  vertical={false}
+                />
                 <XAxis 
                   dataKey="month" 
                   tick={<CustomXAxisTick />}
@@ -193,39 +194,37 @@ export function NIIChart({ className, fullWidth = false, analysisDate }: NIIChar
                   width={40}
                 />
                 <Tooltip content={<CustomTooltip />} />
-                <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1.5} />
                 
-                {/* Interest Income (Assets) line - Green */}
-                <Line 
-                  type="monotone" 
-                  dataKey="interestIncome" 
+                {/* Zero baseline */}
+                <ReferenceLine y={0} stroke="hsl(var(--foreground))" strokeWidth={1} opacity={0.6} />
+                
+                {/* Interest Income (Assets) - bars above 0 */}
+                <Bar 
+                  dataKey="income" 
                   name="Interest Income (Assets)"
-                  stroke="hsl(var(--success))" 
-                  strokeWidth={2}
-                  dot={{ r: fullWidth ? 3 : 2, fill: 'hsl(var(--success))' }}
-                  activeDot={{ r: fullWidth ? 5 : 4 }}
+                  fill="hsl(var(--success))" 
+                  radius={[6, 6, 0, 0]}
+                  barSize={fullWidth ? 24 : 16}
                 />
                 
-                {/* Interest Expense (Liabilities) line - Red */}
-                <Line 
-                  type="monotone" 
-                  dataKey="interestExpense" 
+                {/* Interest Expense (Liabilities) - bars below 0 (negative) */}
+                <Bar 
+                  dataKey="expenseNeg" 
                   name="Interest Expense (Liabilities)"
-                  stroke="hsl(var(--destructive))" 
-                  strokeWidth={2}
-                  dot={{ r: fullWidth ? 3 : 2, fill: 'hsl(var(--destructive))' }}
-                  activeDot={{ r: fullWidth ? 5 : 4 }}
+                  fill="hsl(var(--destructive))" 
+                  radius={[0, 0, 6, 6]}
+                  barSize={fullWidth ? 24 : 16}
                 />
                 
-                {/* Net Interest Income (NII) line - Orange */}
+                {/* Net Interest Income (NII) line */}
                 <Line 
                   type="monotone" 
-                  dataKey="netNII" 
+                  dataKey="nii" 
                   name="Net Interest Income (NII)"
                   stroke="hsl(var(--warning))" 
-                  strokeWidth={2.5}
-                  dot={{ r: fullWidth ? 4 : 3, fill: 'hsl(var(--warning))' }}
-                  activeDot={{ r: fullWidth ? 6 : 5 }}
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={{ r: fullWidth ? 6 : 5, fill: 'hsl(var(--warning))' }}
                 />
               </ComposedChart>
             </ResponsiveContainer>
@@ -234,11 +233,11 @@ export function NIIChart({ className, fullWidth = false, analysisDate }: NIIChar
           {/* Legend */}
           <div className="flex items-center justify-center gap-4 px-3 py-2 text-[8px] shrink-0">
             <div className="flex items-center gap-1.5">
-              <div className="w-4 h-0.5 rounded bg-success" />
+              <div className="w-3 h-3 rounded-sm bg-success" />
               <span className="text-muted-foreground">Interest Income (Assets)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-4 h-0.5 rounded bg-destructive" />
+              <div className="w-3 h-3 rounded-sm bg-destructive" />
               <span className="text-muted-foreground">Interest Expense (Liabilities)</span>
             </div>
             <div className="flex items-center gap-1.5">

@@ -1,285 +1,314 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Search, ChevronDown, ChevronRight, Minus, FileText, Folder, FolderOpen } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, ChevronRight, ChevronDown, Minus, FileText, Folder, FolderOpen, Eye } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { getBalanceContracts, type BalanceContract } from '@/lib/api';
+import { BALANCE_HIERARCHY, type BalanceNode } from '@/types/whatif';
 import { useWhatIf } from './WhatIfContext';
-import type { BalanceUiCategory, BalanceUiRow } from '@/lib/balanceUi';
+import { BalanceDetailsModalRemove } from './BalanceDetailsModalRemove';
 
-interface WhatIfRemoveTabProps {
-  sessionId: string;
-  balanceRows: BalanceUiRow[];
-}
+// Mock contract search results
+const MOCK_CONTRACTS = [
+  { id: 'NUM_SEC_AC_001234', product: 'Fixed Rate Mortgage', balance: 450000, rate: 3.25, subcategory: 'mortgages' },
+  { id: 'NUM_SEC_AC_001235', product: 'Commercial Loan', balance: 2500000, rate: 4.50, subcategory: 'loans' },
+  { id: 'NUM_SEC_AC_001236', product: 'Government Bond', balance: 10000000, rate: 2.10, subcategory: 'securities' },
+  { id: 'NUM_SEC_AC_002100', product: 'Term Deposit', balance: 1500000, rate: 3.75, subcategory: 'term-deposits' },
+  { id: 'NUM_SEC_AC_002101', product: 'Corporate Bond', balance: 5000000, rate: 4.25, subcategory: 'securities' },
+];
 
-interface ContractPreview {
-  id: string;
-  sheetLabel: string;
-  subcategory: string;
-  category: BalanceUiCategory;
-  amount: number;
-  rate: number | null;
-}
-
-export function WhatIfRemoveTab({ sessionId, balanceRows }: WhatIfRemoveTabProps) {
+export function WhatIfRemoveTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['assets', 'liabilities']));
-  const [searchResults, setSearchResults] = useState<BalanceContract[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedCategoryForDetails, setSelectedCategoryForDetails] = useState<string | null>(null);
   const { addModification } = useWhatIf();
 
-  const assets = useMemo(() => balanceRows.filter((row) => row.category === 'asset'), [balanceRows]);
-  const liabilities = useMemo(() => balanceRows.filter((row) => row.category === 'liability'), [balanceRows]);
-
-  useEffect(() => {
-    let active = true;
-    const q = searchQuery.trim();
-
-    if (q.length < 2) {
-      setSearchResults([]);
-      setSearchLoading(false);
-      setSearchError(null);
-      return () => {
-        active = false;
-      };
-    }
-
-    setSearchLoading(true);
-    setSearchError(null);
-
-    const timer = window.setTimeout(async () => {
-      try {
-        const response = await getBalanceContracts(sessionId, { q, limit: 200 });
-        if (!active) return;
-        setSearchResults(response.contracts);
-      } catch (error) {
-        if (!active) return;
-        setSearchResults([]);
-        setSearchError(getErrorMessage(error));
-      } finally {
-        if (active) {
-          setSearchLoading(false);
-        }
-      }
-    }, 250);
-
-    return () => {
-      active = false;
-      window.clearTimeout(timer);
-    };
-  }, [searchQuery, sessionId]);
-
-  const contracts = useMemo(() => {
-    return searchResults.map((contract) => ({
-      id: contract.contract_id,
-      sheetLabel: contract.sheet,
-      subcategory: contract.subcategory,
-      category: normalizeCategory(contract.category),
-      amount: contract.amount ?? 0,
-      rate: contract.rate,
-    }));
-  }, [searchResults]);
-
   const toggleNode = (nodeId: string) => {
-    setExpandedNodes((prev) => {
+    setExpandedNodes(prev => {
       const next = new Set(prev);
-      if (next.has(nodeId)) next.delete(nodeId);
-      else next.add(nodeId);
+      if (next.has(nodeId)) {
+        next.delete(nodeId);
+      } else {
+        next.add(nodeId);
+      }
       return next;
     });
   };
 
-  const handleRemoveCategoryRow = (row: BalanceUiRow) => {
+  // Map node IDs to category and subcategory for balance tree placement
+  const getCategoryFromNodeId = (nodeId: string): { category: 'asset' | 'liability'; subcategory: string } => {
+    const assetSubcategories = ['mortgages', 'loans', 'securities', 'interbank', 'other-assets'];
+    const liabilitySubcategories = ['deposits', 'term-deposits', 'wholesale-funding', 'debt-issued', 'other-liabilities'];
+    
+    if (nodeId === 'assets' || assetSubcategories.includes(nodeId)) {
+      return { 
+        category: 'asset', 
+        subcategory: assetSubcategories.includes(nodeId) ? nodeId : 'loans'
+      };
+    }
+    return { 
+      category: 'liability', 
+      subcategory: liabilitySubcategories.includes(nodeId) ? nodeId : 'term-deposits'
+    };
+  };
+
+  const handleRemoveNode = (node: BalanceNode, path: string) => {
+    const { category, subcategory } = getCategoryFromNodeId(node.id);
     addModification({
       type: 'remove',
-      label: row.label,
-      details: formatAmount(row.amount),
-      notional: row.amount,
-      category: row.category,
-      subcategory: row.id,
-      rate: row.avgRate ?? 0,
+      label: node.label,
+      details: node.amount ? formatAmount(node.amount) : undefined,
+      notional: node.amount || 0,
+      category,
+      subcategory,
+      rate: 0.035, // Placeholder rate for removed positions
     });
   };
 
-  const handleRemoveContract = (contract: ContractPreview) => {
+  const handleViewDetails = (nodeId: string) => {
+    setSelectedCategoryForDetails(nodeId);
+    setShowDetailsModal(true);
+  };
+
+  const handleRemoveContract = (contract: typeof MOCK_CONTRACTS[0]) => {
+    // Determine category based on product type (mock logic)
+    const isAsset = ['Fixed Rate Mortgage', 'Commercial Loan', 'Government Bond', 'Corporate Bond'].includes(contract.product);
+    const subcategoryMap: Record<string, string> = {
+      'Fixed Rate Mortgage': 'mortgages',
+      'Commercial Loan': 'loans',
+      'Government Bond': 'securities',
+      'Corporate Bond': 'securities',
+      'Term Deposit': 'term-deposits',
+    };
+    
     addModification({
       type: 'remove',
       label: contract.id,
-      details: `${contract.sheetLabel} - ${formatAmount(contract.amount)}`,
-      notional: contract.amount,
-      category: contract.category,
-      subcategory: contract.subcategory,
-      rate: contract.rate ?? 0,
+      details: `${contract.product} - ${formatAmount(contract.balance)}`,
+      notional: contract.balance,
+      category: isAsset ? 'asset' : 'liability',
+      subcategory: subcategoryMap[contract.product] || (isAsset ? 'loans' : 'term-deposits'),
+      rate: contract.rate / 100,
     });
   };
 
+  const formatAmount = (num: number) => {
+    if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
+    if (num >= 1e6) return `$${(num / 1e6).toFixed(1)}M`;
+    if (num >= 1e3) return `$${(num / 1e3).toFixed(0)}K`;
+    return `$${num}`;
+  };
+
+  // Filter contracts based on search - works globally or within category context
+  const filteredContracts = searchQuery.length >= 2
+    ? MOCK_CONTRACTS.filter(c => {
+        const matchesSearch = c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          c.product.toLowerCase().includes(searchQuery.toLowerCase());
+        // If a category is selected via details modal, filter by that too
+        if (selectedCategoryForDetails && showDetailsModal) {
+          return matchesSearch && c.subcategory === selectedCategoryForDetails;
+        }
+        return matchesSearch;
+      })
+    : [];
+
   return (
     <div className="flex flex-col h-full gap-3">
+      {/* Contract Search */}
       <div className="space-y-2">
         <div className="relative">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
-            placeholder="Search by Contract ID (n_contrato...)"
+            placeholder="Search by Contract ID (NUM_SEC_AC...)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="h-7 pl-7 text-xs"
           />
         </div>
-
-        {searchQuery.trim().length >= 2 && (
+        
+        {/* Search Results */}
+        {filteredContracts.length > 0 && (
           <div className="rounded-md border border-border bg-card overflow-hidden">
-            {searchLoading && (
-              <div className="px-2.5 py-2 text-[11px] text-muted-foreground">Searching contracts...</div>
-            )}
-
-            {!searchLoading && searchError && (
-              <div className="px-2.5 py-2 text-[11px] text-destructive whitespace-pre-wrap">{searchError}</div>
-            )}
-
-            {!searchLoading && !searchError && contracts.length === 0 && (
-              <div className="px-2.5 py-2 text-[11px] text-muted-foreground">No contracts found.</div>
-            )}
-
-            {!searchLoading &&
-              !searchError &&
-              contracts.map((contract) => (
-                <div
-                  key={`${contract.sheetLabel}-${contract.id}`}
-                  className="flex items-center justify-between px-2.5 py-1.5 border-b border-border/50 last:border-0 hover:bg-accent/30"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <FileText className="h-3 w-3 text-muted-foreground shrink-0" />
-                      <span className="text-xs font-mono text-foreground truncate">{contract.id}</span>
-                    </div>
-                    <div className="text-[10px] text-muted-foreground ml-4.5">
-                      {contract.sheetLabel} • {formatAmount(contract.amount)}
-                    </div>
+            {filteredContracts.map(contract => (
+              <div
+                key={contract.id}
+                className="flex items-center justify-between px-2.5 py-1.5 border-b border-border/50 last:border-0 hover:bg-accent/30"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <FileText className="h-3 w-3 text-muted-foreground shrink-0" />
+                    <span className="text-xs font-mono text-foreground truncate">{contract.id}</span>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-5 px-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => handleRemoveContract(contract)}
-                  >
-                    <Minus className="h-3 w-3" />
-                  </Button>
+                  <div className="text-[10px] text-muted-foreground ml-4.5">
+                    {contract.product} • {formatAmount(contract.balance)} • {contract.rate}%
+                  </div>
                 </div>
-              ))}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-5 px-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => handleRemoveContract(contract)}
+                >
+                  <Minus className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
+      {/* Divider */}
       <div className="flex items-center gap-2">
         <div className="flex-1 h-px bg-border" />
         <span className="text-[9px] text-muted-foreground uppercase tracking-wide">Or select from balance</span>
         <div className="flex-1 h-px bg-border" />
       </div>
 
+      {/* Balance Tree */}
       <ScrollArea className="flex-1">
-        <div className="space-y-1 pr-3">
-          {assets.length > 0 && (
-            <CategoryGroup
-              id="assets"
-              label="Assets"
-              rows={assets}
-              isExpanded={expandedNodes.has('assets')}
+        <div className="space-y-0.5 pr-3">
+          {BALANCE_HIERARCHY.map(node => (
+            <TreeNode
+              key={node.id}
+              node={node}
+              path={node.label}
+              depth={0}
+              expandedNodes={expandedNodes}
               onToggle={toggleNode}
-              onRemove={handleRemoveCategoryRow}
+              onRemove={handleRemoveNode}
+              onViewDetails={handleViewDetails}
+              formatAmount={formatAmount}
             />
-          )}
-
-          {liabilities.length > 0 && (
-            <CategoryGroup
-              id="liabilities"
-              label="Liabilities"
-              rows={liabilities}
-              isExpanded={expandedNodes.has('liabilities')}
-              onToggle={toggleNode}
-              onRemove={handleRemoveCategoryRow}
-            />
-          )}
-
-          {assets.length === 0 && liabilities.length === 0 && (
-            <p className="text-[11px] text-muted-foreground italic">Upload a balance to enable remove selection.</p>
-          )}
-        </div>
-      </ScrollArea>
-    </div>
-  );
-}
-
-function CategoryGroup({
-  id,
-  label,
-  rows,
-  isExpanded,
-  onToggle,
-  onRemove,
-}: {
-  id: string;
-  label: string;
-  rows: BalanceUiRow[];
-  isExpanded: boolean;
-  onToggle: (id: string) => void;
-  onRemove: (row: BalanceUiRow) => void;
-}) {
-  const totalAmount = rows.reduce((acc, row) => acc + row.amount, 0);
-  const totalPositions = rows.reduce((acc, row) => acc + row.positions, 0);
-  const ChevronIcon = isExpanded ? ChevronDown : ChevronRight;
-  const FolderIcon = isExpanded ? FolderOpen : Folder;
-  const labelClass = id === 'assets' ? 'text-success' : 'text-destructive';
-
-  return (
-    <div>
-      <button
-        onClick={() => onToggle(id)}
-        className="w-full flex items-center gap-1 py-1.5 px-2 rounded-md bg-muted/30 hover:bg-muted/50 transition-colors"
-      >
-        <ChevronIcon className="h-3 w-3 text-muted-foreground" />
-        <FolderIcon className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className={`text-xs font-semibold ${labelClass}`}>{label}</span>
-        <span className="ml-auto text-[11px] font-mono text-muted-foreground">{formatAmount(totalAmount)}</span>
-        <span className="text-[10px] text-muted-foreground/80 bg-muted px-1 rounded">{totalPositions}</span>
-      </button>
-
-      {isExpanded && (
-        <div className="mt-1 space-y-0.5">
-          {rows.map((row) => (
-            <div key={row.id} className="flex items-center gap-1 py-1 px-2 pl-8 rounded-sm hover:bg-accent/40 group">
-              <FileText className="h-3 w-3 text-muted-foreground" />
-              <span className="text-xs text-foreground flex-1">{row.label}</span>
-              <span className="text-[11px] font-mono text-muted-foreground">{formatAmount(row.amount)}</span>
-              <span className="text-[10px] text-muted-foreground/80 bg-muted px-1 rounded">{row.positions}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={() => onRemove(row)}
-              >
-                <Minus className="h-3 w-3" />
-              </Button>
-            </div>
           ))}
         </div>
+      </ScrollArea>
+
+      {/* Balance Details Modal for Removal */}
+      {selectedCategoryForDetails && (
+        <BalanceDetailsModalRemove
+          open={showDetailsModal}
+          onOpenChange={setShowDetailsModal}
+          selectedCategory={selectedCategoryForDetails}
+          searchQuery={searchQuery}
+        />
       )}
     </div>
   );
 }
 
-function normalizeCategory(category: string): BalanceUiCategory {
-  return category.toLowerCase() === 'liability' ? 'liability' : 'asset';
+interface TreeNodeProps {
+  node: BalanceNode;
+  path: string;
+  depth: number;
+  expandedNodes: Set<string>;
+  onToggle: (id: string) => void;
+  onRemove: (node: BalanceNode, path: string) => void;
+  onViewDetails: (nodeId: string) => void;
+  formatAmount: (n: number) => string;
 }
 
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  return String(error);
-}
+function TreeNode({ node, path, depth, expandedNodes, onToggle, onRemove, onViewDetails, formatAmount }: TreeNodeProps) {
+  const isExpanded = expandedNodes.has(node.id);
+  const hasChildren = node.children && node.children.length > 0;
+  const isLeaf = !hasChildren;
+  
+  const isCategory = node.type === 'category';
+  const labelColor = node.id === 'assets' ? 'text-success' : node.id === 'liabilities' ? 'text-destructive' : 'text-foreground';
+  
+  const FolderIcon = isExpanded ? FolderOpen : Folder;
+  const ChevronIcon = isExpanded ? ChevronDown : ChevronRight;
 
-function formatAmount(num: number) {
-  if (Math.abs(num) >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
-  if (Math.abs(num) >= 1e6) return `$${(num / 1e6).toFixed(1)}M`;
-  if (Math.abs(num) >= 1e3) return `$${(num / 1e3).toFixed(0)}K`;
-  return `$${num.toFixed(0)}`;
+  return (
+    <div>
+      <div
+        className={`flex items-center gap-1 py-1 px-1.5 rounded-sm hover:bg-accent/50 group cursor-pointer ${
+          depth === 0 ? 'bg-muted/30' : ''
+        }`}
+        style={{ paddingLeft: `${depth * 12 + 4}px` }}
+      >
+        {/* Expand/collapse */}
+        {hasChildren ? (
+          <button onClick={() => onToggle(node.id)} className="p-0.5 hover:bg-accent rounded">
+            <ChevronIcon className="h-3 w-3 text-muted-foreground" />
+          </button>
+        ) : (
+          <span className="w-4" />
+        )}
+
+        {/* Icon */}
+        {hasChildren ? (
+          <FolderIcon className="h-3 w-3 text-muted-foreground" />
+        ) : (
+          <FileText className="h-3 w-3 text-muted-foreground" />
+        )}
+
+        {/* Label */}
+        <span className={`text-xs flex-1 ${isCategory ? `font-semibold ${labelColor}` : 'text-foreground'}`}>
+          {node.label}
+        </span>
+
+        {/* Amount */}
+        {node.amount && (
+          <span className="text-[10px] font-mono text-muted-foreground">
+            {formatAmount(node.amount)}
+          </span>
+        )}
+
+        {/* Count */}
+        {node.count && (
+          <span className="text-[9px] text-muted-foreground/70 bg-muted px-1 rounded">
+            {node.count}
+          </span>
+        )}
+
+        {/* View Details button - only for leaf nodes */}
+        {isLeaf && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewDetails(node.id);
+            }}
+            title="View contracts for removal"
+          >
+            <Eye className="h-2.5 w-2.5" />
+          </Button>
+        )}
+
+        {/* Remove button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive hover:bg-destructive/10 transition-opacity"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(node, path);
+          }}
+        >
+          <Minus className="h-2.5 w-2.5" />
+        </Button>
+      </div>
+
+      {/* Children */}
+      {hasChildren && isExpanded && (
+        <div>
+          {node.children!.map(child => (
+            <TreeNode
+              key={child.id}
+              node={child}
+              path={`${path} > ${child.label}`}
+              depth={depth + 1}
+              expandedNodes={expandedNodes}
+              onToggle={onToggle}
+              onRemove={onRemove}
+              onViewDetails={onViewDetails}
+              formatAmount={formatAmount}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
