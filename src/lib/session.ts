@@ -9,10 +9,7 @@ async function createAndStoreSessionId(): Promise<string> {
 }
 
 export async function getOrCreateSessionId(): Promise<string> {
-  console.log("[session] getOrCreateSessionId called");
-
   const existing = localStorage.getItem(LS_KEY);
-  console.log("[session] existing from localStorage:", existing);
 
   if (existing) {
     try {
@@ -25,14 +22,11 @@ export async function getOrCreateSessionId(): Promise<string> {
       // If backend restarted and forgot in-memory sessions, rotate to a fresh one.
       if (!isSessionMissing) throw error;
 
-      console.warn("[session] stale session id, creating a new one:", existing);
       localStorage.removeItem(LS_KEY);
     }
   }
 
-  console.log("[session] creating new session via API");
   const sessionId = await createAndStoreSessionId();
-  console.log("[session] created sessionId:", sessionId);
   return sessionId;
 }
 

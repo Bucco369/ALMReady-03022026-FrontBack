@@ -71,3 +71,28 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## Local Backend Curves Flow (Session-Scoped)
+
+1. Start backend on `http://localhost:8000`.
+2. Start frontend with `npm run dev`.
+3. Create/restore session (frontend does this automatically).
+4. Upload curves Excel (`.xlsx`) from the Curves card or call:
+
+```sh
+curl -X POST \
+  -F "file=@/path/to/Curve tenors_input.xlsx" \
+  http://localhost:8000/api/sessions/<session_id>/curves
+```
+
+5. Check curves summary:
+
+```sh
+curl http://localhost:8000/api/sessions/<session_id>/curves/summary
+```
+
+6. Fetch points for one curve:
+
+```sh
+curl http://localhost:8000/api/sessions/<session_id>/curves/EUR_ESTR_OIS
+```

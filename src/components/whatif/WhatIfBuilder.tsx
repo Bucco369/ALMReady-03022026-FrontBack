@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Plus, Minus, Trash2, Check, FlaskConical } from 'lucide-react';
+import { X, Plus, Minus, Trash2, Check, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -8,13 +8,21 @@ import { Badge } from '@/components/ui/badge';
 import { useWhatIf } from './WhatIfContext';
 import { WhatIfAddTab } from './WhatIfAddTab';
 import { WhatIfRemoveTab } from './WhatIfRemoveTab';
+import type { BalanceUiTree } from '@/lib/balanceUi';
 
 interface WhatIfBuilderProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  sessionId?: string | null;
+  balanceTree?: BalanceUiTree | null;
 }
 
-export function WhatIfBuilder({ open, onOpenChange }: WhatIfBuilderProps) {
+export function WhatIfBuilder({
+  open,
+  onOpenChange,
+  sessionId,
+  balanceTree,
+}: WhatIfBuilderProps) {
   const [activeTab, setActiveTab] = useState<'add' | 'remove'>('add');
   const { 
     modifications, 
@@ -31,7 +39,7 @@ export function WhatIfBuilder({ open, onOpenChange }: WhatIfBuilderProps) {
       <SheetContent className="w-[420px] sm:w-[480px] flex flex-col p-0">
         <SheetHeader className="px-4 py-3 border-b border-border shrink-0">
           <SheetTitle className="flex items-center gap-2 text-sm">
-            <FlaskConical className="h-4 w-4 text-primary" />
+            <SlidersHorizontal className="h-4 w-4 text-primary" />
             Balance What-If Builder
           </SheetTitle>
         </SheetHeader>
@@ -109,7 +117,10 @@ export function WhatIfBuilder({ open, onOpenChange }: WhatIfBuilderProps) {
           </TabsContent>
 
           <TabsContent value="remove" className="flex-1 px-4 py-3 m-0 min-h-0">
-            <WhatIfRemoveTab />
+            <WhatIfRemoveTab
+              sessionId={sessionId ?? null}
+              balanceTree={balanceTree ?? null}
+            />
           </TabsContent>
         </Tabs>
 

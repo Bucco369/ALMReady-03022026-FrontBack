@@ -11,6 +11,10 @@ export interface WhatIfModification {
   category?: 'asset' | 'liability' | 'derivative';
   subcategory?: string; // e.g., 'mortgages', 'bonds', 'sight-deposits'
   rate?: number; // Interest rate for avg rate delta calculation
+  maturity?: number; // Residual maturity in years for weighted maturity delta calculation
+  positionDelta?: number; // Allows remove_all to deduct full subcategory count.
+  removeMode?: 'all' | 'contracts';
+  contractIds?: string[];
 }
 
 export interface ProductTemplate {
@@ -133,47 +137,6 @@ export const PRODUCT_TEMPLATES: ProductTemplate[] = [
       { id: 'maturityDate', label: 'Expected Maturity', type: 'date', required: true },
       { id: 'wac', label: 'Weighted Avg Coupon (%)', type: 'number', required: true, placeholder: '4.25' },
       { id: 'cpr', label: 'Prepayment Speed (CPR %)', type: 'number', required: false, placeholder: '8' },
-    ],
-  },
-];
-
-// Balance hierarchy for Remove flow
-export interface BalanceNode {
-  id: string;
-  label: string;
-  type: 'category' | 'subcategory' | 'group' | 'contract';
-  children?: BalanceNode[];
-  amount?: number;
-  count?: number;
-}
-
-export const BALANCE_HIERARCHY: BalanceNode[] = [
-  {
-    id: 'assets',
-    label: 'Assets',
-    type: 'category',
-    amount: 2_450_000_000,
-    count: 72,
-    children: [
-      { id: 'mortgages', label: 'Mortgages', type: 'subcategory', amount: 1_200_000_000, count: 34 },
-      { id: 'loans', label: 'Loans', type: 'subcategory', amount: 400_000_000, count: 16 },
-      { id: 'securities', label: 'Securities', type: 'subcategory', amount: 550_000_000, count: 12 },
-      { id: 'interbank', label: 'Interbank / Central Bank', type: 'subcategory', amount: 200_000_000, count: 6 },
-      { id: 'other-assets', label: 'Other assets', type: 'subcategory', amount: 100_000_000, count: 4 },
-    ],
-  },
-  {
-    id: 'liabilities',
-    label: 'Liabilities',
-    type: 'category',
-    amount: 2_280_000_000,
-    count: 52,
-    children: [
-      { id: 'deposits', label: 'Deposits', type: 'subcategory', amount: 680_000_000, count: 18 },
-      { id: 'term-deposits', label: 'Term deposits', type: 'subcategory', amount: 920_000_000, count: 24 },
-      { id: 'wholesale-funding', label: 'Wholesale funding', type: 'subcategory', amount: 480_000_000, count: 6 },
-      { id: 'debt-issued', label: 'Debt issued', type: 'subcategory', amount: 150_000_000, count: 3 },
-      { id: 'other-liabilities', label: 'Other liabilities', type: 'subcategory', amount: 50_000_000, count: 1 },
     ],
   },
 ];

@@ -1,20 +1,20 @@
 import React, { useState, useCallback } from 'react';
-import { BalancePositionsCard } from '@/components/BalancePositionsCard';
+import { BalancePositionsCardConnected } from '@/components/connected/BalancePositionsCardConnected';
 import { CurvesAndScenariosCard } from '@/components/CurvesAndScenariosCard';
 import { ResultsCard } from '@/components/ResultsCard';
 import { WhatIfProvider } from '@/components/whatif/WhatIfContext';
 import { BehaviouralProvider } from '@/components/behavioural/BehaviouralContext';
 import { runCalculation } from '@/lib/calculationEngine';
 import type { Position, YieldCurve, Scenario, CalculationResults } from '@/types/financial';
-import { DEFAULT_SCENARIOS, SAMPLE_POSITIONS, SAMPLE_YIELD_CURVE } from '@/types/financial';
+import { DEFAULT_SCENARIOS, SAMPLE_YIELD_CURVE } from '@/types/financial';
 import { Button } from '@/components/ui/button';
-import { FileSpreadsheet, Calculator, TrendingUp } from 'lucide-react';
+import { Calculator, TrendingUp } from 'lucide-react';
 
 const Index = () => {
   // State management
   const [positions, setPositions] = useState<Position[]>([]);
   const [curves, setCurves] = useState<YieldCurve[]>([]);
-  const [selectedCurves, setSelectedCurves] = useState<string[]>(['risk-free', 'euribor-3m']);
+  const [selectedCurves, setSelectedCurves] = useState<string[]>([]);
   const [scenarios, setScenarios] = useState<Scenario[]>(DEFAULT_SCENARIOS);
   const [results, setResults] = useState<CalculationResults | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -48,12 +48,6 @@ const Index = () => {
     }, 500);
   }, [canCalculate, positions, curves, scenarios]);
 
-  // Load sample data
-  const handleLoadSampleData = useCallback(() => {
-    setPositions(SAMPLE_POSITIONS);
-    setCurves([SAMPLE_YIELD_CURVE]);
-  }, []);
-
   return (
     <BehaviouralProvider>
       <WhatIfProvider>
@@ -72,15 +66,6 @@ const Index = () => {
             </div>
             
             <div className="flex items-center gap-2.5">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLoadSampleData}
-                className="h-8 text-xs gap-2 text-muted-foreground hover:text-foreground hover:bg-accent/60 rounded-lg transition-all duration-200"
-              >
-                <FileSpreadsheet className="h-3.5 w-3.5" />
-                Load Sample
-              </Button>
               <Button
                 size="sm"
                 className="h-8 text-xs gap-2 rounded-lg shadow-sm transition-all duration-200 hover:shadow-md"
@@ -107,7 +92,7 @@ const Index = () => {
         <main className="flex-1 p-3 overflow-hidden">
           <div className="grid grid-cols-2 grid-rows-2 gap-3 h-full">
             {/* Top-left: Balance Positions */}
-            <BalancePositionsCard
+            <BalancePositionsCardConnected
               positions={positions}
               onPositionsChange={setPositions}
             />

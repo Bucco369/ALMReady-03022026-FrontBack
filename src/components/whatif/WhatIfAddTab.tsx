@@ -8,6 +8,32 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { PRODUCT_TEMPLATES, type ProductTemplate } from '@/types/whatif';
 import { useWhatIf } from './WhatIfContext';
 
+function parsePositiveNumber(input?: string): number | null {
+  if (!input) return null;
+  const parsed = parseFloat(input);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return parsed;
+}
+
+function computeResidualMaturityYears(formValues: Record<string, string>): number {
+  const fromAvgLife = parsePositiveNumber(formValues.avgLife);
+  if (fromAvgLife !== null) return fromAvgLife;
+
+  const maturityDateRaw = formValues.maturityDate;
+  if (!maturityDateRaw) return 0;
+
+  const maturityDate = new Date(maturityDateRaw);
+  if (Number.isNaN(maturityDate.getTime())) return 0;
+
+  const startDateRaw = formValues.startDate;
+  const startDate = startDateRaw ? new Date(startDateRaw) : new Date();
+  if (Number.isNaN(startDate.getTime())) return 0;
+
+  const years = (maturityDate.getTime() - startDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+  if (!Number.isFinite(years)) return 0;
+  return Math.max(0, years);
+}
+
 export function WhatIfAddTab() {
   const [selectedTemplate, setSelectedTemplate] = useState<ProductTemplate | null>(null);
   const [formValues, setFormValues] = useState<Record<string, string>>({});
@@ -36,14 +62,17 @@ export function WhatIfAddTab() {
     
     const notional = formValues.notional || '—';
     const currency = formValues.currency || 'USD';
-    const rate = parseFloat(formValues.coupon || formValues.depositRate || formValues.fixedRate || '0') / 100;
+    const rawRate = formValues.coupon || formValues.depositRate || formValues.fixedRate;
+    const parsedRate = rawRate !== undefined ? parseFloat(rawRate) : NaN;
+    const rate = Number.isFinite(parsedRate) ? parsedRate / 100 : undefined;
+    const maturity = computeResidualMaturityYears(formValues);
     
     // Map template to subcategory for balance tree placement
     const subcategoryMap: Record<string, string> = {
       'fixed-loan': 'loans',
       'floating-loan': 'loans',
-      'bond-portfolio': 'bonds',
-      'nmd': 'sight-deposits',
+      'bond-portfolio': 'securities',
+      'nmd': 'deposits',
       'term-deposit': 'term-deposits',
       'wholesale': 'wholesale-funding',
       'irs-hedge': 'loans', // derivatives appear under appropriate category
@@ -59,6 +88,8 @@ export function WhatIfAddTab() {
       category: selectedTemplate.category,
       subcategory: subcategoryMap[selectedTemplate.id] || 'loans',
       rate,
+      maturity,
+      positionDelta: 1,
     });
 
     // Reset form

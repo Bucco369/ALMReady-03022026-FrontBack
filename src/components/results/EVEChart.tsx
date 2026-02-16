@@ -18,7 +18,7 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useWhatIf } from '@/components/whatif/WhatIfContext';
-import { addMonths, addYears, format } from 'date-fns';
+import { getCalendarLabelFromMonths } from '@/lib/calendarLabels';
 
 const TENORS = [
   { label: '1M', months: 1 },
@@ -62,12 +62,6 @@ function computeWhatIfImpact(modifications: any[]) {
   });
 
   return { assetDelta, liabilityDelta };
-}
-
-// Generate calendar label from tenor and analysis date
-function getCalendarLabel(analysisDate: Date, monthsToAdd: number): string {
-  const targetDate = addMonths(analysisDate, monthsToAdd);
-  return format(targetDate, 'MMM yyyy');
 }
 
 // Generate placeholder data for EVE chart with What-If support
@@ -116,7 +110,7 @@ const generateEVEData = (
     const netEV = totalAssets + totalLiabilities;
 
     // Calendar label for this tenor
-    const calendarLabel = getCalendarLabel(analysisDate, tenor.months);
+    const calendarLabel = getCalendarLabelFromMonths(analysisDate, tenor.months);
     
     return {
       tenor: tenor.label,

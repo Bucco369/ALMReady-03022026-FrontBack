@@ -8,6 +8,9 @@ h11==0.16.0
 httptools==0.7.1
 idna==3.11
 orjson==3.11.7
+pandas==2.3.3
+numpy==2.3.3
+openpyxl==3.1.5
 pydantic==2.12.5
 pydantic_core==2.41.5
 python-dotenv==1.2.1

@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/popover';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { addMonths, format } from 'date-fns';
+import { getCalendarLabelFromMonths } from '@/lib/calendarLabels';
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => ({
   label: `${i + 1}M`,
@@ -34,10 +34,21 @@ const SCENARIOS = [
   { id: 'short-down', label: 'Short Down' },
 ];
 
-function getCalendarLabel(analysisDate: Date, monthsToAdd: number): string {
-  const targetDate = addMonths(analysisDate, monthsToAdd);
-  return format(targetDate, 'MMM yyyy');
-}
+type AxisTickProps = {
+  x: number;
+  y: number;
+  payload: { value: string | number };
+};
+
+type TooltipEntry = {
+  value?: number | string;
+};
+
+type ChartTooltipProps = {
+  active?: boolean;
+  payload?: TooltipEntry[];
+  label?: string | number;
+};
 
 // Generate raw data for NII chart
 const generateRawNIIData = (scenario: string, analysisDate: Date | null) => {
@@ -57,7 +68,7 @@ const generateRawNIIData = (scenario: string, analysisDate: Date | null) => {
     const incomeAdj = scenarioMultiplier * (3 + index * 0.3);
     const expenseAdj = scenarioMultiplier * (2 + index * 0.2);
     
-    const calendarLabel = analysisDate ? getCalendarLabel(analysisDate, month.monthsToAdd) : null;
+    const calendarLabel = analysisDate ? getCalendarLabelFromMonths(analysisDate, month.monthsToAdd) : null;
     
     return {
       month: month.label,
@@ -94,7 +105,7 @@ export function NIIChart({ className, fullWidth = false, analysisDate }: NIIChar
   const formatValue = (value: number) => `${value.toFixed(1)}M`;
 
   // Custom X-axis tick with dual labels
-  const CustomXAxisTick = ({ x, y, payload }: any) => {
+  const CustomXAxisTick = ({ x, y, payload }: AxisTickProps) => {
     const dataPoint = data.find(d => d.month === payload.value);
     return (
       <g transform={`translate(${x},${y})`}>
@@ -126,7 +137,7 @@ export function NIIChart({ className, fullWidth = false, analysisDate }: NIIChar
     );
   };
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: ChartTooltipProps) => {
     if (!active || !payload?.length) return null;
     const dataPoint = data.find(d => d.month === label);
     
@@ -172,12 +183,12 @@ export function NIIChart({ className, fullWidth = false, analysisDate }: NIIChar
               <ComposedChart
                 data={data}
                 margin={{ top: 10, right: 15, left: 0, bottom: 25 }}
+                stackOffset="sign"
               >
                 <CartesianGrid 
                   strokeDasharray="3 3" 
                   stroke="hsl(var(--border))" 
-                  opacity={0.4}
-                  vertical={false}
+                  opacity={0.5}
                 />
                 <XAxis 
                   dataKey="month" 
@@ -190,30 +201,34 @@ export function NIIChart({ className, fullWidth = false, analysisDate }: NIIChar
                   tick={{ fontSize: fullWidth ? 10 : 9, fill: 'hsl(var(--muted-foreground))' }}
                   axisLine={{ stroke: 'hsl(var(--border))' }}
                   tickLine={false}
-                  tickFormatter={(v) => `${v}`}
+                  tickFormatter={(v) => `${Math.abs(v)}`}
                   width={40}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 
                 {/* Zero baseline */}
-                <ReferenceLine y={0} stroke="hsl(var(--foreground))" strokeWidth={1} opacity={0.6} />
+                <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1.5} />
                 
-                {/* Interest Income (Assets) - bars above 0 */}
+                {/* Interest Income (Assets) - positive stack */}
                 <Bar 
                   dataKey="income" 
                   name="Interest Income (Assets)"
+                  stackId="main"
                   fill="hsl(var(--success))" 
-                  radius={[6, 6, 0, 0]}
-                  barSize={fullWidth ? 24 : 16}
+                  opacity={0.8}
+                  radius={[4, 4, 0, 0]}
+                  barSize={fullWidth ? 22 : 16}
                 />
                 
-                {/* Interest Expense (Liabilities) - bars below 0 (negative) */}
+                {/* Interest Expense (Liabilities) - negative stack */}
                 <Bar 
                   dataKey="expenseNeg" 
                   name="Interest Expense (Liabilities)"
+                  stackId="main"
                   fill="hsl(var(--destructive))" 
-                  radius={[0, 0, 6, 6]}
-                  barSize={fullWidth ? 24 : 16}
+                  opacity={0.8}
+                  radius={[0, 0, 4, 4]}
+                  barSize={fullWidth ? 22 : 16}
                 />
                 
                 {/* Net Interest Income (NII) line */}
@@ -221,10 +236,10 @@ export function NIIChart({ className, fullWidth = false, analysisDate }: NIIChar
                   type="monotone" 
                   dataKey="nii" 
                   name="Net Interest Income (NII)"
-                  stroke="hsl(var(--warning))" 
-                  strokeWidth={3}
-                  dot={false}
-                  activeDot={{ r: fullWidth ? 6 : 5, fill: 'hsl(var(--warning))' }}
+                  stroke="hsl(var(--primary))" 
+                  strokeWidth={2}
+                  dot={{ r: fullWidth ? 3.5 : 3, fill: 'hsl(var(--primary))' }}
+                  activeDot={{ r: fullWidth ? 5 : 4, fill: 'hsl(var(--primary))' }}
                 />
               </ComposedChart>
             </ResponsiveContainer>
@@ -241,7 +256,7 @@ export function NIIChart({ className, fullWidth = false, analysisDate }: NIIChar
               <span className="text-muted-foreground">Interest Expense (Liabilities)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-5 h-0.5 rounded bg-warning" />
+              <div className="w-5 h-0.5 rounded bg-primary" />
               <span className="text-muted-foreground">Net Interest Income (NII)</span>
             </div>
           </div>
