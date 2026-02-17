@@ -1,3 +1,28 @@
+/**
+ * EVEChart.tsx – Stacked bar chart for Economic Value of Equity (EVE).
+ *
+ * === ROLE IN THE SYSTEM ===
+ * Renders a Recharts ComposedChart showing asset/liability PV breakdown
+ * across 12 standard IRRBB tenors (1M → 30Y). A Net EV line overlays
+ * the stacked bars. The user can switch between 7 regulatory scenarios
+ * via a popover selector.
+ *
+ * === WHAT-IF INTEGRATION ===
+ * Reads WhatIfContext.modifications and computes assetDelta/liabilityDelta
+ * from notional values of adds/removes. These deltas produce extra bar
+ * segments with different opacity, plus a warning-coloured segment for reductions.
+ *
+ * === CURRENT LIMITATIONS ===
+ * - ALL DATA IS SYNTHETIC: generateEVEData() produces deterministic
+ *   placeholder values using sin/cos functions. No connection to real
+ *   calculation results (CalculationResults.scenarioResults).
+ * - The scenario multiplier logic is a rough visual approximation, not
+ *   based on actual interest-rate shock mechanics.
+ * - Phase 1 will replace generateEVEData() with real per-tenor PV
+ *   breakdown returned by the backend engine.
+ * - Calendar labels (e.g. "Mar 2026" under "1M") are functional via
+ *   calendarLabels.ts and driven by the WhatIf analysisDate.
+ */
 import React, { useState, useMemo } from 'react';
 import {
   ComposedChart,

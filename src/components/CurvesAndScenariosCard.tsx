@@ -1,3 +1,30 @@
+/**
+ * CurvesAndScenariosCard.tsx – Upload, manage, and visualize yield curves + IRRBB scenarios.
+ *
+ * === ROLE IN THE SYSTEM ===
+ * The top-right quadrant of the dashboard. Two main responsibilities:
+ *
+ * 1. CURVES MANAGEMENT:
+ *    - Upload Excel files containing yield-curve data (one curve per row).
+ *    - Files are sent to POST /api/sessions/{id}/curves/upload (backend parses
+ *      tenor columns like ON, 1M, 3M… 50Y and returns CurvesSummaryResponse).
+ *    - Users select which curves to include in the calculation (checkboxes).
+ *    - Curve points are lazy-loaded via GET /api/sessions/{id}/curves/{curveId}/points.
+ *    - A "Details" dialog shows an interactive LineChart with all selected curves
+ *      overlaid, plus a maturity-range slider.
+ *
+ * 2. SCENARIOS MANAGEMENT:
+ *    - Lists the 6 standard IRRBB regulatory scenarios with shock magnitudes in bps.
+ *    - Users can enable/disable scenarios and add custom ones (parallel or long-end).
+ *    - In "Scenarios" chart mode, plots base curve + shocked curves via
+ *      buildScenarioPoints() from curves/scenarios.ts.
+ *
+ * === CURRENT LIMITATIONS ===
+ * - Curves are uploaded and visualized but NOT yet consumed by the local
+ *   calculationEngine.ts (which uses a flat 2% base rate).
+ * - Phase 1: Selected curves will be passed to POST /api/sessions/{id}/calculate
+ *   so the backend engine applies proper curve-based discounting.
+ */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   TrendingUp,

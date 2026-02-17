@@ -1,20 +1,42 @@
-// What-If modification types
+/**
+ * whatif.ts – Types for the What-If modification system.
+ *
+ * === ROLE IN THE SYSTEM ===
+ * What-If modifications represent hypothetical changes to the balance:
+ * - "add": Create a synthetic position (e.g. new loan portfolio)
+ * - "remove": Exclude existing positions from calculation
+ *
+ * These modifications live in WhatIfContext (frontend state only) and are
+ * displayed as green/red overlays in the BalancePositionsCard.
+ *
+ * === CURRENT LIMITATION ===
+ * Modifications are NOT sent to the backend for calculation. ResultsCard
+ * uses HARDCODED mock impact values (+12.5M EVE, -2.1M NII, etc.) when
+ * hasModifications is true. Phase 1 will send modifications to the backend
+ * as part of the /calculate request, and the backend will apply them as
+ * overlays on the canonical positions before running the engine.
+ *
+ * === FUTURE: WHAT-IF INSTANTÁNEO ===
+ * Phase 2 aims for instantaneous What-If by caching per-contract EVE/NII
+ * contributions from the base run. Removes = subtract contributions.
+ * Adds = mini-run only for new positions. This requires the engine to
+ * output granular contributions, not just totals.
+ */
 
 export interface WhatIfModification {
-  id: string;
+  id: string;                     // Auto-generated unique ID
   type: 'add' | 'remove';
-  label: string;
-  details?: string;
-  notional?: number;
+  label: string;                  // Display name (e.g. "Fixed-rate Loan Portfolio")
+  details?: string;               // Extra info (e.g. "€10M EUR")
+  notional?: number;              // Amount for adds
   currency?: string;
-  // Target category for placement in balance tree
-  category?: 'asset' | 'liability' | 'derivative';
-  subcategory?: string; // e.g., 'mortgages', 'bonds', 'sight-deposits'
-  rate?: number; // Interest rate for avg rate delta calculation
-  maturity?: number; // Residual maturity in years for weighted maturity delta calculation
-  positionDelta?: number; // Allows remove_all to deduct full subcategory count.
-  removeMode?: 'all' | 'contracts';
-  contractIds?: string[];
+  category?: 'asset' | 'liability' | 'derivative';  // Balance tree placement
+  subcategory?: string;           // e.g., 'mortgages', 'deposits'
+  rate?: number;                  // Interest rate (decimal) for avg rate delta
+  maturity?: number;              // Residual maturity in years
+  positionDelta?: number;         // For remove_all: count of positions removed
+  removeMode?: 'all' | 'contracts';  // Remove entire subcategory vs specific contracts
+  contractIds?: string[];         // Specific contract_ids to remove
 }
 
 export interface ProductTemplate {

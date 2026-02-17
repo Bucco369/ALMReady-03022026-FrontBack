@@ -1,3 +1,11 @@
+/**
+ * calendarLabels.ts – Converts tenor strings (e.g. "3M", "5Y") into calendar dates.
+ *
+ * === ROLE IN THE SYSTEM ===
+ * When the user sets an Analysis Date, charts show calendar dates beneath tenor
+ * labels (e.g. "Jul 2026" under "6M"). Used by EVEChart, NIIChart, and
+ * CurvesAndScenariosCard. Supports D/W/M/Y units and ON (overnight = +1 day).
+ */
 import { addDays, addMonths, addWeeks, addYears, format } from "date-fns";
 
 const TENOR_TOKEN_RE = /^\s*(\d+)\s*([DWMY])\s*$/i;

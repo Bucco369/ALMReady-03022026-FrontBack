@@ -1,3 +1,18 @@
+/**
+ * WhatIfAddTab.tsx – Template-based form for adding synthetic positions.
+ *
+ * === ROLE IN THE SYSTEM ===
+ * Two-step flow inside WhatIfBuilder's "Add Position" tab:
+ * 1. Template selection: PRODUCT_TEMPLATES grouped by category (Asset/Liability/Derivative).
+ * 2. Form entry: Dynamic fields → creates WhatIfModification of type='add'.
+ *
+ * Maps template IDs to balance-tree subcategories (e.g. 'nmd' → 'deposits').
+ * Computes rate (% → decimal) and maturity (from dates or avgLife).
+ *
+ * === CURRENT LIMITATIONS ===
+ * - Synthetic positions are simple metadata objects, NOT real cashflow schedules.
+ * - Phase 1: Backend will generate proper cashflow structures from these parameters.
+ */
 import React, { useState } from 'react';
 import { Plus, Building2, Landmark, TrendingUp, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';

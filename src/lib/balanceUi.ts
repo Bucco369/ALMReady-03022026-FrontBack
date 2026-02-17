@@ -1,3 +1,25 @@
+/**
+ * balanceUi.ts – Maps backend BalanceSummaryTree → frontend UI tree types.
+ *
+ * === ROLE IN THE SYSTEM ===
+ * The backend returns a BalanceSummaryTree with raw category/subcategory data.
+ * This module transforms it into BalanceUiTree which the BalancePositionsCard
+ * renders directly. Key responsibilities:
+ * 1. Sort subcategories in the predefined display order (mirrors backend's
+ *    ASSET_SUBCATEGORY_ORDER / LIABILITY_SUBCATEGORY_ORDER).
+ * 2. Provide fallback empty trees when data is missing.
+ * 3. Map backend field names (avg_rate) to frontend names (avgRate).
+ *
+ * === SHEET-LEVEL FALLBACK ===
+ * inferCategoryFromSheetName() and mapSheetSummaryToUiRow() provide a legacy
+ * fallback that maps individual sheet summaries to UI rows. This is used when
+ * summary_tree is unavailable (shouldn't happen in normal flow).
+ *
+ * === FUTURE ===
+ * When ZIP/CSV input arrives, the backend will still produce the same
+ * BalanceSummaryTree, so this module shouldn't need changes.
+ */
+
 import type {
   BalanceSheetSummary,
   BalanceSummaryResponse,

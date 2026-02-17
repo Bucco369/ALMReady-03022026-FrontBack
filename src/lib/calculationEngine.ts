@@ -1,3 +1,41 @@
+/**
+ * calculationEngine.ts – SIMPLIFIED LOCAL EVE/NII calculation engine.
+ *
+ * ╔══════════════════════════════════════════════════════════════════════════╗
+ * ║  THIS ENTIRE FILE WILL BE REPLACED IN PHASE 1.                         ║
+ * ║  The real EVE/NII calculation will run server-side via the external     ║
+ * ║  Python engine. The frontend will call POST /api/sessions/{id}/calculate║
+ * ║  and consume the returned CalculationResults directly.                  ║
+ * ╚══════════════════════════════════════════════════════════════════════════╝
+ *
+ * === WHAT IT DOES TODAY ===
+ * Provides a working (but simplified) IRRBB calculation so the UI can show
+ * real-ish numbers even before the external engine is integrated:
+ * 1. generateCashflows(): Creates annual interest + bullet principal flows
+ * 2. discountCashflows(): Applies continuous discounting (e^(-rt))
+ * 3. calculateEVE(): Sum of present values = Economic Value of Equity
+ * 4. calculateNII(): Sum of interest cashflows in next 12 months
+ * 5. applyScenarioShock(): Shifts yield curve per scenario type
+ * 6. runCalculation(): Orchestrates all of the above for base + N scenarios
+ *
+ * === KNOWN LIMITATIONS ===
+ * - NII IS CONSTANT ACROSS SCENARIOS: NII is calculated from raw (unshocked)
+ *   cashflows, so deltaNii is always 0. The real engine will recalculate NII
+ *   with shocked curves (repricing effect on floating-rate positions).
+ * - NO REPRICING MODEL: Floating-rate positions are treated as fixed-rate
+ *   (couponRate is used as-is). No forward curve projection.
+ * - NO AMORTIZATION TYPES: All positions use bullet-style cashflows (annual
+ *   interest + principal at maturity). No annuity, linear, or scheduled types.
+ * - NO BEHAVIOURAL ADJUSTMENTS: NMD maturity extension, prepayments, and
+ *   term deposit redemptions are not applied.
+ * - NO WHAT-IF OVERLAY: Positions come straight from the balance upload;
+ *   What-If modifications are not applied before calculation.
+ * - CONTINUOUS DISCOUNTING: Uses e^(-rt) instead of (1+r)^(-t). The real
+ *   engine may use a different discounting convention.
+ * - RUNS ON MAIN THREAD: Blocks the UI for large balances. The backend
+ *   calculation will be async.
+ */
+
 import type {
   Position,
   YieldCurve,
@@ -9,8 +47,9 @@ import type {
 } from '@/types/financial';
 
 /**
- * Generate cash flows for a given position
- * This is a simplified stub that creates annual cash flows
+ * Generate simplified annual cashflows for a single position.
+ * Creates: N annual interest payments + 1 bullet principal at maturity.
+ * Sign convention: Assets → positive, Liabilities → negative.
  */
 export function generateCashflows(position: Position): Cashflow[] {
   const cashflows: Cashflow[] = [];
@@ -151,8 +190,11 @@ export function calculateEVE(discountedCashflows: DiscountedCashflow[]): number 
 }
 
 /**
- * Calculate NII (Net Interest Income) for next 12 months
- * Simplified: sum of interest cash flows in the next year
+ * Calculate NII (Net Interest Income) for next 12 months.
+ * LIMITATION: This is a naive sum of interest cashflows within 12 months.
+ * It does NOT re-project floating rates under shocked curves, so NII is
+ * identical across all scenarios (deltaNii = 0 always). The real engine
+ * will model repricing and produce scenario-dependent NII.
  */
 export function calculateNII(cashflows: Cashflow[]): number {
   const today = new Date();
@@ -191,7 +233,9 @@ export function runCalculation(
       const shockedCurve = applyScenarioShock(baseCurve, scenario);
       const shockedDiscountedCF = discountCashflows(allCashflows, shockedCurve);
       const scenarioEve = calculateEVE(shockedDiscountedCF);
-      const scenarioNii = calculateNII(allCashflows); // Simplified: NII stays same
+      // LIMITATION: NII is recalculated with the SAME unshocked cashflows,
+      // so deltaNii will always be 0. The real engine fixes this.
+      const scenarioNii = calculateNII(allCashflows);
       
       return {
         scenarioId: scenario.id,

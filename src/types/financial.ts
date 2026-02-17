@@ -1,12 +1,43 @@
-// Core financial data types for EVE/NII Calculator
+/**
+ * financial.ts – Core financial data types for the EVE/NII calculator.
+ *
+ * === ROLE IN THE SYSTEM ===
+ * These types define the data structures used by:
+ * - Index.tsx (top-level state)
+ * - calculationEngine.ts (local calculation engine – will be replaced)
+ * - ResultsCard.tsx (rendering calculation results)
+ * - CurvesAndScenariosCard.tsx (scenario management)
+ *
+ * === IMPORTANT: Position type is a FRONTEND ABSTRACTION ===
+ * The Position interface below is what the LOCAL calculation engine uses.
+ * It does NOT match the backend's canonical position schema (which has
+ * subcategory_id, rate_type, maturity_bucket, etc.). The mapping from
+ * backend → Position happens in BalancePositionsCardConnected.mapSummaryToPositions().
+ *
+ * When Phase 1 replaces the local engine with a backend API call, the Position
+ * type will likely become irrelevant for calculation purposes. The backend
+ * will consume its own canonical_rows directly. Position may still be used
+ * for UI display purposes.
+ *
+ * === CalculationResults is the KEY CONTRACT ===
+ * The CalculationResults interface defines what the ResultsCard expects.
+ * Whether the calculation runs locally or on the backend, the output MUST
+ * conform to this shape. This is the stable contract between calculation
+ * and visualization.
+ */
 
+/**
+ * A financial position as understood by the LOCAL calculation engine.
+ * NOTE: This is a simplified view. The backend's canonical row has ~25 fields.
+ * Phase 1 will make this type less important as calculation moves server-side.
+ */
 export interface Position {
   id: string;
   instrumentType: 'Asset' | 'Liability';
   description: string;
-  notional: number;
-  maturityDate: string;
-  couponRate: number;
+  notional: number;                    // Principal / saldo_ini
+  maturityDate: string;                // ISO date (YYYY-MM-DD)
+  couponRate: number;                  // Decimal (0.045 = 4.5%)
   repriceFrequency: 'Fixed' | 'Monthly' | 'Quarterly' | 'Semi-Annual' | 'Annual';
   currency: string;
 }
@@ -63,17 +94,33 @@ export interface ScenarioResult {
   deltaNii: number;
 }
 
+/**
+ * The output contract for EVE/NII calculation – consumed by ResultsCard.
+ * Whether calculation runs locally (current) or on the backend (Phase 1),
+ * the result MUST match this shape. This is the STABLE API between
+ * calculation and visualization.
+ *
+ * FUTURE: May add a session_id field when results come from the backend.
+ */
 export interface CalculationResults {
-  baseEve: number;
-  baseNii: number;
-  worstCaseEve: number;
-  worstCaseDeltaEve: number;
-  worstCaseScenario: ScenarioType;
-  scenarioResults: ScenarioResult[];
-  calculatedAt: string;
+  baseEve: number;              // EVE with no scenario shocks applied
+  baseNii: number;              // NII with no scenario shocks (next 12 months)
+  worstCaseEve: number;         // EVE of the worst scenario
+  worstCaseDeltaEve: number;    // worstCaseEve - baseEve
+  worstCaseScenario: ScenarioType;  // Name of the worst scenario
+  scenarioResults: ScenarioResult[];  // Per-scenario breakdown
+  calculatedAt: string;         // ISO timestamp of when calculation ran
 }
 
-// Default IRRBB scenarios per regulatory guidelines
+/**
+ * Default IRRBB scenarios per EBA/Basel regulatory guidelines.
+ * These are the 6 standard shock scenarios that banks must assess.
+ * The shockBps values represent the magnitude; the sign and tenor-dependency
+ * are determined by the scenario name in applyScenarioShock().
+ * NOTE: Parallel Down and Short Down have NEGATIVE shockBps because the
+ * local engine uses absolute magnitude in switch/case logic. The backend
+ * engine may handle signs differently.
+ */
 export const DEFAULT_SCENARIOS: Scenario[] = [
   {
     id: 'parallel-up',

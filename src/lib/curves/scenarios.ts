@@ -1,3 +1,22 @@
+/**
+ * scenarios.ts – Applies IRRBB regulatory interest-rate shocks to yield curves.
+ *
+ * === ROLE IN THE SYSTEM ===
+ * Given a base yield curve (array of CurvePoint) and a scenario ID, computes
+ * the shocked curve. Used by CurvesAndScenariosCard's "Scenarios" chart mode.
+ *
+ * === SHOCK MECHANICS (EBA/BCBS IRRBB) ===
+ * - Parallel Up/Down: Flat ±200bp shift across all tenors.
+ * - Short Up/Down: Decaying shock R_SHORT × e^{-t/4}, strongest at short end.
+ * - Long Up/Down: R_LONG × (1 − e^{-t/4}), converges at long maturities.
+ * - Steepener: short-down + long-up. Flattener: short-up + long-down.
+ * - Custom: User-defined parallel or long-end shaped shock in bps.
+ *
+ * === CURRENT LIMITATIONS ===
+ * - VISUALIZATION ONLY: Shocked curves are displayed in charts but not used
+ *   for actual EVE/NII calculation. Phase 1 will apply the same shock logic
+ *   in the backend Python engine.
+ */
 import type { CurvePoint } from "@/lib/api";
 
 export const CURVE_SCENARIO_IDS = [

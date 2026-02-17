@@ -1,3 +1,28 @@
+/**
+ * WhatIfContext.tsx – Global state for the What-If modification system.
+ *
+ * === ROLE IN THE SYSTEM ===
+ * Manages a list of hypothetical balance modifications (adds/removes) that
+ * the user builds through the WhatIfBuilder side-sheet. The state is consumed by:
+ * - BalancePositionsCard: Shows green/red delta overlays on the balance tree.
+ * - ResultsCard: Shows What-If impact columns (currently HARDCODED mock values).
+ * - EVEChart: Adjusts visualization bars based on What-If asset/liability deltas.
+ *
+ * === STATE ===
+ * - modifications[]: Array of WhatIfModification (add/remove entries)
+ * - isApplied: Whether the user clicked "Apply to Analysis"
+ * - analysisDate: Optional date for calendar label display in charts
+ * - cet1Capital: CET1 capital amount for %CET1 calculations in ResultsCard
+ *
+ * === CURRENT LIMITATIONS ===
+ * - FRONTEND-ONLY STATE: Modifications are never sent to the backend. They
+ *   exist purely in React state and are lost on page refresh.
+ * - NO REAL CALCULATION IMPACT: The isApplied flag triggers HARDCODED impact
+ *   values in ResultsCard (+12.5M EVE, -2.1M NII). No actual recalculation.
+ * - Phase 1 will send modifications to POST /api/sessions/{id}/calculate.
+ * - Phase 2 will enable instant delta calculation using cached contributions.
+ */
+
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import type { WhatIfModification } from '@/types/whatif';
 

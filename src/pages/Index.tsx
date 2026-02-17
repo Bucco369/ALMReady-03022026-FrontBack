@@ -1,3 +1,30 @@
+/**
+ * Index.tsx – Main orchestrator page for the ALMReady IRRBB dashboard.
+ *
+ * === ROLE IN THE SYSTEM ===
+ * This is the ROOT COMPONENT of the application. It:
+ * 1. Holds the top-level state: positions, curves, scenarios, results.
+ * 2. Wraps everything in BehaviouralProvider and WhatIfProvider contexts.
+ * 3. Renders the 3-quadrant dashboard layout:
+ *    - Top-left: BalancePositionsCardConnected (balance upload + tree view)
+ *    - Top-right: CurvesAndScenariosCard (curves upload + scenario toggles)
+ *    - Bottom: ResultsCard (EVE/NII results + charts)
+ * 4. Owns the "Calculate EVE & NII" button and orchestrates the calculation.
+ *
+ * === CURRENT LIMITATIONS ===
+ * - CALCULATION IS LOCAL: handleCalculate() calls runCalculation() from
+ *   calculationEngine.ts, which is a simplified frontend-only engine.
+ *   Phase 1 will replace this with a POST /api/sessions/{id}/calculate
+ *   call to the backend, which delegates to the external Python engine.
+ * - NO WHAT-IF IN CALCULATION: The What-If overlay (WhatIfContext) is not
+ *   passed to the calculation. Phase 1 will send modifications to the backend.
+ * - NO BEHAVIOURAL IN CALCULATION: BehaviouralContext params are not used.
+ * - SAMPLE CURVE FALLBACK: If no curves are uploaded, a hardcoded USD sample
+ *   curve is used. This is a demo convenience, not production behavior.
+ * - SYNCHRONOUS FEEL: setTimeout(500ms) simulates async; the real backend
+ *   call will be genuinely async and may take seconds for large balances.
+ */
+
 import React, { useState, useCallback } from 'react';
 import { BalancePositionsCardConnected } from '@/components/connected/BalancePositionsCardConnected';
 import { CurvesAndScenariosCard } from '@/components/CurvesAndScenariosCard';
@@ -11,7 +38,9 @@ import { Button } from '@/components/ui/button';
 import { Calculator, TrendingUp } from 'lucide-react';
 
 const Index = () => {
-  // State management
+  // ─── Top-level application state ───────────────────────────────────────
+  // These are the 4 inputs needed for calculation + the result output.
+  // Each child card "owns" one input and reports changes via callbacks.
   const [positions, setPositions] = useState<Position[]>([]);
   const [curves, setCurves] = useState<YieldCurve[]>([]);
   const [selectedCurves, setSelectedCurves] = useState<string[]>([]);
@@ -19,23 +48,26 @@ const Index = () => {
   const [results, setResults] = useState<CalculationResults | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
-  // Check if calculation is possible
-  const canCalculate = 
-    positions.length > 0 && 
+  // All 3 conditions must be met to enable the Calculate button.
+  const canCalculate =
+    positions.length > 0 &&
     selectedCurves.length > 0 &&
     scenarios.some((s) => s.enabled);
 
-  // Handle calculation
+  // ─── Calculation handler ───────────────────────────────────────────────
+  // LIMITATION: This runs the SIMPLIFIED LOCAL engine (calculationEngine.ts).
+  // Phase 1 will replace this with: await calculateEveNii(sessionId, request)
+  // which calls POST /api/sessions/{id}/calculate on the backend.
   const handleCalculate = useCallback(() => {
     if (!canCalculate) return;
 
-    // Use sample curve for calculation (placeholder)
+    // Fallback to sample curve if user hasn't uploaded real curves
     const baseCurve = curves.length > 0 ? curves[0] : SAMPLE_YIELD_CURVE;
     const discountCurve = baseCurve;
 
     setIsCalculating(true);
-    
-    // Simulate async calculation
+
+    // setTimeout simulates async; will become a real await in Phase 1
     setTimeout(() => {
       const calculationResults = runCalculation(
         positions,

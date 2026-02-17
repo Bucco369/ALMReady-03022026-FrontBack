@@ -1,3 +1,16 @@
+/**
+ * labels.ts – Human-readable display names for curve identifiers.
+ *
+ * === ROLE IN THE SYSTEM ===
+ * The backend returns curve_id strings like "EUR_EURIBOR_6M" or "EUR_ESTR_OIS".
+ * This module maps them to user-friendly labels for the UI:
+ * - "EUR_ESTR_OIS" → "Risk-free"
+ * - "EUR_EURIBOR_3M" → "EURIBOR 3M"
+ * - "EUR_IRS_EURIBOR_6M" → "Swap (EURIBOR 6M)"
+ *
+ * Two strategies: EXACT_LABELS lookup, then regex pattern matching.
+ * Falls back to title-cased underscore-to-space conversion.
+ */
 const EXACT_LABELS: Record<string, string> = {
   EUR_ESTR_OIS: "Risk-free",
   EUR_EURIBOR_1M: "EURIBOR 1M",

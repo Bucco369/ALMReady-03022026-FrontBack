@@ -1,3 +1,17 @@
+/**
+ * WhatIfBuilder.tsx – Side-sheet for building What-If balance modifications.
+ *
+ * === ROLE IN THE SYSTEM ===
+ * Opens as a right-side Sheet when the user clicks the What-If button.
+ * Contains two tabs: "Add Position" (WhatIfAddTab) and "Remove Position"
+ * (WhatIfRemoveTab). Shows pending modifications as green/red badges.
+ * "Apply to Analysis" calls applyModifications() → sets isApplied=true.
+ *
+ * === CURRENT LIMITATIONS ===
+ * - "Apply" only flips a boolean flag in React state. It does NOT trigger
+ *   backend calculation. ResultsCard shows HARDCODED impact deltas.
+ * - Phase 1: Apply will POST modifications to /api/sessions/{id}/calculate.
+ */
 import React, { useState } from 'react';
 import { X, Plus, Minus, Trash2, Check, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';

@@ -1,3 +1,56 @@
+"""
+ALMReady Backend – FastAPI monolith for IRRBB data ingestion & session management.
+
+=== ROLE IN THE SYSTEM ===
+This file is the SOLE backend module. It acts as the "source of truth" for all
+balance and curve data within a user session. The frontend never stores raw
+financial data; it always fetches from this API.
+
+=== WHAT IT DOES TODAY ===
+1. SESSION MANAGEMENT: Create/retrieve UUID-based sessions persisted as JSON on disk.
+2. BALANCE INGESTION: Accept Excel uploads (.xlsx/.xls), parse sheets by prefix
+   (A_=Assets, L_=Liabilities, E_=Equity, D_=Derivatives), canonicalize every row
+   into a uniform dict, build a hierarchical summary tree, and persist everything
+   as JSON files inside the session directory.
+3. CURVE INGESTION: Accept Excel uploads with yield curve data, parse tenor columns,
+   convert to (tenor, t_years, rate) points, and persist per-curve point arrays.
+4. FILTERING & AGGREGATION: Serve balance details and contract lists with cascading
+   filters (category, subcategory, currency, rate_type, maturity, etc.), facets for
+   dynamic filter chips, and server-side pagination.
+
+=== CURRENT LIMITATIONS (relative to the final ALMReady goal) ===
+- NO CALCULATION ENDPOINT: There is no POST /calculate endpoint yet. EVE/NII
+  calculations currently run in the frontend (calculationEngine.ts), which is a
+  simplified placeholder. Phase 1 of integration will add a backend /calculate
+  endpoint that delegates to the external Python EVE/NII engine.
+- NO WHAT-IF OVERLAY: The backend stores the raw balance only. What-If modifications
+  live exclusively in the frontend (WhatIfContext). Phase 1 will add server-side
+  What-If overlay logic before calling the engine.
+- NO BEHAVIOURAL TRANSFORMS: Behavioural assumptions (NMD maturity extension,
+  prepayment SMM, term deposit TDRR) are configured in the frontend but not yet
+  applied anywhere in calculation. Phase 1/2 will apply these transforms server-side.
+- DEPOSITS HARDCODED TO 0Y MATURITY: Non-maturing deposits are forced to
+  maturity_years=0 and bucket="<1Y" as a temporary rule until the NMD behavioural
+  model is wired into the calculation.
+- EXCEL-ONLY INPUT: The final system will also support ZIP→CSVs by flow type
+  (fixed-annuity, fixed-bullet, non-maturity, etc.). Currently only .xlsx/.xls.
+- NO RESULT CACHING: There is no calculation_results.json being written yet.
+  Phase 1 will persist results so page refreshes don't require re-calculation.
+- SINGLE-FILE MONOLITH: All logic (models, parsers, helpers, routes) is in this
+  one file. Acceptable for now but may be split as the engine integration grows.
+
+=== KEY FILES IT READS/WRITES PER SESSION ===
+  /backend/data/sessions/{session_id}/
+    meta.json                  – SessionMeta (created_at, status, schema_version)
+    balance__<filename>.xlsx   – Copy of uploaded balance Excel
+    balance_summary.json       – BalanceUploadResponse (sheets, sample_rows, summary_tree)
+    balance_positions.json     – Array of canonical position dicts (source of truth)
+    balance_contracts.json     – Simplified contract array for search/pagination
+    curves__<filename>.xlsx    – Copy of uploaded curves Excel
+    curves_summary.json        – CurvesSummaryResponse (catalog of curves)
+    curves_points.json         – Dict {curve_id: [CurvePoint]} (all curve data)
+"""
+
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
@@ -16,7 +69,10 @@ from pydantic import BaseModel, Field
 
 app = FastAPI()
 
-# CORS (dev): allow local frontend origins.
+# ---------------------------------------------------------------------------
+# CORS (dev-only): allow local frontend origins on common Vite/React ports.
+# LIMITATION: In production, restrict to the actual deployed frontend domain.
+# ---------------------------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -32,10 +88,18 @@ app.add_middleware(
 )
 
 
-# -------------------------
-# API Models
-# -------------------------
+# ═══════════════════════════════════════════════════════════════════════════════
+# API MODELS (Pydantic v2)
+# These models define the REST contract between frontend and backend.
+# The frontend's api.ts mirrors these types as TypeScript types.
+# ═══════════════════════════════════════════════════════════════════════════════
+
 class SessionMeta(BaseModel):
+    """
+    Metadata for a user session. Every interaction with the app happens within
+    a session identified by a UUID.
+    FUTURE: Add `balance_format` field ("excel"|"zip") when ZIP ingestion lands.
+    """
     session_id: str
     created_at: str
     status: str = "active"
@@ -52,17 +116,27 @@ class BalanceSheetSummary(BaseModel):
 
 
 class BalanceTreeNode(BaseModel):
-    id: str
-    label: str
-    amount: float
-    positions: int
-    avg_rate: float | None = None
-    avg_maturity: float | None = None
+    """
+    A single subcategory row inside the balance summary tree.
+    Example: id="mortgages", label="Mortgages", amount=500M, positions=500.
+    The frontend's BalancePositionsCard renders these as expandable rows.
+    """
+    id: str          # Canonical subcategory_id (e.g. "mortgages", "deposits")
+    label: str       # Human-readable name from subcategoria_ui column
+    amount: float    # Sum of saldo_ini for all contracts in this subcategory
+    positions: int   # Count of contracts
+    avg_rate: float | None = None      # Weighted average rate (by |amount|)
+    avg_maturity: float | None = None  # Weighted average maturity in years
 
 
 class BalanceTreeCategory(BaseModel):
-    id: str
-    label: str
+    """
+    Top-level category in the balance tree: Assets, Liabilities, Equity, or Derivatives.
+    Contains an ordered list of subcategory nodes.
+    Ordering follows ASSET_SUBCATEGORY_ORDER / LIABILITY_SUBCATEGORY_ORDER below.
+    """
+    id: str          # "assets", "liabilities", "equity", or "derivatives"
+    label: str       # "Assets", "Liabilities", etc.
     amount: float
     positions: int
     avg_rate: float | None = None
@@ -71,6 +145,13 @@ class BalanceTreeCategory(BaseModel):
 
 
 class BalanceSummaryTree(BaseModel):
+    """
+    The complete hierarchical view of the balance sheet.
+    This is the primary data structure consumed by the frontend to render the
+    balance positions card. It's built from canonical_rows after every upload.
+    NOTE: Equity and Derivatives are "optional sides" – they appear in the tree
+    but are NOT included in the main balance totals (include_in_balance_tree=false).
+    """
     assets: BalanceTreeCategory | None = None
     liabilities: BalanceTreeCategory | None = None
     equity: BalanceTreeCategory | None = None
@@ -87,20 +168,25 @@ class BalanceUploadResponse(BaseModel):
 
 
 class BalanceContract(BaseModel):
+    """
+    Simplified view of one contract, used by the contracts search/pagination
+    endpoint and by the What-If Remove flow (WhatIfRemoveTab.tsx).
+    This is a subset of the full canonical row – enough for display and filtering.
+    """
     contract_id: str
     sheet: str | None = None
-    category: str
+    category: str                   # "asset" | "liability" | "equity" | "derivative"
     categoria_ui: str | None = None
-    subcategory: str
+    subcategory: str                # subcategory_id (e.g. "mortgages")
     subcategoria_ui: str | None = None
     group: str | None = None
     currency: str | None = None
     counterparty: str | None = None
-    rate_type: str | None = None
-    maturity_bucket: str | None = None
+    rate_type: str | None = None    # "Fixed" | "Floating" | null
+    maturity_bucket: str | None = None  # "<1Y", "1-5Y", "5-10Y", "10-20Y", ">20Y"
     maturity_years: float | None = None
     amount: float | None = None
-    rate: float | None = None
+    rate: float | None = None       # rate_display value
 
 
 class BalanceContractsResponse(BaseModel):
@@ -176,15 +262,18 @@ class CurvePointsResponse(BaseModel):
     points: list[CurvePoint]
 
 
-# -------------------------
-# In-memory and disk stores
-# -------------------------
-_SESSIONS: dict[str, SessionMeta] = {}
+# ═══════════════════════════════════════════════════════════════════════════════
+# IN-MEMORY CACHE & DISK PATHS
+# Sessions are cached in-memory for fast lookups during a server lifecycle,
+# but always persisted to disk so they survive restarts.
+# ═══════════════════════════════════════════════════════════════════════════════
+_SESSIONS: dict[str, SessionMeta] = {}  # Hot cache; populated lazily from disk.
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent  # /backend/
 SESSIONS_DIR = BASE_DIR / "data" / "sessions"
 SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
 
+# Excel sheets with these names are metadata/schema sheets – skip during parsing.
 META_SHEETS = {
     "README",
     "SCHEMA_BASE",
@@ -193,19 +282,27 @@ META_SHEETS = {
     "BALANCE_SUMMARY",
     "CURVES_ENUMS",
 }
+
+# Only sheets starting with these prefixes contain position data.
+# A_=Assets, L_=Liabilities, E_=Equity, D_=Derivatives.
 POSITION_PREFIXES = ("A_", "L_", "E_", "D_")
 
+# Columns that MUST exist in every A_, L_, E_ sheet for parsing to succeed.
+# D_ (derivatives) sheets are more lenient.
 BASE_REQUIRED_COLS = {
-    "num_sec_ac",
-    "lado_balance",
-    "categoria_ui",
-    "subcategoria_ui",
-    "grupo",
-    "moneda",
-    "saldo_ini",
-    "tipo_tasa",
+    "num_sec_ac",       # Contract identifier
+    "lado_balance",     # Side: asset/liability/equity/derivative
+    "categoria_ui",     # UI category label
+    "subcategoria_ui",  # UI subcategory label (maps to subcategory_id)
+    "grupo",            # Group within subcategory
+    "moneda",           # Currency (EUR, USD, etc.)
+    "saldo_ini",        # Initial balance / notional amount
+    "tipo_tasa",        # Rate type: fijo/variable/nonrate
 }
 
+# Maps Spanish/English subcategory labels → canonical subcategory_id slugs.
+# If a label isn't found here, it gets slugified automatically.
+# FUTURE: When ZIP/CSV input arrives, flow_type will replace this mapping.
 SUBCATEGORY_ID_ALIASES = {
     "mortgages": "mortgages",
     "loans": "loans",
@@ -220,6 +317,8 @@ SUBCATEGORY_ID_ALIASES = {
     "equity": "equity",
 }
 
+# Display order for subcategories in the UI tree. The frontend mirrors this
+# in balanceUi.ts. Unknown subcategories appear after these, sorted by amount.
 ASSET_SUBCATEGORY_ORDER = [
     "mortgages",
     "loans",
@@ -236,9 +335,11 @@ LIABILITY_SUBCATEGORY_ORDER = [
 ]
 
 
-# -------------------------
-# Path helpers
-# -------------------------
+# ═══════════════════════════════════════════════════════════════════════════════
+# PATH HELPERS
+# Every session gets its own directory under /backend/data/sessions/{uuid}/.
+# Files are named with semantic prefixes so multiple uploads can coexist.
+# ═══════════════════════════════════════════════════════════════════════════════
 def _session_dir(session_id: str) -> Path:
     path = SESSIONS_DIR / session_id
     path.mkdir(parents=True, exist_ok=True)
@@ -309,9 +410,11 @@ def _latest_curves_file(session_id: str) -> Path:
     return candidates[0]
 
 
-# -------------------------
-# Session persistence helpers
-# -------------------------
+# ═══════════════════════════════════════════════════════════════════════════════
+# SESSION PERSISTENCE HELPERS
+# Sessions are created via POST /api/sessions and stored as meta.json.
+# The in-memory _SESSIONS dict acts as a read-through cache.
+# ═══════════════════════════════════════════════════════════════════════════════
 def _persist_session_meta(meta: SessionMeta) -> None:
     # Ensure session directory exists before persisting metadata.
     _session_dir(meta.session_id)
@@ -344,9 +447,12 @@ def _assert_session_exists(session_id: str) -> None:
         raise HTTPException(status_code=404, detail="Session not found. Create it first via POST /api/sessions")
 
 
-# -------------------------
-# Value normalization helpers
-# -------------------------
+# ═══════════════════════════════════════════════════════════════════════════════
+# VALUE NORMALIZATION HELPERS
+# These functions handle the messy reality of Excel data: NaN values, mixed
+# types, accented characters, inconsistent date formats, etc.
+# They're used extensively by _canonicalize_position_row() below.
+# ═══════════════════════════════════════════════════════════════════════════════
 def _norm_key(text: str) -> str:
     return str(text).strip().lower()
 
@@ -500,33 +606,52 @@ def _to_subcategory_id(subcategoria_ui: str | None, sheet_name: str) -> str:
 
 
 def _normalize_rate_type(tipo_tasa: str | None) -> str | None:
+    """
+    Normalize the Spanish/English rate type to exactly two values: "Fixed" or "Floating".
+    "nonrate"/"non-rate"/"no-rate" instruments (e.g. cash, central bank balances) are
+    treated as Floating for display simplicity.
+    LIMITATION: The real engine may need a third "NonRate" category for proper cashflow
+    generation (these positions generate no interest flows).
+    """
     raw = (tipo_tasa or "").strip().lower()
     if raw in {"fijo", "fixed"}:
         return "Fixed"
     if raw in {"variable", "floating", "float", "nonrate", "non-rate", "no-rate"}:
-        # UX requirement: Fixed vs Floating only.
         return "Floating"
     return None
 
 
 def _rate_display(tipo_tasa: str | None, tasa_fija: float | None) -> float | None:
+    """
+    Select the rate to display in the UI for a given position.
+    LIMITATION: For floating-rate instruments, we currently show tasa_fija (the
+    fixed component / last-known rate) because we don't have a forward curve
+    lookup here. The external engine will compute proper projected rates.
+    For nonrate instruments, tasa_fija is used as a fallback (usually null).
+    """
     raw = (tipo_tasa or "").strip().lower()
 
     if raw in {"fijo", "fixed"}:
         return tasa_fija
 
     if raw in {"nonrate", "non-rate", "no-rate"}:
-        # Explicit fallback accepted by requirements.
         return tasa_fija
 
     if raw in {"variable", "floating", "float"}:
-        # Requirement: do not invent tenor proxy here.
         return tasa_fija
 
     return tasa_fija
 
 
 def _maturity_years(fecha_vencimiento: str | None, fallback_years: float | None) -> float | None:
+    """
+    Calculate residual maturity in years from today.
+    Priority: fecha_vencimiento date → fallback core_avg_maturity_y column → None.
+    If the maturity date is in the past (negative years), we fall back to the
+    auxiliary column. This handles already-matured positions gracefully.
+    NOTE: Deposits are overridden to 0.0 in _canonicalize_position_row() regardless
+    of this calculation – see the "deposits" special rule below.
+    """
     if fecha_vencimiento:
         try:
             venc = datetime.fromisoformat(fecha_vencimiento).date()
@@ -624,6 +749,29 @@ def _safe_sheet_summary(sheet_name: str, df: pd.DataFrame) -> BalanceSheetSummar
 
 
 def _canonicalize_position_row(sheet_name: str, record: dict[str, Any], idx: int) -> dict[str, Any]:
+    """
+    Transform one raw Excel row into a canonical position dict.
+
+    This is the CORE DATA TRANSFORMATION of the backend. Every field from the
+    Excel is normalized, validated, and mapped to a stable schema that the rest
+    of the system (frontend tree, filters, future engine) can rely on.
+
+    Key transformations:
+    - contract_id: from num_sec_ac or auto-generated from sheet+index
+    - side: normalized from lado_balance or inferred from sheet prefix (A_/L_/E_/D_)
+    - subcategory_id: mapped via SUBCATEGORY_ID_ALIASES or slugified
+    - rate_type: normalized to "Fixed"/"Floating"/null
+    - maturity_years: calculated from fecha_vencimiento or fallback column
+    - maturity_bucket: categorized into <1Y, 1-5Y, 5-10Y, 10-20Y, >20Y
+
+    BUSINESS RULES:
+    - Deposits (subcategory_id=="deposits") are forced to maturity_years=0.0 and
+      bucket="<1Y". This is TEMPORARY until the NMD behavioural model is integrated.
+    - include_in_balance_tree is true only for assets/liabilities (not equity/derivatives).
+
+    FUTURE: When ZIP/CSV input arrives, this function will be replaced by a new
+    parser that reads flow_type from the CSV filename and epígrafe from a column.
+    """
     lookup = {_norm_key(k): k for k in record.keys()}
 
     def get(col: str) -> Any:
@@ -657,7 +805,14 @@ def _canonicalize_position_row(sheet_name: str, record: dict[str, Any], idx: int
     core_avg_maturity = _to_float(get("core_avg_maturity_y"))
     maturity_years = _maturity_years(fecha_vencimiento, core_avg_maturity)
     if subcategory_id == "deposits":
-        # Temporary business rule: treat non-maturity deposits as 0Y until behavioural treatment is implemented.
+        # ┌──────────────────────────────────────────────────────────────────┐
+        # │ TEMPORARY BUSINESS RULE: Non-maturing deposits → 0Y maturity    │
+        # │ Reason: NMD behavioural model (core/non-core split, average     │
+        # │ maturity extension) is not yet wired into the calculation.      │
+        # │ When Phase 2 (behavioural) lands, this override will be         │
+        # │ removed and the BehaviouralContext NMD params will drive the     │
+        # │ effective maturity instead.                                      │
+        # └──────────────────────────────────────────────────────────────────┘
         maturity_years = 0.0
 
     maturity_bucket = _to_text(get("bucket_vencimiento")) or _bucket_from_years(maturity_years)
@@ -726,6 +881,12 @@ def _subcategory_sort_key(side: str, subcategory_id: str, label: str, amount: fl
 
 
 def _build_category_tree(rows: list[dict[str, Any]], side: str, label: str, cat_id: str) -> BalanceTreeCategory | None:
+    """
+    Build a hierarchical category tree for Assets or Liabilities.
+    Groups canonical rows by subcategory_id, computes aggregates (sum, weighted
+    avg rate/maturity), and sorts subcategories in regulatory display order.
+    Only rows with include_in_balance_tree=True are included.
+    """
     scoped = [r for r in rows if r.get("side") == side and r.get("include_in_balance_tree")]
     if not scoped:
         return None
@@ -777,6 +938,11 @@ def _build_category_tree(rows: list[dict[str, Any]], side: str, label: str, cat_
 
 
 def _build_optional_side_tree(rows: list[dict[str, Any]], side: str, label: str, cat_id: str) -> BalanceTreeCategory | None:
+    """
+    Build a tree for Equity or Derivatives. Same as _build_category_tree but:
+    - Does NOT filter by include_in_balance_tree (equity/derivatives have it=False)
+    - Sorts subcategories alphabetically (no predefined order)
+    """
     scoped = [r for r in rows if r.get("side") == side]
     if not scoped:
         return None
@@ -824,6 +990,18 @@ def _build_summary_tree(rows: list[dict[str, Any]]) -> BalanceSummaryTree:
 
 
 def _parse_workbook(xlsx_path: Path) -> tuple[list[BalanceSheetSummary], dict[str, list[dict[str, Any]]], list[dict[str, Any]]]:
+    """
+    Parse an entire balance Excel workbook into canonical rows.
+
+    Returns:
+      - sheet_summaries: Metadata per sheet (row count, column names, totals)
+      - sample_rows: First 3 rows per sheet (used by What-If Add as templates)
+      - canonical_rows: ALL position rows across all sheets, canonicalized
+
+    The workbook is expected to have sheets named with A_/L_/E_/D_ prefixes.
+    Metadata sheets (README, SCHEMA_*, etc.) are skipped.
+    FUTURE: A parallel _parse_zip() function will handle ZIP→CSV input.
+    """
     try:
         xls = pd.ExcelFile(xlsx_path)
     except Exception as exc:
@@ -899,6 +1077,23 @@ def _extract_currency_from_curve_id(curve_id: str) -> str | None:
 
 
 def _parse_curves_workbook(xlsx_path: Path) -> tuple[list[CurveCatalogItem], dict[str, list[CurvePoint]], str | None]:
+    """
+    Parse a yield curves Excel workbook.
+
+    Expected format: First valid sheet has curve_id in column 1, tenor headers
+    (ON, 1W, 1M, 3M, 1Y, 5Y, 10Y, etc.) in columns 2..N, and rates as values.
+    Each row is one curve (e.g. EUR_ESTR_OIS, EUR_EURIBOR_3M).
+
+    Returns:
+      - catalog: List of CurveCatalogItem (curve_id, currency, point count, min/max tenor)
+      - points_by_curve: Dict mapping curve_id → sorted list of CurvePoint
+      - default_curve_id: Preferred discount curve (EUR_ESTR_OIS if present)
+
+    The frontend uses these points for:
+    1. Visualization of base curves (CurvesAndScenariosCard line chart)
+    2. Applying scenario shocks for visualization (curves/scenarios.ts)
+    3. FUTURE: Passed to the external engine for EVE/NII discount calculations
+    """
     try:
         xls = pd.ExcelFile(xlsx_path)
     except Exception as exc:
@@ -1155,9 +1350,13 @@ def _load_or_rebuild_positions(session_id: str) -> list[dict[str, Any]]:
     raise HTTPException(status_code=404, detail="No balance uploaded for this session yet")
 
 
-# -------------------------
-# Filtering and aggregations
-# -------------------------
+# ═══════════════════════════════════════════════════════════════════════════════
+# FILTERING AND AGGREGATIONS
+# These functions power the GET /balance/details and GET /balance/contracts
+# endpoints. Filters are applied in cascade: category → subcategory → currency
+# → rate_type → counterparty → maturity → free-text query.
+# All filtering happens in-memory on the canonical_rows array (no database).
+# ═══════════════════════════════════════════════════════════════════════════════
 def _split_csv_values(raw: str | None) -> set[str]:
     if raw is None:
         return set()
@@ -1325,9 +1524,25 @@ def _aggregate_totals(rows: list[dict[str, Any]]) -> BalanceDetailsTotals:
     )
 
 
-# -------------------------
-# API routes
-# -------------------------
+# ═══════════════════════════════════════════════════════════════════════════════
+# API ROUTES
+#
+# Current endpoints:
+#   POST /api/sessions                              → Create new session
+#   GET  /api/sessions/{id}                         → Get session metadata
+#   POST /api/sessions/{id}/balance                 → Upload balance Excel
+#   GET  /api/sessions/{id}/balance/summary         → Get balance summary tree
+#   GET  /api/sessions/{id}/balance/details         → Filtered aggregation view
+#   GET  /api/sessions/{id}/balance/contracts       → Paginated contract search
+#   POST /api/sessions/{id}/curves                  → Upload curves Excel
+#   GET  /api/sessions/{id}/curves/summary          → Get curves catalog
+#   GET  /api/sessions/{id}/curves/{curve_id}       → Get points for one curve
+#
+# FUTURE endpoints (Phase 1 integration):
+#   POST /api/sessions/{id}/calculate               → Run EVE/NII via external engine
+#   GET  /api/sessions/{id}/results                 → Retrieve cached calculation results
+#   POST /api/sessions/{id}/balance/zip             → Upload ZIP of CSVs by flow type
+# ═══════════════════════════════════════════════════════════════════════════════
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}

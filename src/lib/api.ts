@@ -1,5 +1,30 @@
+/**
+ * api.ts – HTTP client and TypeScript types mirroring the backend API models.
+ *
+ * === ROLE IN THE SYSTEM ===
+ * This is the SOLE communication layer between frontend and backend.
+ * Every API call goes through the generic http<T>() helper which handles
+ * URL construction, error extraction, and JSON parsing.
+ *
+ * === TYPE MIRRORING ===
+ * The types here (SessionMeta, BalanceSummaryResponse, CurvePoint, etc.)
+ * mirror the Pydantic models in backend/app/main.py. They MUST stay in sync.
+ * When the backend adds new fields (e.g. flow_type, balance_format), they
+ * should be added here too.
+ *
+ * === FUTURE ADDITIONS (Phase 1) ===
+ * - calculateEveNii(sessionId, request): POST /api/sessions/{id}/calculate
+ *   Will send {discount_curve_id, scenarios[], what_if_modifications[],
+ *   behavioural_params} and return CalculationResults.
+ * - uploadBalanceZip(sessionId, file): POST /api/sessions/{id}/balance/zip
+ *   For ZIP→CSV input format.
+ * - getCalculationResults(sessionId): GET /api/sessions/{id}/results
+ *   For retrieving cached results on page refresh.
+ */
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
+/** Generic HTTP helper. All API calls flow through here. */
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, init);
   if (!res.ok) {

@@ -1,3 +1,16 @@
+/**
+ * WhatIfRemoveTab.tsx – Browse and remove positions from the balance.
+ *
+ * === ROLE IN THE SYSTEM ===
+ * Inside WhatIfBuilder's "Remove Position" tab. Two removal modes:
+ * 1. Search by contract ID (debounced API call to /balance/contracts).
+ * 2. Browse balance tree: subcategory-level "remove all" or drill-down to
+ *    individual contracts via BalanceDetailsModalRemove.
+ *
+ * === CURRENT LIMITATIONS ===
+ * - Removals are frontend-only (WhatIfContext state). Never sent to backend.
+ * - Phase 1: Modifications sent as overlay mask for engine exclusion.
+ */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Search, ChevronRight, ChevronDown, Minus, FileText, Folder, FolderOpen, Eye, Lock } from 'lucide-react';
 import { Input } from '@/components/ui/input';

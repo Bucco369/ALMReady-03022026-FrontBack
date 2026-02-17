@@ -1,3 +1,31 @@
+/**
+ * BehaviouralContext.tsx – Global state for behavioural assumption overrides.
+ *
+ * === ROLE IN THE SYSTEM ===
+ * Manages user-defined behavioural parameters that modify how the calculation
+ * engine treats three product families:
+ * - NMD (Non-Maturing Deposits): core/non-core split, average maturity, pass-through rate
+ * - Loan Prepayments: SMM (Single Monthly Mortality) → auto-converted to CPR (annual)
+ * - Term Deposits: TDRR (Term Deposit Redemption Rate, monthly → annual)
+ *
+ * These parameters are exposed via the BehaviouralAssumptionsCard side-panel
+ * and consumed (currently only visually) by ResultsCard and charts.
+ *
+ * === CURRENT LIMITATIONS ===
+ * - FRONTEND-ONLY STATE: Parameters are never sent to the backend. The
+ *   "Apply" button only sets isApplied=true in React state.
+ * - NO CALCULATION IMPACT: The local calculationEngine.ts does not use these
+ *   parameters at all. The engine applies constant rates regardless.
+ * - Phase 1 will send these parameters in the /calculate request body so the
+ *   external Python engine can apply NMD replication, prepayment-adjusted
+ *   cashflows, and TDRR-adjusted term deposit profiles.
+ *
+ * === REGULATORY CONTEXT ===
+ * - MAX_TOTAL_MATURITY = 5.0 years is a supervisory cap (EBA guidelines on
+ *   IRRBB) for the weighted average maturity of NMD core deposits.
+ * - NMD_BUCKET_DISTRIBUTION defines the regulatory time-bucket weighting
+ *   for distributing NMD core cashflows across repricing buckets.
+ */
 import React, { createContext, useContext, useState, useCallback, ReactNode, useMemo } from 'react';
 
 export type BehaviouralProfile = 'none' | 'nmd' | 'loan-prepayments' | 'term-deposits';

@@ -1,3 +1,22 @@
+/**
+ * NIIChart.tsx – Bar chart for Net Interest Income (NII) over 12 months.
+ *
+ * === ROLE IN THE SYSTEM ===
+ * Renders a Recharts ComposedChart showing monthly interest income (assets,
+ * positive bars) vs interest expense (liabilities, negative bars) with a
+ * Net Interest Income (NII = income − expense) line overlay.
+ * The user can switch between 7 regulatory IRRBB scenarios via popover.
+ *
+ * === CURRENT LIMITATIONS ===
+ * - ALL DATA IS SYNTHETIC: generateRawNIIData() produces deterministic
+ *   placeholder values using sin/cos functions. No real NII calculation.
+ * - Unlike EVEChart, this chart does NOT integrate What-If modifications.
+ *   It only reads analysisDate for calendar labels.
+ * - The scenario multipliers are rough visual approximations only.
+ * - Phase 1 will replace generateRawNIIData() with real monthly NII
+ *   projections returned by the backend engine, broken down by income
+ *   and expense components.
+ */
 import React, { useState, useMemo } from 'react';
 import {
   ComposedChart,

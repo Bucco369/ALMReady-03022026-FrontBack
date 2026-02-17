@@ -1,3 +1,34 @@
+/**
+ * BalanceDetailsModalRemove.tsx – Contract-level drill-down modal for What-If removals.
+ *
+ * === ROLE IN THE SYSTEM ===
+ * Opened from WhatIfRemoveTab when the user clicks the Eye icon on a subcategory.
+ * Provides a two-level drill-down into the balance data:
+ *
+ * 1. GROUP VIEW (default):
+ *    - Calls GET /api/sessions/{id}/balance/details with filters (currency,
+ *      rate_type, counterparty, maturity_bucket) to get aggregated groups.
+ *    - Displays a table: Group | Amount | Contracts | Avg Rate | Avg Maturity.
+ *    - "Add filtered to Pending Removals" button: Creates a single WhatIfModification
+ *      for all positions matching the current filter set.
+ *
+ * 2. CONTRACT VIEW (drill-down):
+ *    - Click a group row → calls GET /api/sessions/{id}/balance/contracts with
+ *      the group filter to list individual contracts.
+ *    - Each contract has a checkbox. Selected contracts can be batch-added
+ *      to pending removals.
+ *
+ * === FILTER SYSTEM ===
+ * Four independent facet filters: Currency, Rate Type, Counterparty, Maturity Bucket.
+ * Filter options come from the backend's `facets` field in BalanceDetailsResponse.
+ * Active filters are shown as badges and can be cleared individually or all at once.
+ *
+ * === CURRENT LIMITATIONS ===
+ * - Removals are stored in WhatIfContext only (not sent to backend).
+ * - The "filtered removal" creates a modification with removeMode='contracts'
+ *   but does NOT enumerate individual contract_ids — it stores the total count
+ *   and notional. Phase 1 will need to either enumerate or send filter criteria.
+ */
 import React, { useEffect, useMemo, useState } from 'react';
 import { FileSpreadsheet, X, Filter, ChevronLeft, Minus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';

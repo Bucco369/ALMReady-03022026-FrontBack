@@ -1,3 +1,23 @@
+/**
+ * BalancePositionsCardConnected.tsx – "Smart" wrapper connecting
+ * BalancePositionsCard (pure UI) to the backend API and session system.
+ *
+ * === ROLE IN THE SYSTEM ===
+ * Bridge between backend balance APIs and the presentational card. Handles:
+ * 1. SESSION MANAGEMENT: useSession() + withSessionRetry() for stale sessions.
+ * 2. EXCEL UPLOAD: Intercepts file/drop events, uploads to backend, refreshes tree.
+ * 3. SUMMARY → POSITIONS MAPPING: Converts BalanceSummaryResponse → Position[].
+ *    This mapping is LOSSY (one Position per sheet, not per contract).
+ * 4. PERSISTENCE MARKER: localStorage remembers uploads across page refreshes.
+ *
+ * === CURRENT LIMITATIONS ===
+ * - LOSSY MAPPING: mapSummaryToPositions() creates one Position per sheet with
+ *   sheet-level totals. Phase 1 backend engine reads canonical_rows directly.
+ * - DEFAULT MATURITY: All positions get "2030-12-31" as placeholder maturity.
+ * - EVENT INTERCEPTION: Uses onChangeCapture/onDropCapture to intercept events
+ *   before child component handles them – pragmatic backend integration pattern.
+ */
+
 import React, { useCallback, useEffect, useState } from "react";
 import { BalancePositionsCard } from "@/components/BalancePositionsCard";
 import {

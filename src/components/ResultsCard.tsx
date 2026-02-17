@@ -1,3 +1,24 @@
+/**
+ * ResultsCard.tsx – Displays IRRBB calculation results (EVE + NII).
+ *
+ * === ROLE IN THE SYSTEM ===
+ * The bottom-right quadrant of the dashboard. Shows:
+ * 1. A summary table (left 1/3) with 4 rows × 3 column groups:
+ *    - Baseline: Base EVE, Worst EVE, Base NII, Worst NII (from CalculationResults)
+ *    - What-If: Impact delta values (currently HARDCODED)
+ *    - Post What-If: Baseline + impact
+ *    Each column group shows both absolute value and %CET1.
+ * 2. A chart area (right 2/3) toggling between EVEChart and NIIChart.
+ * 3. A "Details" dialog with full scenario comparison table.
+ *
+ * === CURRENT LIMITATIONS ===
+ * - HARDCODED WHAT-IF IMPACT: The whatIfImpact object uses fixed values
+ *   (+12.5M EVE, +8.2M worst EVE, -2.1M NII, -1.8M worst NII) that appear
+ *   whenever What-If modifications are applied. Never computed from real data.
+ * - CET1 DEFAULT: Uses 500M as fallback if user hasn't set CET1 capital.
+ * - Phase 1 will replace hardcoded impacts with delta values returned from
+ *   the backend /calculate endpoint after applying What-If overlays.
+ */
 import React, { useState } from 'react';
 import { BarChart3, Eye, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
