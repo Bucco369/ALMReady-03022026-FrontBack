@@ -348,6 +348,7 @@ export function CurvesAndScenariosCard({
 
   const [showUploadDropzone, setShowUploadDropzone] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [isRefreshingSummary, setIsRefreshingSummary] = useState(false);
 
   const [curvesSummary, setCurvesSummary] = useState<CurvesSummaryResponse | null>(null);
@@ -577,14 +578,17 @@ export function CurvesAndScenariosCard({
       if (!isExcelFile(file) || !sessionId) return;
 
       setIsUploading(true);
+      setUploadProgress(0);
       try {
-        const summary = await uploadCurvesExcel(sessionId, file);
+        const summary = await uploadCurvesExcel(sessionId, file, (pct) => setUploadProgress(pct));
+        setUploadProgress(100);
         setUploadedSessionMarker(summary.session_id);
         await applyCurvesSummary(summary);
       } catch (error) {
         console.error('[CurvesAndScenariosCard] failed to upload curves file', error);
       } finally {
         setIsUploading(false);
+        setUploadProgress(0);
       }
     },
     [applyCurvesSummary, sessionId]
@@ -970,8 +974,9 @@ export function CurvesAndScenariosCard({
                       size="sm"
                       onClick={handleDropzoneBrowseClick}
                       className="h-6 text-[10px]"
+                      disabled={isUploading}
                     >
-                      {isUploading ? 'Uploading...' : 'Browse'}
+                      Browse
                     </Button>
                     <Button
                       variant="ghost"
@@ -986,6 +991,22 @@ export function CurvesAndScenariosCard({
                       Sample
                     </Button>
                   </div>
+                  {isUploading && (
+                    <div className="mt-3 w-full max-w-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-primary rounded-full transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-medium text-muted-foreground tabular-nums w-7 text-right">
+                          {uploadProgress}%
+                        </span>
+                      </div>
+                      <p className="text-[9px] text-muted-foreground mt-1">Uploading curves...</p>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <>

@@ -34,6 +34,54 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T;
 }
 
+/**
+ * XHR-based multipart POST with two-phase progress hooks.
+ * onProgress(0→80): fires as bytes are sent over the wire.
+ * onBytesSent():    fires via upload.onloadend when ALL bytes are sent
+ *                   (before the server responds). Use this to start a
+ *                   simulated "backend processing" phase (80→98%).
+ */
+function xhrUpload<T>(
+  path: string,
+  formData: FormData,
+  onProgress?: (pct: number) => void,
+  onBytesSent?: () => void
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${API_BASE}${path}`);
+
+    if (onProgress) {
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          onProgress(Math.round((e.loaded / e.total) * 80));
+        }
+      };
+    }
+
+    // onloadend fires when all bytes are sent, regardless of whether
+    // progress events were emitted (handles tiny files too).
+    if (onBytesSent) {
+      xhr.upload.onloadend = onBytesSent;
+    }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText) as T);
+        } catch {
+          reject(new Error(`Failed to parse JSON response from ${path}`));
+        }
+      } else {
+        reject(new Error(`HTTP ${xhr.status} ${xhr.statusText} on ${path}: ${xhr.responseText}`));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error(`Network error on ${path}`));
+    xhr.send(formData);
+  });
+}
+
 export type SessionMeta = {
   session_id: string;
   created_at: string;
@@ -247,23 +295,35 @@ export async function getSession(sessionId: string): Promise<SessionMeta> {
   return http<SessionMeta>(`/api/sessions/${encodeURIComponent(sessionId)}`);
 }
 
-export async function uploadBalanceExcel(sessionId: string, file: File): Promise<BalanceSummaryResponse> {
+export async function uploadBalanceExcel(
+  sessionId: string,
+  file: File,
+  onProgress?: (pct: number) => void,
+  onBytesSent?: () => void
+): Promise<BalanceSummaryResponse> {
   const fd = new FormData();
   fd.append("file", file, file.name);
-
-  return http<BalanceSummaryResponse>(
+  return xhrUpload<BalanceSummaryResponse>(
     `/api/sessions/${encodeURIComponent(sessionId)}/balance`,
-    { method: "POST", body: fd }
+    fd,
+    onProgress,
+    onBytesSent
   );
 }
 
-export async function uploadBalanceZip(sessionId: string, file: File): Promise<BalanceSummaryResponse> {
+export async function uploadBalanceZip(
+  sessionId: string,
+  file: File,
+  onProgress?: (pct: number) => void,
+  onBytesSent?: () => void
+): Promise<BalanceSummaryResponse> {
   const fd = new FormData();
   fd.append("file", file, file.name);
-
-  return http<BalanceSummaryResponse>(
+  return xhrUpload<BalanceSummaryResponse>(
     `/api/sessions/${encodeURIComponent(sessionId)}/balance/zip`,
-    { method: "POST", body: fd }
+    fd,
+    onProgress,
+    onBytesSent
   );
 }
 
@@ -271,13 +331,17 @@ export async function getBalanceSummary(sessionId: string): Promise<BalanceSumma
   return http<BalanceSummaryResponse>(`/api/sessions/${encodeURIComponent(sessionId)}/balance/summary`);
 }
 
-export async function uploadCurvesExcel(sessionId: string, file: File): Promise<CurvesSummaryResponse> {
+export async function uploadCurvesExcel(
+  sessionId: string,
+  file: File,
+  onProgress?: (pct: number) => void
+): Promise<CurvesSummaryResponse> {
   const fd = new FormData();
   fd.append("file", file, file.name);
-
-  return http<CurvesSummaryResponse>(
+  return xhrUpload<CurvesSummaryResponse>(
     `/api/sessions/${encodeURIComponent(sessionId)}/curves`,
-    { method: "POST", body: fd }
+    fd,
+    onProgress
   );
 }
 

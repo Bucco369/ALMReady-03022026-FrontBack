@@ -23,7 +23,7 @@
  * (e.g. when using sample data without a backend connection).
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { BalancePositionsCardConnected } from '@/components/connected/BalancePositionsCardConnected';
 import { CurvesAndScenariosCard } from '@/components/CurvesAndScenariosCard';
 import { ResultsCard } from '@/components/ResultsCard';
@@ -45,6 +45,8 @@ const Index = () => {
   const [scenarios, setScenarios] = useState<Scenario[]>(DEFAULT_SCENARIOS);
   const [results, setResults] = useState<CalculationResults | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [calcProgress, setCalcProgress] = useState(0);
+  const calcTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { sessionId } = useSession();
 
@@ -60,14 +62,35 @@ const Index = () => {
   const handleCalculate = useCallback(async () => {
     if (!canCalculate) return;
 
+    // Compute enabled scenarios first so we can calibrate progress speed.
+    const enabledScenarios = sessionId
+      ? scenarios.filter((s) => s.enabled).map((s) => s.id)
+      : [];
+
     setIsCalculating(true);
+    setCalcProgress(0);
+
+    // Calibrated progress simulation: ~90s per scenario on a typical portfolio.
+    // Ramp reaches ≈85% at 80% of estimated total time, then creeps to 90% ceiling.
+    const numScenarios = Math.max(1, enabledScenarios.length);
+    const estimatedMs = numScenarios * 90_000; // 90 s per scenario
+    const targetTicks = (estimatedMs * 0.80) / 150; // ticks to hit ~85%
+    const decayRate = 3 / targetTicks; // exponential approach constant
+
+    if (calcTimerRef.current) clearInterval(calcTimerRef.current);
+    calcTimerRef.current = setInterval(() => {
+      setCalcProgress((prev) => {
+        if (prev >= 90) {
+          clearInterval(calcTimerRef.current!);
+          return 90;
+        }
+        return Math.min(90, prev + Math.max(0.005, (90 - prev) * decayRate));
+      });
+    }, 150);
 
     try {
       if (sessionId) {
         // Backend calculation via ALMReady motor
-        const enabledScenarios = scenarios
-          .filter((s) => s.enabled)
-          .map((s) => s.id);
 
         const response = await calculateEveNii(sessionId, {
           scenarios: enabledScenarios,
@@ -108,7 +131,13 @@ const Index = () => {
       console.error("Calculation failed:", err);
       // TODO: show user-facing error toast
     } finally {
-      setIsCalculating(false);
+      if (calcTimerRef.current) clearInterval(calcTimerRef.current);
+      setCalcProgress(100);
+      // Brief pause at 100% before hiding the bar
+      setTimeout(() => {
+        setIsCalculating(false);
+        setCalcProgress(0);
+      }, 400);
     }
   }, [canCalculate, sessionId, positions, curves, selectedCurves, scenarios]);
 
@@ -176,6 +205,7 @@ const Index = () => {
               <ResultsCard
                 results={results}
                 isCalculating={isCalculating}
+                calcProgress={calcProgress}
               />
             </div>
           </div>

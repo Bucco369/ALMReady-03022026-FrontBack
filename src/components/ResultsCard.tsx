@@ -15,7 +15,7 @@
  * - HARDCODED WHAT-IF IMPACT: The whatIfImpact object uses fixed values
  *   (+12.5M EVE, +8.2M worst EVE, -2.1M NII, -1.8M worst NII) that appear
  *   whenever What-If modifications are applied. Never computed from real data.
- * - CET1 DEFAULT: Uses 500M as fallback if user hasn't set CET1 capital.
+ * - %CET1 columns are blank until the user sets a CET1 capital value.
  * - Phase 1 will replace hardcoded impacts with delta values returned from
  *   the backend /calculate endpoint after applying What-If overlays.
  */
@@ -30,10 +30,12 @@ import { useWhatIf } from '@/components/whatif/WhatIfContext';
 interface ResultsCardProps {
   results: CalculationResults | null;
   isCalculating: boolean;
+  calcProgress?: number;
 }
 export function ResultsCard({
   results,
-  isCalculating
+  isCalculating,
+  calcProgress = 0,
 }: ResultsCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [activeChart, setActiveChart] = useState<'eve' | 'nii'>('eve');
@@ -45,8 +47,8 @@ export function ResultsCard({
   } = useWhatIf();
   const hasModifications = modifications.length > 0 && isApplied;
 
-  // CET1 capital for percentage calculations (default to 500M if not set)
-  const cet1Capital = contextCet1 || 500_000_000;
+  // CET1 capital for percentage calculations – null when not set by the user.
+  const cet1Capital = contextCet1;
 
   // What-If impact values – zeroed out until backend What-If overlay is implemented.
   // When Phase 2 lands, these will come from a separate /calculate call with
@@ -86,9 +88,20 @@ export function ResultsCard({
           </div>
         </div>
         <div className="dashboard-card-content flex items-center justify-center">
-          <div className="flex flex-col items-center gap-2">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            <span className="text-sm text-muted-foreground">Running IRRBB calculation...</span>
+          <div className="w-full max-w-xs">
+            <p className="text-sm text-muted-foreground mb-3">Running IRRBB calculation...</p>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full transition-all duration-300"
+                  style={{ width: `${Math.round(calcProgress)}%` }}
+                />
+              </div>
+              <span className="text-[10px] font-medium text-muted-foreground tabular-nums w-7 text-right">
+                {Math.round(calcProgress)}%
+              </span>
+            </div>
+            <p className="text-[9px] text-muted-foreground mt-1">This typically takes 3–6 minutes — please wait</p>
           </div>
         </div>
       </div>;
@@ -109,11 +122,11 @@ export function ResultsCard({
       </div>;
   }
 
-  // Calculate worst case values
-  const worstEvePercent = results.worstCaseDeltaEve / results.baseEve * 100;
+  // Calculate worst case values – percentages expressed as delta / CET1 (IRRBB standard)
+  const worstEvePercent = cet1Capital !== null ? results.worstCaseDeltaEve / cet1Capital * 100 : null;
   const worstNiiResult = results.scenarioResults.find(s => s.scenarioName === results.worstCaseScenario);
   const worstNiiDelta = worstNiiResult?.deltaNii ?? 0;
-  const worstNiiPercent = worstNiiDelta / results.baseNii * 100;
+  const worstNiiPercent = cet1Capital !== null ? worstNiiDelta / cet1Capital * 100 : null;
   return <>
       <div className="dashboard-card h-full flex flex-col">
         <div className="dashboard-card-header flex-shrink-0">
@@ -166,10 +179,49 @@ export function ResultsCard({
                     </tr>
                   </thead>
                   <tbody>
-                    <ResultsSummaryRow label="Base EVE" baselineValue={results.baseEve} baselineCet1Pct={results.baseEve / cet1Capital * 100} impactValue={hasModifications ? whatIfImpact.baseEve : 0} impactCet1Pct={hasModifications ? whatIfImpact.baseEve / cet1Capital * 100 : 0} postValue={results.baseEve + (hasModifications ? whatIfImpact.baseEve : 0)} postCet1Pct={(results.baseEve + (hasModifications ? whatIfImpact.baseEve : 0)) / cet1Capital * 100} hasModifications={hasModifications} />
-                    <ResultsSummaryRow label="Worst scenario EVE" baselineValue={results.worstCaseEve} baselineCet1Pct={results.worstCaseDeltaEve / cet1Capital * 100} impactValue={hasModifications ? whatIfImpact.worstEve : 0} impactCet1Pct={hasModifications ? whatIfImpact.worstEve / cet1Capital * 100 : 0} postValue={results.worstCaseEve + (hasModifications ? whatIfImpact.worstEve : 0)} postCet1Pct={(results.worstCaseDeltaEve + (hasModifications ? whatIfImpact.worstEve : 0)) / cet1Capital * 100} hasModifications={hasModifications} isWorst />
-                    <ResultsSummaryRow label="Base NII" baselineValue={results.baseNii} baselineCet1Pct={results.baseNii / cet1Capital * 100} impactValue={hasModifications ? whatIfImpact.baseNii : 0} impactCet1Pct={hasModifications ? whatIfImpact.baseNii / cet1Capital * 100 : 0} postValue={results.baseNii + (hasModifications ? whatIfImpact.baseNii : 0)} postCet1Pct={(results.baseNii + (hasModifications ? whatIfImpact.baseNii : 0)) / cet1Capital * 100} hasModifications={hasModifications} />
-                    <ResultsSummaryRow label="Worst scenario NII" baselineValue={results.baseNii + worstNiiDelta} baselineCet1Pct={worstNiiDelta / cet1Capital * 100} impactValue={hasModifications ? whatIfImpact.worstNii : 0} impactCet1Pct={hasModifications ? whatIfImpact.worstNii / cet1Capital * 100 : 0} postValue={results.baseNii + worstNiiDelta + (hasModifications ? whatIfImpact.worstNii : 0)} postCet1Pct={(worstNiiDelta + (hasModifications ? whatIfImpact.worstNii : 0)) / cet1Capital * 100} hasModifications={hasModifications} isWorst isLast />
+                    <ResultsSummaryRow
+                      label="Base EVE"
+                      baselineValue={results.baseEve}
+                      baselineCet1Pct={cet1Capital !== null ? 0 : null}
+                      impactValue={hasModifications ? whatIfImpact.baseEve : 0}
+                      impactCet1Pct={hasModifications && cet1Capital !== null ? whatIfImpact.baseEve / cet1Capital * 100 : null}
+                      postValue={results.baseEve + (hasModifications ? whatIfImpact.baseEve : 0)}
+                      postCet1Pct={cet1Capital !== null ? (hasModifications ? whatIfImpact.baseEve : 0) / cet1Capital * 100 : null}
+                      hasModifications={hasModifications}
+                    />
+                    <ResultsSummaryRow
+                      label="Worst scenario EVE"
+                      baselineValue={results.worstCaseEve}
+                      baselineCet1Pct={cet1Capital !== null ? results.worstCaseDeltaEve / cet1Capital * 100 : null}
+                      impactValue={hasModifications ? whatIfImpact.worstEve : 0}
+                      impactCet1Pct={hasModifications && cet1Capital !== null ? whatIfImpact.worstEve / cet1Capital * 100 : null}
+                      postValue={results.worstCaseEve + (hasModifications ? whatIfImpact.worstEve : 0)}
+                      postCet1Pct={cet1Capital !== null ? (results.worstCaseDeltaEve + (hasModifications ? whatIfImpact.worstEve : 0)) / cet1Capital * 100 : null}
+                      hasModifications={hasModifications}
+                      isWorst
+                    />
+                    <ResultsSummaryRow
+                      label="Base NII"
+                      baselineValue={results.baseNii}
+                      baselineCet1Pct={cet1Capital !== null ? 0 : null}
+                      impactValue={hasModifications ? whatIfImpact.baseNii : 0}
+                      impactCet1Pct={hasModifications && cet1Capital !== null ? whatIfImpact.baseNii / cet1Capital * 100 : null}
+                      postValue={results.baseNii + (hasModifications ? whatIfImpact.baseNii : 0)}
+                      postCet1Pct={cet1Capital !== null ? (hasModifications ? whatIfImpact.baseNii : 0) / cet1Capital * 100 : null}
+                      hasModifications={hasModifications}
+                    />
+                    <ResultsSummaryRow
+                      label="Worst scenario NII"
+                      baselineValue={results.baseNii + worstNiiDelta}
+                      baselineCet1Pct={cet1Capital !== null ? worstNiiDelta / cet1Capital * 100 : null}
+                      impactValue={hasModifications ? whatIfImpact.worstNii : 0}
+                      impactCet1Pct={hasModifications && cet1Capital !== null ? whatIfImpact.worstNii / cet1Capital * 100 : null}
+                      postValue={results.baseNii + worstNiiDelta + (hasModifications ? whatIfImpact.worstNii : 0)}
+                      postCet1Pct={cet1Capital !== null ? (worstNiiDelta + (hasModifications ? whatIfImpact.worstNii : 0)) / cet1Capital * 100 : null}
+                      hasModifications={hasModifications}
+                      isWorst
+                      isLast
+                    />
                   </tbody>
                 </table>
               </div>
@@ -199,8 +251,8 @@ export function ResultsCard({
             <div className="grid grid-cols-4 gap-4">
               <SummaryCard label="BASE EVE" value={formatCurrency(results.baseEve)} />
               <SummaryCard label="BASE NII" value={formatCurrency(results.baseNii)} />
-              <SummaryCard label="WORST EVE" value={formatCurrency(results.worstCaseEve)} delta={formatCompact(results.worstCaseDeltaEve)} deltaPercent={`${worstEvePercent >= 0 ? '+' : ''}${worstEvePercent.toFixed(1)}%`} variant={results.worstCaseDeltaEve >= 0 ? 'success' : 'destructive'} />
-              <SummaryCard label="WORST NII" value={formatCurrency(results.baseNii + worstNiiDelta)} delta={formatCompact(worstNiiDelta)} deltaPercent={`${worstNiiPercent >= 0 ? '+' : ''}${worstNiiPercent.toFixed(1)}%`} variant={worstNiiDelta >= 0 ? 'success' : 'destructive'} />
+              <SummaryCard label="WORST EVE" value={formatCurrency(results.worstCaseEve)} delta={formatCompact(results.worstCaseDeltaEve)} deltaPercent={worstEvePercent !== null ? `${worstEvePercent >= 0 ? '+' : ''}${worstEvePercent.toFixed(1)}% CET1` : undefined} variant={results.worstCaseDeltaEve >= 0 ? 'success' : 'destructive'} />
+              <SummaryCard label="WORST NII" value={formatCurrency(results.baseNii + worstNiiDelta)} delta={formatCompact(worstNiiDelta)} deltaPercent={worstNiiPercent !== null ? `${worstNiiPercent >= 0 ? '+' : ''}${worstNiiPercent.toFixed(1)}% CET1` : undefined} variant={worstNiiDelta >= 0 ? 'success' : 'destructive'} />
             </div>
 
             {/* Scenario Comparison Table - EVE and NII side by side */}
@@ -211,10 +263,10 @@ export function ResultsCard({
                     <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Scenario</th>
                     <th className="text-right py-3 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">EVE</th>
                     <th className="text-right py-3 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">ΔEVE</th>
-                    <th className="text-right py-3 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">ΔEVE %</th>
+                    <th className="text-right py-3 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">ΔEVE %CET1</th>
                     <th className="text-right py-3 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">NII</th>
                     <th className="text-right py-3 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">ΔNII</th>
-                    <th className="text-right py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide">ΔNII %</th>
+                    <th className="text-right py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide">ΔNII %CET1</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
@@ -230,8 +282,8 @@ export function ResultsCard({
                   </tr>
                   {/* Scenario Rows */}
                   {results.scenarioResults.map((result, index) => {
-                  const evePercent = result.deltaEve / results.baseEve * 100;
-                  const niiPercent = result.deltaNii / results.baseNii * 100;
+                  const evePercent = cet1Capital !== null ? result.deltaEve / cet1Capital * 100 : null;
+                  const niiPercent = cet1Capital !== null ? result.deltaNii / cet1Capital * 100 : null;
                   return <tr key={result.scenarioId} className={`hover:bg-muted/20 ${index < results.scenarioResults.length - 1 ? 'border-b border-border/50' : ''}`}>
                         <td className="py-3 px-4 font-medium text-foreground">{result.scenarioName}</td>
                         <td className="text-right py-3 px-3 font-mono text-foreground">{formatCurrency(result.eve)}</td>
@@ -239,14 +291,14 @@ export function ResultsCard({
                           {result.deltaEve >= 0 ? '+' : ''}{formatCompact(result.deltaEve)}
                         </td>
                         <td className={`text-right py-3 px-3 font-mono text-xs ${result.deltaEve >= 0 ? 'text-success' : 'text-destructive'}`}>
-                          {evePercent >= 0 ? '+' : ''}{evePercent.toFixed(1)}%
+                          {evePercent !== null ? `${evePercent >= 0 ? '+' : ''}${evePercent.toFixed(1)}%` : '—'}
                         </td>
                         <td className="text-right py-3 px-3 font-mono text-foreground">{formatCurrency(result.nii)}</td>
                         <td className={`text-right py-3 px-3 font-mono font-medium ${result.deltaNii >= 0 ? 'text-success' : 'text-destructive'}`}>
                           {result.deltaNii >= 0 ? '+' : ''}{formatCompact(result.deltaNii)}
                         </td>
                         <td className={`text-right py-3 px-4 font-mono text-xs ${result.deltaNii >= 0 ? 'text-success' : 'text-destructive'}`}>
-                          {niiPercent >= 0 ? '+' : ''}{niiPercent.toFixed(1)}%
+                          {niiPercent !== null ? `${niiPercent >= 0 ? '+' : ''}${niiPercent.toFixed(1)}%` : '—'}
                         </td>
                       </tr>;
                 })}
@@ -288,11 +340,11 @@ function SummaryCard({
 interface ResultsSummaryRowProps {
   label: string;
   baselineValue: number;
-  baselineCet1Pct: number;
+  baselineCet1Pct: number | null;
   impactValue: number;
-  impactCet1Pct: number;
+  impactCet1Pct: number | null;
   postValue: number;
-  postCet1Pct: number;
+  postCet1Pct: number | null;
   hasModifications: boolean;
   isWorst?: boolean;
   isLast?: boolean;
@@ -321,9 +373,9 @@ function ResultsSummaryRow({
     const sign = num >= 0 ? '+' : '';
     return `${sign}${formatMillions(num)}`;
   };
-  const formatPct = (pct: number) => `${pct.toFixed(1)}%`;
-  const formatImpactPct = (pct: number) => {
-    if (pct === 0) return '—';
+  const formatPct = (pct: number | null) => pct !== null ? `${pct.toFixed(1)}%` : '—';
+  const formatImpactPct = (pct: number | null) => {
+    if (pct === null || pct === 0) return '—';
     const sign = pct >= 0 ? '+' : '';
     return `${sign}${pct.toFixed(1)}%`;
   };

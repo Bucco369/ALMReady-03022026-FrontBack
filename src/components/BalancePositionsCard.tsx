@@ -22,6 +22,8 @@ interface BalancePositionsCardProps {
   onPositionsChange: (positions: Position[]) => void;
   sessionId?: string | null;
   summaryTree?: BalanceSummaryTree | null;
+  isUploading?: boolean;
+  uploadProgress?: number;
 }
 
 type WhatIfDelta = {
@@ -311,7 +313,9 @@ export function BalancePositionsCard({
   positions,
   onPositionsChange,
   sessionId,
-  summaryTree
+  summaryTree,
+  isUploading = false,
+  uploadProgress = 0,
 }: BalancePositionsCardProps) {
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -481,7 +485,7 @@ export function BalancePositionsCard({
               <p className="text-xs text-muted-foreground mb-2">Drop CSV, Excel, or ZIP to upload</p>
               <Input ref={uploadInputRef} type="file" accept=".csv,.xlsx,.xls,.zip" className="hidden" onChange={handleInputChange} />
               <div className="flex gap-1.5">
-                <Button variant="outline" size="sm" onClick={handleBrowseClick} className="h-6 text-xs px-2">
+                <Button variant="outline" size="sm" onClick={handleBrowseClick} className="h-6 text-xs px-2" disabled={isUploading}>
                   Browse
                 </Button>
                 <Button variant="ghost" size="sm" onClick={handleDownloadSample} className="h-6 text-xs px-2">
@@ -489,6 +493,22 @@ export function BalancePositionsCard({
                   Sample
                 </Button>
               </div>
+              {isUploading && (
+                <div className="mt-3 w-full max-w-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-full transition-all duration-300"
+                        style={{ width: `${Math.round(uploadProgress)}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] font-medium text-muted-foreground tabular-nums w-7 text-right">
+                      {Math.round(uploadProgress)}%
+                    </span>
+                  </div>
+                  <p className="text-[9px] text-muted-foreground mt-1">Uploading balance...</p>
+                </div>
+              )}
             </div> : <div className="flex flex-col flex-1 min-h-0">
               {/* Scrollable Balance Table with Sticky Header - Apple Style */}
               <div className="flex-1 min-h-0 overflow-hidden rounded-xl border border-border/40">
