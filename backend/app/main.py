@@ -121,6 +121,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ---------------------------------------------------------------------------
+# Upload progress tracking (in-memory, per session).
+# Key = session_id, value = {"step": int, "total": int, "phase": str}
+# ---------------------------------------------------------------------------
+_upload_progress: dict[str, dict[str, Any]] = {}
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # API MODELS (Pydantic v2)
@@ -331,6 +336,44 @@ class CalculationResultsResponse(BaseModel):
     calculated_at: str
 
 
+class WhatIfModificationItem(BaseModel):
+    """One What-If modification (add or remove) sent from the frontend."""
+    id: str
+    type: str  # "add" | "remove"
+    label: str = ""
+    notional: float | None = None
+    currency: str | None = None
+    category: str | None = None  # "asset" | "liability" | "derivative"
+    subcategory: str | None = None
+    rate: float | None = None  # decimal, e.g. 0.035
+    maturity: float | None = None  # residual maturity in years
+    removeMode: str | None = None  # "all" | "contracts"
+    contractIds: list[str] | None = None
+    # Motor-specific fields for synthetic position generation (adds)
+    productTemplateId: str | None = None
+    startDate: str | None = None  # ISO date
+    maturityDate: str | None = None  # ISO date
+    paymentFreq: str | None = None  # "Monthly"/"Quarterly"/"Semi-Annual"/"Annual"
+    repricingFreq: str | None = None
+    refIndex: str | None = None
+    spread: float | None = None  # bps
+
+
+class WhatIfCalculateRequest(BaseModel):
+    """Request body for POST /api/sessions/{id}/calculate/whatif."""
+    modifications: list[WhatIfModificationItem]
+
+
+class WhatIfResultsResponse(BaseModel):
+    """Impact of What-If modifications on EVE/NII metrics."""
+    session_id: str
+    base_eve_delta: float
+    worst_eve_delta: float
+    base_nii_delta: float
+    worst_nii_delta: float
+    calculated_at: str
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # IN-MEMORY CACHE & DISK PATHS
 # Sessions are cached in-memory for fast lookups during a server lifecycle,
@@ -369,9 +412,20 @@ BASE_REQUIRED_COLS = {
     "tipo_tasa",        # Rate type: fijo/variable/nonrate
 }
 
-# Maps Spanish/English subcategory labels → canonical subcategory_id slugs.
-# If a label isn't found here, it gets slugified automatically.
-# FUTURE: When ZIP/CSV input arrives, flow_type will replace this mapping.
+# ── Balance classification (single source of truth: balance_config) ───────
+# Categories, ordering, labels are defined in almready.balance_config.schema.
+# Client-specific classification rules live in almready.balance_config.clients.
+from almready.balance_config.schema import (
+    ASSET_SUBCATEGORY_ORDER,
+    LIABILITY_SUBCATEGORY_ORDER,
+    SUBCATEGORY_LABELS as _BC_LABELS,
+    SIDE_CATEGORIA_UI as _BC_SIDE_UI,
+)
+from almready.balance_config.classifier import classify_position as _bc_classify
+from almready.balance_config.clients import get_client_rules as _bc_get_rules
+
+# Legacy alias map — still used by the Excel upload path.
+# For the ZIP/CSV path, classification is done via balance_config.
 SUBCATEGORY_ID_ALIASES = {
     "mortgages": "mortgages",
     "loans": "loans",
@@ -385,23 +439,6 @@ SUBCATEGORY_ID_ALIASES = {
     "other liabilities": "other-liabilities",
     "equity": "equity",
 }
-
-# Display order for subcategories in the UI tree. The frontend mirrors this
-# in balanceUi.ts. Unknown subcategories appear after these, sorted by amount.
-ASSET_SUBCATEGORY_ORDER = [
-    "mortgages",
-    "loans",
-    "securities",
-    "interbank",
-    "other-assets",
-]
-LIABILITY_SUBCATEGORY_ORDER = [
-    "deposits",
-    "term-deposits",
-    "wholesale-funding",
-    "debt-issued",
-    "other-liabilities",
-]
 
 # ── ZIP/CSV flow: motor source_contract_type → UI labels ──────────────────────
 # These map the motor's source_contract_type to human-readable labels used as
@@ -941,34 +978,36 @@ def _canonicalize_position_row(sheet_name: str, record: dict[str, Any], idx: int
     }
 
 
-def _canonicalize_motor_row(record: dict[str, Any], idx: int) -> dict[str, Any]:
+def _canonicalize_motor_row(
+    record: dict[str, Any],
+    idx: int,
+    client_rules: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """
     Transform one motor-canonical row (from load_positions_from_specs) into a
-    UI-canonical position dict.  This parallels _canonicalize_position_row() but
-    works with the motor's schema (contract_id, notional, side=A/L, rate_type=
-    fixed/float, source_contract_type, etc.) instead of the Excel schema.
+    UI-canonical position dict.
 
-    Key differences from the Excel path:
-    - side comes as "A"/"L" instead of "asset"/"liability"
-    - subcategory is derived from source_contract_type, not subcategoria_ui column
-    - group is set to the contract-type label (no Producto column available)
-    - currency defaults to "EUR" (unicaja-specific; parameterize later)
-    - motor-specific fields (daycount_base, repricing_freq, etc.) are preserved
-      for the calculation endpoint
+    Classification uses balance_config:
+    - ``balance_section`` (Apartado)  → determines asset/liability/derivative
+    - ``balance_product`` (Producto)  → keyword match → subcategory_id
+    - Fallback to motor side (A/L) when Apartado is not available.
     """
     contract_id = str(record.get("contract_id") or f"motor-{idx + 1}")
     source_contract_type = str(record.get("source_contract_type") or "unknown")
-
-    # Motor side: "A" → "asset", "L" → "liability"
     raw_side = str(record.get("side") or "A").upper()
-    side = "asset" if raw_side == "A" else ("liability" if raw_side == "L" else "asset")
 
-    categoria_ui = "Assets" if side == "asset" else "Liabilities"
-    subcategoria_ui = _CONTRACT_TYPE_LABELS.get(
-        source_contract_type,
-        source_contract_type.replace("_", " ").title(),
+    # ── Balance classification via balance_config ─────────────────────────
+    rules = client_rules or {}
+    cls = _bc_classify(
+        apartado=_to_text(record.get("balance_section")),
+        producto=_to_text(record.get("balance_product")),
+        motor_side=raw_side,
+        **rules,
     )
-    subcategory_id = _slugify(subcategoria_ui)
+    side = cls.side
+    categoria_ui = _BC_SIDE_UI.get(side, "Assets")
+    subcategoria_ui = cls.subcategory_label
+    subcategory_id = cls.subcategory_id
 
     amount = _to_float(record.get("notional")) or 0.0
 
@@ -981,7 +1020,7 @@ def _canonicalize_motor_row(record: dict[str, Any], idx: int) -> dict[str, Any]:
     )
     fixed_rate = _to_float(record.get("fixed_rate"))
     spread_val = _to_float(record.get("spread"))
-    rate_display = fixed_rate  # same logic as _rate_display
+    rate_display = fixed_rate
 
     # Dates – motor rows may contain datetime.date objects or ISO strings
     fecha_inicio = _to_iso_date(record.get("start_date"))
@@ -1023,7 +1062,7 @@ def _canonicalize_motor_row(record: dict[str, Any], idx: int) -> dict[str, Any]:
         "maturity_years": mat_years,
         "maturity_bucket": maturity_bucket,
         "repricing_bucket": None,
-        "include_in_balance_tree": True,
+        "include_in_balance_tree": side in {"asset", "liability"},
         # Motor-specific fields preserved for /calculate endpoint
         "source_contract_type": source_contract_type,
         "daycount_base": _to_text(record.get("daycount_base")),
@@ -1032,6 +1071,10 @@ def _canonicalize_motor_row(record: dict[str, Any], idx: int) -> dict[str, Any]:
         "payment_freq": _to_text(record.get("payment_freq")),
         "floor_rate": _to_float(record.get("floor_rate")),
         "cap_rate": _to_float(record.get("cap_rate")),
+        # Classification source fields (for audit/debugging)
+        "balance_product": _to_text(record.get("balance_product")),
+        "balance_section": _to_text(record.get("balance_section")),
+        "balance_epigrafe": _to_text(record.get("balance_epigrafe")),
     }
 
 
@@ -1270,19 +1313,30 @@ def _parse_zip_balance(
         if spec.get("source_contract_type") not in _EXCLUDED_CONTRACT_TYPES
     ]
 
+    def _report_progress(step: int, total: int) -> None:
+        _upload_progress[session_id] = {
+            "step": step, "total": total, "phase": "parsing",
+        }
+
+    _upload_progress[session_id] = {"step": 0, "total": len(filtered_specs), "phase": "parsing"}
+
     try:
         motor_df = load_positions_from_specs(
             root_path=extract_dir,
             mapping_module=bank_mapping_unicaja,
             source_specs=filtered_specs,
+            on_progress=_report_progress,
         )
     except Exception as exc:
+        _upload_progress.pop(session_id, None)
         raise HTTPException(
             status_code=400,
             detail=f"Error parsing CSV positions: {exc}",
         )
 
     # ── 3. Persist motor DataFrame for /calculate endpoint ────────────────────
+    _upload_progress[session_id] = {"step": 0, "total": 0, "phase": "persisting"}
+
     motor_records = motor_df.to_dict(orient="records")
     for rec in motor_records:
         for key, val in list(rec.items()):
@@ -1294,9 +1348,14 @@ def _parse_zip_balance(
     )
 
     # ── 4. Build UI-canonical rows ────────────────────────────────────────────
+    _upload_progress[session_id] = {"step": 0, "total": 0, "phase": "canonicalizing"}
+
+    # Load client classification rules once (not per row)
+    client_rules = _bc_get_rules("unicaja")
+
     canonical_rows: list[dict[str, Any]] = []
     for idx, rec in enumerate(motor_records):
-        canonical_rows.append(_canonicalize_motor_row(rec, idx))
+        canonical_rows.append(_canonicalize_motor_row(rec, idx, client_rules=client_rules))
 
     # ── 5. Build sheet summaries (one per contract type present) ──────────────
     contract_types = sorted({
@@ -1605,11 +1664,34 @@ def _reconstruct_motor_dataframe(session_id: str) -> pd.DataFrame:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
+    # Drop rows with missing critical dates (except non-maturity types which
+    # don't need maturity_date). These would cause the EVE/NII engine to raise
+    # ValueError("Valor requerido vacio ...") for an individual row.
+    import logging as _logging
+    _NON_MATURITY_TYPES = {"fixed_non_maturity", "variable_non_maturity",
+                           "static_position", "non-maturity"}
+    sct_col = "source_contract_type"
+    if "maturity_date" in df.columns:
+        needs_maturity = ~df[sct_col].str.lower().str.strip().isin(_NON_MATURITY_TYPES) if sct_col in df.columns else pd.Series(True, index=df.index)
+        missing_maturity = needs_maturity & df["maturity_date"].isna()
+        n_bad = int(missing_maturity.sum())
+        if n_bad > 0:
+            sample_ids = df.loc[missing_maturity, "contract_id"].head(5).tolist() if "contract_id" in df.columns else []
+            _logging.getLogger(__name__).warning(
+                "Dropping %d positions with missing maturity_date (e.g. %s)",
+                n_bad, sample_ids,
+            )
+            df = df.loc[~missing_maturity].reset_index(drop=True)
+
     return df
 
 
 def _results_path(session_id: str) -> Path:
     return _session_dir(session_id) / "calculation_results.json"
+
+
+def _calc_params_path(session_id: str) -> Path:
+    return _session_dir(session_id) / "calculation_params.json"
 
 
 def _persist_balance_payload(session_id: str, response: BalanceUploadResponse, canonical_rows: list[dict[str, Any]]) -> None:
@@ -2037,7 +2119,34 @@ async def upload_balance_zip(session_id: str, file: UploadFile = File(...)) -> B
     )
 
     _persist_balance_payload(session_id, response, canonical_rows)
+    _upload_progress.pop(session_id, None)
     return response
+
+
+@app.get("/api/sessions/{session_id}/upload-progress")
+def get_upload_progress(session_id: str):
+    """
+    Poll backend-side processing progress during balance upload.
+    Returns {"step", "total", "phase"} while processing, or
+    {"phase": "idle"} when no upload is in progress.
+    """
+    progress = _upload_progress.get(session_id)
+    if progress is None:
+        return {"phase": "idle", "step": 0, "total": 0, "pct": 0}
+    step = progress.get("step", 0)
+    total = progress.get("total", 0)
+    phase = progress.get("phase", "parsing")
+    # Map phases to percentage ranges:
+    #   parsing: 0→80% (main work), persisting: 80→90%, canonicalizing: 90→98%
+    if phase == "parsing" and total > 0:
+        pct = round((step / total) * 80)
+    elif phase == "persisting":
+        pct = 85
+    elif phase == "canonicalizing":
+        pct = 95
+    else:
+        pct = 0
+    return {"phase": phase, "step": step, "total": total, "pct": pct}
 
 
 @app.post("/api/sessions/{session_id}/calculate", response_model=CalculationResultsResponse)
@@ -2244,6 +2353,20 @@ def calculate_eve_nii(session_id: str, req: CalculateRequest) -> CalculationResu
         encoding="utf-8",
     )
 
+    # Persist calculation params so /calculate/whatif can reuse curves & scenarios
+    calc_params = {
+        "discount_curve_id": req.discount_curve_id,
+        "scenarios": req.scenarios,
+        "analysis_date": analysis_date.isoformat(),
+        "currency": req.currency,
+        "risk_free_index": risk_free_index,
+        "worst_case_scenario": worst_scenario_name,
+    }
+    _calc_params_path(session_id).write_text(
+        json.dumps(calc_params, indent=2),
+        encoding="utf-8",
+    )
+
     return response
 
 
@@ -2256,6 +2379,355 @@ def get_calculation_results(session_id: str) -> CalculationResultsResponse:
         raise HTTPException(status_code=404, detail="No calculation results yet. Run /calculate first.")
     payload = json.loads(results_file.read_text(encoding="utf-8"))
     return CalculationResultsResponse(**payload)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# WHAT-IF DELTA CALCULATION
+# Computes EVE/NII only for positions added/removed by the user's What-If
+# modifications, using the same curves & scenarios as the base calculation.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Maps product template IDs to motor source_contract_type + side.
+_PRODUCT_TEMPLATE_TO_MOTOR = {
+    "fixed-loan":     {"source_contract_type": "fixed_annuity",   "side": "A"},
+    "floating-loan":  {"source_contract_type": "variable_bullet", "side": "A"},
+    "bond-portfolio": {"source_contract_type": "fixed_bullet",    "side": "A"},
+    "securitised":    {"source_contract_type": "fixed_annuity",   "side": "A"},
+    "term-deposit":   {"source_contract_type": "fixed_bullet",    "side": "L"},
+    "wholesale":      {"source_contract_type": "fixed_bullet",    "side": "L"},
+    "irs-hedge":      {"source_contract_type": "fixed_bullet",    "side": "A"},
+}
+
+# Fallback: infer source_contract_type from category + rate heuristic.
+_CATEGORY_SIDE_MAP = {"asset": "A", "liability": "L", "derivative": "A"}
+
+_FREQ_TO_MONTHS = {
+    "monthly": 1, "quarterly": 3, "semi-annual": 6, "annual": 12,
+}
+
+# Map UI refIndex labels (from PRODUCT_TEMPLATES) → motor index_name format.
+_REF_INDEX_TO_MOTOR: dict[str, str] = {
+    "EURIBOR 3M":  "EUR_EURIBOR_3M",
+    "EURIBOR 6M":  "EUR_EURIBOR_6M",
+    "EURIBOR 12M": "EUR_EURIBOR_12M",
+    "SOFR":        "USD_SOFR",
+    "SONIA":       "GBP_SONIA",
+}
+
+
+def _create_synthetic_motor_row(
+    mod: WhatIfModificationItem,
+    analysis_date: date,
+) -> dict[str, Any]:
+    """Convert a single 'add' WhatIfModification into a motor-compatible row."""
+    mapping = _PRODUCT_TEMPLATE_TO_MOTOR.get(mod.productTemplateId or "", {})
+    sct = mapping.get("source_contract_type", "fixed_bullet")
+    side = mapping.get("side", _CATEGORY_SIDE_MAP.get(mod.category or "asset", "A"))
+
+    # Dates
+    if mod.startDate:
+        try:
+            start = date.fromisoformat(mod.startDate)
+        except ValueError:
+            start = analysis_date
+    else:
+        start = analysis_date
+
+    if mod.maturityDate:
+        try:
+            mat = date.fromisoformat(mod.maturityDate)
+        except ValueError:
+            mat = None
+    else:
+        mat = None
+
+    # If no explicit maturityDate, derive from maturity years
+    if mat is None and mod.maturity and mod.maturity > 0:
+        from datetime import timedelta
+        mat = start + timedelta(days=round(mod.maturity * 365.25))
+
+    # If still None, default to 1 year
+    if mat is None:
+        from datetime import timedelta
+        mat = start + timedelta(days=365)
+
+    # Rate: mod.rate is a decimal (0.035 = 3.5%)
+    fixed_rate = mod.rate if mod.rate is not None else 0.0
+    spread_val = (mod.spread or 0.0) / 10000.0 if mod.spread else 0.0  # bps → decimal
+
+    # For variable types, set the rate fields appropriately
+    is_variable = "variable" in sct
+    raw_ref = (mod.refIndex or "").strip()
+    ref_index = _REF_INDEX_TO_MOTOR.get(raw_ref, raw_ref) or "EUR_ESTR_OIS"
+
+    # Frequency
+    freq_str = (mod.paymentFreq or "annual").lower()
+    coupon_months = _FREQ_TO_MONTHS.get(freq_str, 12)
+
+    # Repricing for variable
+    reprice_str = (mod.repricingFreq or freq_str).lower()
+    reprice_months = _FREQ_TO_MONTHS.get(reprice_str, coupon_months)
+
+    # Build payment_freq string (motor format: "1M", "3M", "6M", "12M")
+    payment_freq_str = f"{coupon_months}M"
+
+    # Build repricing_freq string for variable types
+    repricing_freq_str = f"{reprice_months}M" if is_variable else None
+
+    row: dict[str, Any] = {
+        "contract_id": f"whatif_{mod.id}",
+        "side": side,
+        "source_contract_type": sct,
+        "notional": abs(mod.notional or 0.0),
+        "fixed_rate": 0.0 if is_variable else fixed_rate,
+        "spread": spread_val if is_variable else 0.0,
+        "start_date": start,
+        "maturity_date": mat,
+        "index_name": ref_index if is_variable else None,
+        "next_reprice_date": start if is_variable else None,
+        "daycount_base": "ACT/360",
+        "payment_freq": payment_freq_str,
+        "repricing_freq": repricing_freq_str,
+        "currency": mod.currency or "EUR",
+        "floor_rate": None,
+        "cap_rate": None,
+    }
+    return row
+
+
+def _build_whatif_delta_dataframe(
+    modifications: list[WhatIfModificationItem],
+    motor_df: pd.DataFrame,
+    balance_rows: list[dict[str, Any]],
+    analysis_date: date,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Split What-If modifications into two DataFrames:
+    - add_df: synthetic positions to compute positive EVE/NII delta
+    - remove_df: existing positions to compute negative EVE/NII delta
+
+    Both DataFrames have the same schema as motor_df.
+    """
+    add_rows: list[dict[str, Any]] = []
+    remove_ids: list[str] = []
+
+    for mod in modifications:
+        if mod.type == "add":
+            add_rows.append(_create_synthetic_motor_row(mod, analysis_date))
+
+        elif mod.type == "remove":
+            if mod.removeMode == "contracts" and mod.contractIds:
+                remove_ids.extend(mod.contractIds)
+            elif mod.removeMode == "all" and mod.subcategory:
+                # Find all contract_ids in this subcategory from balance_positions
+                for row in balance_rows:
+                    sub_id = row.get("subcategory_id", "")
+                    if sub_id == mod.subcategory:
+                        cid = row.get("contract_id")
+                        if cid:
+                            remove_ids.append(cid)
+
+    add_df = pd.DataFrame(add_rows) if add_rows else pd.DataFrame()
+    if add_df.empty and motor_df is not None and not motor_df.empty:
+        # Ensure add_df has the same columns for consistency
+        add_df = motor_df.iloc[0:0].copy()
+
+    # Extract remove rows from motor_df
+    if remove_ids and motor_df is not None and not motor_df.empty and "contract_id" in motor_df.columns:
+        unique_ids = set(remove_ids)
+        remove_df = motor_df[motor_df["contract_id"].isin(unique_ids)].copy()
+    else:
+        remove_df = motor_df.iloc[0:0].copy() if (motor_df is not None and not motor_df.empty) else pd.DataFrame()
+
+    # Convert date columns in add_df
+    date_cols = ["start_date", "maturity_date", "next_reprice_date"]
+    for col in date_cols:
+        if col in add_df.columns:
+            add_df[col] = add_df[col].apply(
+                lambda d: d if isinstance(d, date) else None
+            )
+
+    # Ensure numeric columns
+    numeric_cols = ["notional", "fixed_rate", "spread", "floor_rate", "cap_rate"]
+    for col in numeric_cols:
+        if col in add_df.columns:
+            add_df[col] = pd.to_numeric(add_df[col], errors="coerce")
+
+    return add_df, remove_df
+
+
+@app.post("/api/sessions/{session_id}/calculate/whatif", response_model=WhatIfResultsResponse)
+def calculate_whatif(session_id: str, req: WhatIfCalculateRequest) -> WhatIfResultsResponse:
+    """
+    Compute the EVE/NII delta from What-If modifications.
+
+    Prerequisites: Base calculation must have been run (/calculate) so that
+    calculation_params.json and calculation_results.json exist.
+
+    The endpoint:
+    1. Loads stored calculation params (curves, scenarios, worst scenario).
+    2. For 'add' modifications, creates synthetic motor positions.
+    3. For 'remove' modifications, extracts matching positions from motor_positions.
+    4. Runs EVE/NII on add positions (positive delta) and remove positions (negative delta).
+    5. Returns 4 impact numbers: base_eve_delta, worst_eve_delta, base_nii_delta, worst_nii_delta.
+    """
+    from almready.services.eve import run_eve_scenarios
+    from almready.services.nii import run_nii_12m_scenarios
+    from almready.services.regulatory_curves import build_regulatory_curve_sets
+
+    _assert_session_exists(session_id)
+
+    # ── 1. Load stored calculation params ──────────────────────────────────
+    params_file = _calc_params_path(session_id)
+    if not params_file.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="No base calculation found. Run /calculate first.",
+        )
+    calc_params = json.loads(params_file.read_text(encoding="utf-8"))
+
+    try:
+        analysis_date = date.fromisoformat(calc_params["analysis_date"])
+    except (KeyError, ValueError):
+        analysis_date = date.today()
+
+    discount_curve_id = calc_params.get("discount_curve_id", "EUR_ESTR_OIS")
+    scenarios = calc_params.get("scenarios", [])
+    risk_free_index = calc_params.get("risk_free_index", discount_curve_id)
+    worst_scenario = calc_params.get("worst_case_scenario", "base")
+
+    # ── 2. Load motor positions (for removes) ─────────────────────────────
+    motor_path = _motor_positions_path(session_id)
+    if motor_path.exists():
+        motor_df = _reconstruct_motor_dataframe(session_id)
+    else:
+        motor_df = pd.DataFrame()
+
+    # Load balance positions (for remove-all-by-subcategory lookup)
+    pos_path = _positions_path(session_id)
+    balance_rows: list[dict[str, Any]] = []
+    if pos_path.exists():
+        balance_rows = json.loads(pos_path.read_text(encoding="utf-8"))
+
+    # ── 3. Build delta DataFrames ──────────────────────────────────────────
+    add_df, remove_df = _build_whatif_delta_dataframe(
+        req.modifications, motor_df, balance_rows, analysis_date,
+    )
+
+    has_adds = not add_df.empty
+    has_removes = not remove_df.empty
+
+    if not has_adds and not has_removes:
+        return WhatIfResultsResponse(
+            session_id=session_id,
+            base_eve_delta=0.0,
+            worst_eve_delta=0.0,
+            base_nii_delta=0.0,
+            worst_nii_delta=0.0,
+            calculated_at=datetime.now(timezone.utc).isoformat(),
+        )
+
+    # ── 4. Build curve sets (same as base calculation) ─────────────────────
+    try:
+        base_curve_set = _build_forward_curve_set(session_id, analysis_date)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Error building curve set: {exc}")
+
+    try:
+        scenario_curve_sets = build_regulatory_curve_sets(
+            base_set=base_curve_set,
+            scenarios=scenarios,
+            risk_free_index=risk_free_index,
+            currency=calc_params.get("currency", "EUR"),
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Error building scenario curves: {exc}")
+
+    # ── 5. Run EVE/NII on delta positions ──────────────────────────────────
+    add_base_eve = 0.0
+    add_worst_eve = 0.0
+    add_base_nii = 0.0
+    add_worst_nii = 0.0
+
+    if has_adds:
+        try:
+            eve_add = run_eve_scenarios(
+                positions=add_df,
+                base_discount_curve_set=base_curve_set,
+                scenario_discount_curve_sets=scenario_curve_sets,
+                base_projection_curve_set=base_curve_set,
+                scenario_projection_curve_sets=scenario_curve_sets,
+                discount_index=discount_curve_id,
+                method="exact",
+            )
+            add_base_eve = eve_add.base_eve
+            add_worst_eve = eve_add.scenario_eve.get(worst_scenario, eve_add.base_eve)
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"What-If EVE error (adds): {exc}")
+
+        try:
+            nii_add = run_nii_12m_scenarios(
+                positions=add_df,
+                base_curve_set=base_curve_set,
+                scenario_curve_sets=scenario_curve_sets,
+                risk_free_index=risk_free_index,
+                balance_constant=True,
+            )
+            add_base_nii = nii_add.base_nii_12m
+            add_worst_nii = nii_add.scenario_nii_12m.get(worst_scenario, nii_add.base_nii_12m)
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"What-If NII error (adds): {exc}")
+
+    remove_base_eve = 0.0
+    remove_worst_eve = 0.0
+    remove_base_nii = 0.0
+    remove_worst_nii = 0.0
+
+    if has_removes:
+        try:
+            eve_rem = run_eve_scenarios(
+                positions=remove_df,
+                base_discount_curve_set=base_curve_set,
+                scenario_discount_curve_sets=scenario_curve_sets,
+                base_projection_curve_set=base_curve_set,
+                scenario_projection_curve_sets=scenario_curve_sets,
+                discount_index=discount_curve_id,
+                method="exact",
+            )
+            remove_base_eve = eve_rem.base_eve
+            remove_worst_eve = eve_rem.scenario_eve.get(worst_scenario, eve_rem.base_eve)
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"What-If EVE error (removes): {exc}")
+
+        try:
+            nii_rem = run_nii_12m_scenarios(
+                positions=remove_df,
+                base_curve_set=base_curve_set,
+                scenario_curve_sets=scenario_curve_sets,
+                risk_free_index=risk_free_index,
+                balance_constant=True,
+            )
+            remove_base_nii = nii_rem.base_nii_12m
+            remove_worst_nii = nii_rem.scenario_nii_12m.get(worst_scenario, nii_rem.base_nii_12m)
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"What-If NII error (removes): {exc}")
+
+    # ── 6. Compute deltas: adds contribute positively, removes negatively ──
+    base_eve_delta = add_base_eve - remove_base_eve
+    worst_eve_delta = add_worst_eve - remove_worst_eve
+    base_nii_delta = add_base_nii - remove_base_nii
+    worst_nii_delta = add_worst_nii - remove_worst_nii
+
+    return WhatIfResultsResponse(
+        session_id=session_id,
+        base_eve_delta=base_eve_delta,
+        worst_eve_delta=worst_eve_delta,
+        base_nii_delta=base_nii_delta,
+        worst_nii_delta=worst_nii_delta,
+        calculated_at=datetime.now(timezone.utc).isoformat(),
+    )
 
 
 @app.get("/api/sessions/{session_id}/balance/summary", response_model=BalanceUploadResponse)

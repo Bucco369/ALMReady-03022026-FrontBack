@@ -31,3 +31,4 @@ backend/data/
 *.pyc
 *.pyo
 .DS_Store
+.claude/

@@ -34,6 +34,12 @@ OPTIONAL_CANONICAL_COLUMNS = (
     "next_reprice_date",
     "floor_rate",
     "cap_rate",
+    # Balance classification columns (used by balance_config classifier).
+    # These are read from the bank's CSV but NOT used by the motor —
+    # only by _canonicalize_motor_row() to assign subcategory_id.
+    "balance_product",
+    "balance_section",
+    "balance_epigrafe",
 )
 
 
@@ -57,6 +63,10 @@ BANK_COLUMNS_MAP = {
     "Reset anchor date": "next_reprice_date",
     "Interest rate floor": "floor_rate",
     "Interest rate cap": "cap_rate",
+    # Balance classification columns (→ balance_config classifier)
+    "Producto": "balance_product",
+    "Apartado": "balance_section",
+    "Epigrafe M1": "balance_epigrafe",
 }
 
 

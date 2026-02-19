@@ -412,10 +412,8 @@ export function BalancePositionsCard({
     });
   };
   const formatAmount = (num: number) => {
-    if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
-    if (num >= 1e6) return `${(num / 1e6).toFixed(0)}M`;
-    if (num >= 1e3) return `${(num / 1e3).toFixed(0)}K`;
-    return num.toString();
+    const millions = num / 1e6;
+    return millions.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '€';
   };
   const formatPercent = (num: number | null | undefined) => {
     if (num === null || num === undefined || Number.isNaN(num)) return '—';
@@ -524,7 +522,7 @@ export function BalancePositionsCard({
                     <thead className="sticky top-0 z-10">
                       <tr className="text-muted-foreground">
                         <th className="text-left text-[10px] font-medium uppercase tracking-wide py-2 pl-3 pr-2 bg-card border-b border-border/40">Category</th>
-                        <th className="text-right text-[10px] font-medium uppercase tracking-wide py-2 px-2 bg-card border-b border-border/40">Amount</th>
+                        <th className="text-right text-[10px] font-medium uppercase tracking-wide py-2 px-2 bg-card border-b border-border/40">Amount (Mln)</th>
                         <th className="text-right text-[10px] font-medium uppercase tracking-wide py-2 px-2 bg-card border-b border-border/40">Pos.</th>
                         <th className="text-right text-[10px] font-medium uppercase tracking-wide py-2 px-2 bg-card border-b border-border/40">Avg Rate</th>
                         <th className="text-right text-[10px] font-medium uppercase tracking-wide py-2 px-2 bg-card border-b border-border/40">Avg Res Mat</th>
@@ -574,7 +572,6 @@ export function BalancePositionsCard({
                   </table>
                 </div>
               </div>
-              
               {/* Action Buttons - What-If, Behavioural and Reset */}
               <div className="flex gap-2 pt-2 border-t border-border/30 mt-2">
                 <Button size="sm" onClick={() => setShowWhatIfBuilder(true)} className="flex-1 h-6 text-xs relative">
@@ -688,10 +685,8 @@ function BalanceRowWithDelta({
   const baseMaturityForDelta = avgMaturity ?? 0;
   const maturityDelta = displayedAvgMaturity - baseMaturityForDelta;
   const formatDeltaAmount = (n: number) => {
-    if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`;
-    if (n >= 1e6) return `${(n / 1e6).toFixed(0)}M`;
-    if (n >= 1e3) return `${(n / 1e3).toFixed(0)}K`;
-    return `${Math.round(n)}`;
+    const millions = n / 1e6;
+    return millions.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '€';
   };
   return <tr className="group cursor-pointer hover:bg-accent/50 transition-colors duration-150 border-b border-border/30" onClick={onToggle}>
       <td className="py-2 pl-3 pr-2">
@@ -792,10 +787,8 @@ function SubcategoryRowWithDelta({
   const baseMaturityForDelta = avgMaturity ?? 0;
   const maturityDelta = displayedAvgMaturity - baseMaturityForDelta;
   const formatDeltaAmount = (n: number) => {
-    if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`;
-    if (n >= 1e6) return `${(n / 1e6).toFixed(0)}M`;
-    if (n >= 1e3) return `${(n / 1e3).toFixed(0)}K`;
-    return `${Math.round(n)}`;
+    const millions = n / 1e6;
+    return millions.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '€';
   };
   return <tr className="text-muted-foreground group hover:bg-accent/40 transition-colors duration-150 border-b border-border/20">
       <td className="py-1.5 pl-8 pr-2">
@@ -929,9 +922,8 @@ function CompactCET1Input({ value, onChange }: CompactCET1InputProps) {
   }, [isEditing]);
 
   const formatCET1Display = (num: number) => {
-    if (num >= 1e9) return `${(num / 1e9).toFixed(1)}B`;
-    if (num >= 1e6) return `${(num / 1e6).toFixed(0)}M`;
-    return num.toLocaleString('en-US');
+    const millions = num / 1e6;
+    return millions.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '€';
   };
 
   const handleConfirm = () => {

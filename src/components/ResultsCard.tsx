@@ -11,31 +11,44 @@
  * 2. A chart area (right 2/3) toggling between EVEChart and NIIChart.
  * 3. A "Details" dialog with full scenario comparison table.
  *
- * === CURRENT LIMITATIONS ===
- * - HARDCODED WHAT-IF IMPACT: The whatIfImpact object uses fixed values
- *   (+12.5M EVE, +8.2M worst EVE, -2.1M NII, -1.8M worst NII) that appear
- *   whenever What-If modifications are applied. Never computed from real data.
+ * === WHAT-IF INTEGRATION ===
+ * When the user clicks "Apply to Analysis" in the WhatIfBuilder, this component
+ * calls POST /api/sessions/{id}/calculate/whatif with the modifications. The
+ * backend runs EVE/NII only on the delta positions (adds with positive sign,
+ * removes with negative sign) using the same curves & scenarios as the base
+ * calculation. The 4 impact values replace the previously hardcoded zeros.
  * - %CET1 columns are blank until the user sets a CET1 capital value.
- * - Phase 1 will replace hardcoded impacts with delta values returned from
- *   the backend /calculate endpoint after applying What-If overlays.
  */
-import React, { useState } from 'react';
-import { BarChart3, Eye, Clock } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { BarChart3, Eye, Clock, Loader2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import type { CalculationResults } from '@/types/financial';
+import type { CalculationResults, Scenario } from '@/types/financial';
 import { EVEChart } from '@/components/results/EVEChart';
 import { NIIChart } from '@/components/results/NIIChart';
 import { useWhatIf } from '@/components/whatif/WhatIfContext';
+import { calculateWhatIf } from '@/lib/api';
+import type { WhatIfModificationRequest } from '@/lib/api';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 interface ResultsCardProps {
   results: CalculationResults | null;
   isCalculating: boolean;
   calcProgress?: number;
+  sessionId: string | null;
+  scenarios?: Scenario[];
 }
 export function ResultsCard({
   results,
   isCalculating,
   calcProgress = 0,
+  sessionId,
+  scenarios = [],
 }: ResultsCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [activeChart, setActiveChart] = useState<'eve' | 'nii'>('eve');
@@ -50,29 +63,113 @@ export function ResultsCard({
   // CET1 capital for percentage calculations – null when not set by the user.
   const cet1Capital = contextCet1;
 
-  // What-If impact values – zeroed out until backend What-If overlay is implemented.
-  // When Phase 2 lands, these will come from a separate /calculate call with
-  // What-If modifications applied server-side.
-  const whatIfImpact = {
+  // What-If impact from backend calculation.
+  const [whatIfImpact, setWhatIfImpact] = useState({
     baseEve: 0,
     worstEve: 0,
     baseNii: 0,
-    worstNii: 0
-  };
+    worstNii: 0,
+  });
+  const whatIfRequestIdRef = useRef(0);
+  const [whatIfLoading, setWhatIfLoading] = useState(false);
+  const [selectedScenario, setSelectedScenario] = useState('parallel-up');
+
+  // Default to the worst scenario when calculation results arrive.
+  useEffect(() => {
+    if (results && results.scenarioResults.length > 0) {
+      const worstResult = results.scenarioResults.find(
+        s => s.scenarioName === results.worstCaseScenario
+      );
+      setSelectedScenario(worstResult?.scenarioId ?? results.scenarioResults[0].scenarioId);
+    }
+  }, [results]);
+
+  // Trigger What-If calculation when modifications are applied and base results exist.
+  // Uses a minimum spinner display time (400ms) so the user always sees the loading
+  // state, even when the backend responds quickly.
+  useEffect(() => {
+    if (!isApplied || modifications.length === 0 || !results || !sessionId) {
+      setWhatIfImpact({ baseEve: 0, worstEve: 0, baseNii: 0, worstNii: 0 });
+      setWhatIfLoading(false);
+      return;
+    }
+
+    const requestId = ++whatIfRequestIdRef.current;
+    setWhatIfLoading(true);
+    // Clear stale values immediately so the UI transitions to loading state
+    setWhatIfImpact({ baseEve: 0, worstEve: 0, baseNii: 0, worstNii: 0 });
+
+    const startTime = Date.now();
+    const MIN_SPINNER_MS = 400;
+    let cancelled = false;
+    let tid: ReturnType<typeof setTimeout>;
+
+    const modsPayload: WhatIfModificationRequest[] = modifications.map((m) => ({
+      id: m.id,
+      type: m.type,
+      label: m.label,
+      notional: m.notional,
+      currency: m.currency,
+      category: m.category,
+      subcategory: m.subcategory,
+      rate: m.rate,
+      maturity: m.maturity,
+      removeMode: m.removeMode,
+      contractIds: m.contractIds,
+      productTemplateId: m.productTemplateId,
+      startDate: m.startDate,
+      maturityDate: m.maturityDate,
+      paymentFreq: m.paymentFreq,
+      repricingFreq: m.repricingFreq,
+      refIndex: m.refIndex,
+      spread: m.spread,
+    }));
+
+    calculateWhatIf(sessionId, { modifications: modsPayload })
+      .then((resp) => {
+        if (cancelled || requestId !== whatIfRequestIdRef.current) return;
+        const elapsed = Date.now() - startTime;
+        const delay = Math.max(0, MIN_SPINNER_MS - elapsed);
+        tid = setTimeout(() => {
+          if (cancelled || requestId !== whatIfRequestIdRef.current) return;
+          setWhatIfImpact({
+            baseEve: resp.base_eve_delta,
+            worstEve: resp.worst_eve_delta,
+            baseNii: resp.base_nii_delta,
+            worstNii: resp.worst_nii_delta,
+          });
+          setWhatIfLoading(false);
+        }, delay);
+      })
+      .catch((err) => {
+        console.error("What-If calculation failed:", err);
+        if (!cancelled && requestId === whatIfRequestIdRef.current) {
+          setWhatIfImpact({ baseEve: 0, worstEve: 0, baseNii: 0, worstNii: 0 });
+          setWhatIfLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      clearTimeout(tid);
+    };
+  }, [isApplied, modifications, results, sessionId]);
+  // Build a lookup from scenario id → display label matching the Curves & Scenarios card
+  // format: "Parallel Up +200bp", "Short Down -250bp", etc.
+  const scenarioDisplayMap = new Map<string, string>();
+  for (const sc of scenarios) {
+    scenarioDisplayMap.set(sc.id, sc.name);
+  }
+  const getScenarioLabel = (scenarioId: string, fallbackName: string) =>
+    scenarioDisplayMap.get(scenarioId) ?? fallbackName;
+
   const formatCurrency = (num: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(num);
+    const millions = num / 1e6;
+    return millions.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '€';
   };
   const formatCompact = (num: number) => {
-    const abs = Math.abs(num);
-    if (abs >= 1e9) return `${(num / 1e9).toFixed(1)}B`;
-    if (abs >= 1e6) return `${(num / 1e6).toFixed(1)}M`;
-    if (abs >= 1e3) return `${(num / 1e3).toFixed(0)}K`;
-    return num.toString();
+    const millions = num / 1e6;
+    return millions.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '€';
   };
   const formatPercentWithAbsolute = (percent: number, absolute: number) => {
     const sign = percent >= 0 ? '+' : '';
@@ -127,6 +224,17 @@ export function ResultsCard({
   const worstNiiResult = results.scenarioResults.find(s => s.scenarioName === results.worstCaseScenario);
   const worstNiiDelta = worstNiiResult?.deltaNii ?? 0;
   const worstNiiPercent = cet1Capital !== null ? worstNiiDelta / cet1Capital * 100 : null;
+
+  // Selected scenario (from dropdown) – drives both summary table and chart.
+  const selectedResult = results.scenarioResults.find(s => s.scenarioId === selectedScenario);
+  const selectedScenarioDisplayName = selectedResult
+    ? getScenarioLabel(selectedResult.scenarioId, selectedResult.scenarioName)
+    : '';
+  const isWorstSelected = selectedResult?.scenarioName === results.worstCaseScenario;
+  const scenarioDropdownLabel = isWorstSelected
+    ? `${selectedScenarioDisplayName} (Worst)`
+    : selectedScenarioDisplayName;
+
   return <>
       <div className="dashboard-card h-full flex flex-col">
         <div className="dashboard-card-header flex-shrink-0">
@@ -139,6 +247,34 @@ export function ResultsCard({
               <Eye className="mr-1 h-3 w-3" />
               Details
             </Button>
+            {/* Scenario selector – drives table + chart */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button size="sm" variant="outline" className="h-5 px-2 text-[10px] font-medium">
+                  {scenarioDropdownLabel || 'Scenario'}
+                  <ChevronDown className="ml-1 h-2.5 w-2.5" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56" align="start">
+                <div className="space-y-3">
+                  <div className="text-xs font-medium text-foreground">Select Scenario</div>
+                  <RadioGroup value={selectedScenario} onValueChange={setSelectedScenario}>
+                    {results.scenarioResults.map((sr) => {
+                      const isWorst = sr.scenarioName === results.worstCaseScenario;
+                      const displayName = getScenarioLabel(sr.scenarioId, sr.scenarioName);
+                      return (
+                        <div key={sr.scenarioId} className="flex items-center space-x-2">
+                          <RadioGroupItem value={sr.scenarioId} id={`rc-${sr.scenarioId}`} />
+                          <Label htmlFor={`rc-${sr.scenarioId}`} className="text-xs cursor-pointer">
+                            {displayName}{isWorst ? ' (Worst)' : ''}
+                          </Label>
+                        </div>
+                      );
+                    })}
+                  </RadioGroup>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="flex items-center gap-2">
             {/* EVE/NII Toggle - Primary style */}
@@ -165,7 +301,12 @@ export function ResultsCard({
                     <tr className="bg-card border-b border-border/40">
                       <th className="text-center align-middle font-medium py-2 px-2 text-muted-foreground" rowSpan={2}>Metric</th>
                       <th className="text-center font-medium py-2 px-1.5 text-muted-foreground border-l border-border/40" colSpan={2}>Baseline</th>
-                      <th className="text-center font-medium py-2 px-1.5 text-muted-foreground border-l border-border/40" colSpan={2}>What-If</th>
+                      <th className="text-center font-medium py-2 px-1.5 text-muted-foreground border-l border-border/40" colSpan={2}>
+                        <span className="inline-flex items-center gap-1 justify-center">
+                          What-If
+                          {whatIfLoading && <Loader2 className="h-3 w-3 animate-spin" />}
+                        </span>
+                      </th>
                       <th className="text-center font-medium py-2 px-1.5 text-muted-foreground border-l border-border/40" colSpan={2}>Post W-I</th>
                     </tr>
                     {/* Subcolumn headers */}
@@ -188,17 +329,19 @@ export function ResultsCard({
                       postValue={results.baseEve + (hasModifications ? whatIfImpact.baseEve : 0)}
                       postCet1Pct={cet1Capital !== null ? (hasModifications ? whatIfImpact.baseEve : 0) / cet1Capital * 100 : null}
                       hasModifications={hasModifications}
+                      isLoading={whatIfLoading}
                     />
                     <ResultsSummaryRow
-                      label="Worst scenario EVE"
-                      baselineValue={results.worstCaseEve}
-                      baselineCet1Pct={cet1Capital !== null ? results.worstCaseDeltaEve / cet1Capital * 100 : null}
-                      impactValue={hasModifications ? whatIfImpact.worstEve : 0}
-                      impactCet1Pct={hasModifications && cet1Capital !== null ? whatIfImpact.worstEve / cet1Capital * 100 : null}
-                      postValue={results.worstCaseEve + (hasModifications ? whatIfImpact.worstEve : 0)}
-                      postCet1Pct={cet1Capital !== null ? (results.worstCaseDeltaEve + (hasModifications ? whatIfImpact.worstEve : 0)) / cet1Capital * 100 : null}
-                      hasModifications={hasModifications}
-                      isWorst
+                      label={`${scenarioDropdownLabel} EVE`}
+                      baselineValue={selectedResult?.eve ?? results.baseEve}
+                      baselineCet1Pct={cet1Capital !== null ? (selectedResult?.deltaEve ?? 0) / cet1Capital * 100 : null}
+                      impactValue={hasModifications && isWorstSelected ? whatIfImpact.worstEve : 0}
+                      impactCet1Pct={hasModifications && isWorstSelected && cet1Capital !== null ? whatIfImpact.worstEve / cet1Capital * 100 : null}
+                      postValue={(selectedResult?.eve ?? results.baseEve) + (hasModifications && isWorstSelected ? whatIfImpact.worstEve : 0)}
+                      postCet1Pct={cet1Capital !== null ? ((selectedResult?.deltaEve ?? 0) + (hasModifications && isWorstSelected ? whatIfImpact.worstEve : 0)) / cet1Capital * 100 : null}
+                      hasModifications={hasModifications && isWorstSelected}
+                      isLoading={whatIfLoading && isWorstSelected}
+                      isWorst={isWorstSelected}
                     />
                     <ResultsSummaryRow
                       label="Base NII"
@@ -209,17 +352,19 @@ export function ResultsCard({
                       postValue={results.baseNii + (hasModifications ? whatIfImpact.baseNii : 0)}
                       postCet1Pct={cet1Capital !== null ? (hasModifications ? whatIfImpact.baseNii : 0) / cet1Capital * 100 : null}
                       hasModifications={hasModifications}
+                      isLoading={whatIfLoading}
                     />
                     <ResultsSummaryRow
-                      label="Worst scenario NII"
-                      baselineValue={results.baseNii + worstNiiDelta}
-                      baselineCet1Pct={cet1Capital !== null ? worstNiiDelta / cet1Capital * 100 : null}
-                      impactValue={hasModifications ? whatIfImpact.worstNii : 0}
-                      impactCet1Pct={hasModifications && cet1Capital !== null ? whatIfImpact.worstNii / cet1Capital * 100 : null}
-                      postValue={results.baseNii + worstNiiDelta + (hasModifications ? whatIfImpact.worstNii : 0)}
-                      postCet1Pct={cet1Capital !== null ? (worstNiiDelta + (hasModifications ? whatIfImpact.worstNii : 0)) / cet1Capital * 100 : null}
-                      hasModifications={hasModifications}
-                      isWorst
+                      label={`${scenarioDropdownLabel} NII`}
+                      baselineValue={results.baseNii + (selectedResult?.deltaNii ?? 0)}
+                      baselineCet1Pct={cet1Capital !== null ? (selectedResult?.deltaNii ?? 0) / cet1Capital * 100 : null}
+                      impactValue={hasModifications && isWorstSelected ? whatIfImpact.worstNii : 0}
+                      impactCet1Pct={hasModifications && isWorstSelected && cet1Capital !== null ? whatIfImpact.worstNii / cet1Capital * 100 : null}
+                      postValue={results.baseNii + (selectedResult?.deltaNii ?? 0) + (hasModifications && isWorstSelected ? whatIfImpact.worstNii : 0)}
+                      postCet1Pct={cet1Capital !== null ? ((selectedResult?.deltaNii ?? 0) + (hasModifications && isWorstSelected ? whatIfImpact.worstNii : 0)) / cet1Capital * 100 : null}
+                      hasModifications={hasModifications && isWorstSelected}
+                      isLoading={whatIfLoading && isWorstSelected}
+                      isWorst={isWorstSelected}
                       isLast
                     />
                   </tbody>
@@ -230,7 +375,9 @@ export function ResultsCard({
             {/* Right: Chart area - fills full height */}
             <div className="w-2/3 flex flex-col min-h-0">
               <div className="rounded-lg border border-border overflow-hidden flex-1 min-h-0">
-                {activeChart === 'eve' ? <EVEChart fullWidth analysisDate={analysisDate} /> : <NIIChart fullWidth analysisDate={analysisDate} />}
+                {activeChart === 'eve'
+                  ? <EVEChart fullWidth analysisDate={analysisDate} selectedScenario={selectedScenario} scenarioLabel={scenarioDropdownLabel} />
+                  : <NIIChart fullWidth analysisDate={analysisDate} selectedScenario={selectedScenario} scenarioLabel={scenarioDropdownLabel} />}
               </div>
             </div>
           </div>
@@ -250,8 +397,8 @@ export function ResultsCard({
             {/* Summary Cards Row - 4 uniform rectangular cards */}
             <div className="grid grid-cols-4 gap-4">
               <SummaryCard label="BASE EVE" value={formatCurrency(results.baseEve)} />
-              <SummaryCard label="BASE NII" value={formatCurrency(results.baseNii)} />
               <SummaryCard label="WORST EVE" value={formatCurrency(results.worstCaseEve)} delta={formatCompact(results.worstCaseDeltaEve)} deltaPercent={worstEvePercent !== null ? `${worstEvePercent >= 0 ? '+' : ''}${worstEvePercent.toFixed(1)}% CET1` : undefined} variant={results.worstCaseDeltaEve >= 0 ? 'success' : 'destructive'} />
+              <SummaryCard label="BASE NII" value={formatCurrency(results.baseNii)} />
               <SummaryCard label="WORST NII" value={formatCurrency(results.baseNii + worstNiiDelta)} delta={formatCompact(worstNiiDelta)} deltaPercent={worstNiiPercent !== null ? `${worstNiiPercent >= 0 ? '+' : ''}${worstNiiPercent.toFixed(1)}% CET1` : undefined} variant={worstNiiDelta >= 0 ? 'success' : 'destructive'} />
             </div>
 
@@ -346,6 +493,7 @@ interface ResultsSummaryRowProps {
   postValue: number;
   postCet1Pct: number | null;
   hasModifications: boolean;
+  isLoading?: boolean;
   isWorst?: boolean;
   isLast?: boolean;
 }
@@ -358,15 +506,13 @@ function ResultsSummaryRow({
   postValue,
   postCet1Pct,
   hasModifications,
+  isLoading = false,
   isWorst = false,
   isLast = false
 }: ResultsSummaryRowProps) {
   const formatMillions = (num: number) => {
-    const abs = Math.abs(num);
-    if (abs >= 1e9) return `${(num / 1e9).toFixed(1)}B`;
-    if (abs >= 1e6) return `${(num / 1e6).toFixed(1)}M`;
-    if (abs >= 1e3) return `${(num / 1e3).toFixed(0)}K`;
-    return num.toFixed(0);
+    const millions = num / 1e6;
+    return millions.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '€';
   };
   const formatImpact = (num: number) => {
     if (num === 0) return '—';
@@ -389,14 +535,20 @@ function ResultsSummaryRow({
       <td className="text-right py-2 px-1.5 font-mono text-foreground border-l border-border/40">{formatMillions(baselineValue)}</td>
       <td className="text-right py-2 px-1.5 font-mono text-muted-foreground">{formatPct(baselineCet1Pct)}</td>
       {/* What-If Impact */}
-      <td className={`text-right py-2 px-1.5 font-mono border-l border-border/40 ${getImpactClass(impactValue)}`}>
-        {hasModifications ? formatImpact(impactValue) : '—'}
+      <td className={`text-right py-2 px-1.5 font-mono border-l border-border/40 ${isLoading ? 'text-muted-foreground' : getImpactClass(impactValue)}`}>
+        {isLoading ? (
+          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground inline-block" />
+        ) : hasModifications ? formatImpact(impactValue) : '—'}
       </td>
-      <td className={`text-right py-2 px-1.5 font-mono ${getImpactClass(impactCet1Pct)}`}>
-        {hasModifications ? formatImpactPct(impactCet1Pct) : '—'}
+      <td className={`text-right py-2 px-1.5 font-mono ${isLoading ? 'text-muted-foreground' : getImpactClass(impactCet1Pct)}`}>
+        {isLoading ? '' : hasModifications ? formatImpactPct(impactCet1Pct) : '—'}
       </td>
       {/* Post What-If */}
-      <td className="text-right py-2 px-1.5 font-mono font-semibold text-foreground border-l border-border/40">{formatMillions(postValue)}</td>
-      <td className="text-right py-2 px-1.5 font-mono text-foreground">{formatPct(postCet1Pct)}</td>
+      <td className={`text-right py-2 px-1.5 font-mono font-semibold border-l border-border/40 ${isLoading ? 'text-muted-foreground' : 'text-foreground'}`}>
+        {isLoading ? '...' : formatMillions(postValue)}
+      </td>
+      <td className={`text-right py-2 px-1.5 font-mono ${isLoading ? 'text-muted-foreground' : 'text-foreground'}`}>
+        {isLoading ? '' : formatPct(postCet1Pct)}
+      </td>
     </tr>;
 }

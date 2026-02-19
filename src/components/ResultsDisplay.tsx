@@ -9,17 +9,13 @@ interface ResultsDisplayProps {
 
 export function ResultsDisplay({ results, isCalculating }: ResultsDisplayProps) {
   const formatCurrency = (num: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(num);
+    const millions = num / 1e6;
+    return millions.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '€';
   };
 
   const formatDelta = (num: number) => {
-    const formatted = formatCurrency(Math.abs(num));
-    return num >= 0 ? `+${formatted}` : `-${formatted.replace('$', '')}`;
+    const sign = num >= 0 ? '+' : '';
+    return `${sign}${formatCurrency(num)}`;
   };
 
   if (isCalculating) {

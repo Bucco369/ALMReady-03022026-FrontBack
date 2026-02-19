@@ -14,13 +14,11 @@
  * - analysisDate: Optional date for calendar label display in charts
  * - cet1Capital: CET1 capital amount for %CET1 calculations in ResultsCard
  *
- * === CURRENT LIMITATIONS ===
- * - FRONTEND-ONLY STATE: Modifications are never sent to the backend. They
- *   exist purely in React state and are lost on page refresh.
- * - NO REAL CALCULATION IMPACT: The isApplied flag triggers HARDCODED impact
- *   values in ResultsCard (+12.5M EVE, -2.1M NII). No actual recalculation.
- * - Phase 1 will send modifications to POST /api/sessions/{id}/calculate.
- * - Phase 2 will enable instant delta calculation using cached contributions.
+ * === BACKEND INTEGRATION ===
+ * When isApplied becomes true, ResultsCard sends the modifications array
+ * to POST /api/sessions/{id}/calculate/whatif. The backend runs EVE/NII
+ * only on the delta positions and returns 4 impact values.
+ * Modifications exist in React state and are lost on page refresh.
  */
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';

@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { getBalanceDetails, type BalanceDetailsResponse } from '@/lib/api';
+import { DETAIL_CONTEXT_LABELS } from '@/config/balanceSchema';
 
 interface BalanceDetailsModalProps {
   open: boolean;
@@ -42,12 +43,8 @@ function mapCategoryContext(selectedCategory?: string | null): {
 }
 
 function formatAmount(num: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num);
+  const millions = num / 1e6;
+  return millions.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '€';
 }
 
 function formatPercent(num: number | null | undefined) {
@@ -129,21 +126,7 @@ export function BalanceDetailsModal({
 
   const getContextLabel = () => {
     if (!selectedCategory) return 'Full Balance';
-    const labels: Record<string, string> = {
-      assets: 'Assets',
-      liabilities: 'Liabilities',
-      mortgages: 'Assets → Mortgages',
-      loans: 'Assets → Loans',
-      securities: 'Assets → Securities',
-      interbank: 'Assets → Interbank / Central Bank',
-      'other-assets': 'Assets → Other assets',
-      deposits: 'Liabilities → Deposits',
-      'term-deposits': 'Liabilities → Term deposits',
-      'wholesale-funding': 'Liabilities → Wholesale funding',
-      'debt-issued': 'Liabilities → Debt issued',
-      'other-liabilities': 'Liabilities → Other liabilities',
-    };
-    return labels[selectedCategory] || 'Full Balance';
+    return DETAIL_CONTEXT_LABELS[selectedCategory] || 'Full Balance';
   };
 
   const currencyOptions = useMemo(
@@ -175,7 +158,7 @@ export function BalanceDetailsModal({
 
   const handleExport = () => {
     if (!data) return;
-    const headers = ['Group', 'Amount', 'Positions', 'Avg Rate (%)', 'Avg Maturity (years)'];
+    const headers = ['Group', 'Amount (Mln)', 'Positions', 'Avg Rate (%)', 'Avg Maturity (years)'];
     const rows = data.groups.map((row) => [
       row.group,
       row.amount.toString(),
@@ -321,7 +304,7 @@ export function BalanceDetailsModal({
             <thead className="sticky top-0 bg-card z-10">
               <tr className="text-muted-foreground border-b border-border">
                 <th className="text-left font-medium py-2.5 pl-3 bg-muted/50">Group</th>
-                <th className="text-right font-medium py-2.5 bg-muted/50">Amount</th>
+                <th className="text-right font-medium py-2.5 bg-muted/50">Amount (Mln)</th>
                 <th className="text-right font-medium py-2.5 bg-muted/50">Positions</th>
                 <th className="text-right font-medium py-2.5 bg-muted/50">Avg Rate</th>
                 <th className="text-right font-medium py-2.5 pr-3 bg-muted/50">Avg Maturity</th>

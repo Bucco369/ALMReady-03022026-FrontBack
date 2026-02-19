@@ -77,10 +77,8 @@ function normalizeCategory(category: string): 'asset' | 'liability' {
 }
 
 function formatAmount(num: number) {
-  if (Math.abs(num) >= 1e9) return `€${(num / 1e9).toFixed(2)}B`;
-  if (Math.abs(num) >= 1e6) return `€${(num / 1e6).toFixed(1)}M`;
-  if (Math.abs(num) >= 1e3) return `€${(num / 1e3).toFixed(0)}K`;
-  return `€${num.toFixed(0)}`;
+  const millions = num / 1e6;
+  return millions.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '€';
 }
 
 function formatPercent(num: number | null | undefined) {
@@ -565,7 +563,7 @@ export function BalanceDetailsModalRemove({
               <thead className="sticky top-0 bg-card z-10">
                 <tr className="text-muted-foreground border-b border-border">
                   <th className="text-left font-medium py-2.5 pl-3 bg-muted/50">Group</th>
-                  <th className="text-right font-medium py-2.5 bg-muted/50">Amount</th>
+                  <th className="text-right font-medium py-2.5 bg-muted/50">Amount (Mln)</th>
                   <th className="text-right font-medium py-2.5 bg-muted/50">Contracts</th>
                   <th className="text-right font-medium py-2.5 bg-muted/50">Avg Rate</th>
                   <th className="text-right font-medium py-2.5 pr-3 bg-muted/50">Avg Maturity</th>
