@@ -53,10 +53,13 @@ financial data; it always fetches from this API.
 
 from __future__ import annotations
 
+from concurrent.futures import ProcessPoolExecutor, as_completed, wait as _cf_wait
+from contextlib import asynccontextmanager
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 import json
+import os
 import re
 import shutil
 import unicodedata
@@ -69,7 +72,36 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-app = FastAPI()
+# ---------------------------------------------------------------------------
+# Persistent process pool – created at startup, reused across all requests.
+# Using a global pool eliminates the per-request spawn overhead (~300-800 ms
+# per worker on macOS spawn mode) that would otherwise dominate for small-to-
+# medium workloads.
+# ---------------------------------------------------------------------------
+_executor: ProcessPoolExecutor | None = None
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    """
+    FastAPI lifespan: pre-warm the process pool before accepting requests.
+
+    Spawns os.cpu_count() workers and runs a warmup task in each one so that
+    almready.services.{eve,nii,nii_projectors} are already imported in every
+    worker process before the first /calculate request arrives.
+    """
+    global _executor
+    import almready.workers as _workers
+
+    n_workers = os.cpu_count() or 1
+    _executor = ProcessPoolExecutor(max_workers=n_workers)
+    _cf_wait([_executor.submit(_workers.warmup) for _ in range(n_workers)])
+    yield
+    _executor.shutdown(wait=True)
+    _executor = None
+
+
+app = FastAPI(lifespan=_lifespan)
 
 # ---------------------------------------------------------------------------
 # CORS (dev-only): allow local frontend origins on common Vite/React ports.
@@ -2021,13 +2053,12 @@ def calculate_eve_nii(session_id: str, req: CalculateRequest) -> CalculationResu
     1. Reconstructs the motor positions DataFrame from motor_positions.json
     2. Builds a ForwardCurveSet from stored curve points
     3. Generates regulatory scenario curve sets (EU Reg 2024/856)
-    4. Runs EVE scenarios via run_eve_scenarios()
-    5. Runs NII scenarios via run_nii_12m_scenarios()
-    6. Maps results to the frontend's CalculationResults contract
-    7. Persists results as calculation_results.json
+    4. Pre-computes the NII margin set (calibrated once, shared across scenarios)
+    5+6. Runs all EVE and NII tasks (base + each scenario) concurrently via
+         ProcessPoolExecutor – one worker process per task, capped at cpu_count().
+    7. Maps results to the frontend's CalculationResults contract
+    8. Persists results as calculation_results.json
     """
-    from almready.services.eve import run_eve_scenarios
-    from almready.services.nii import run_nii_12m_scenarios
     from almready.services.regulatory_curves import build_regulatory_curve_sets
 
     _assert_session_exists(session_id)
@@ -2079,41 +2110,94 @@ def calculate_eve_nii(session_id: str, req: CalculateRequest) -> CalculationResu
             detail=f"Error building scenario curves: {exc}",
         )
 
-    # ── 5. Run EVE scenarios ──────────────────────────────────────────────────
+    # ── 5+6. Run EVE and NII scenarios in parallel ────────────────────────────
+    # Pre-compute the margin set once in the main process (public API).
+    # All NII worker tasks receive the already-calibrated set — no redundant
+    # re-calibration in each child process.
     try:
-        eve_result = run_eve_scenarios(
-            positions=motor_df,
-            base_discount_curve_set=base_curve_set,
-            scenario_discount_curve_sets=scenario_curve_sets,
-            base_projection_curve_set=base_curve_set,
-            scenario_projection_curve_sets=scenario_curve_sets,
-            discount_index=req.discount_curve_id,
-            method="exact",
-        )
-    except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"EVE calculation error: {exc}",
-        )
-
-    # ── 6. Run NII scenarios ──────────────────────────────────────────────────
-    try:
-        nii_result = run_nii_12m_scenarios(
-            positions=motor_df,
-            base_curve_set=base_curve_set,
-            scenario_curve_sets=scenario_curve_sets,
+        from almready.services.nii import compute_nii_margin_set
+        effective_margin_set = compute_nii_margin_set(
+            motor_df,
+            curve_set=base_curve_set,
             risk_free_index=risk_free_index,
-            balance_constant=True,
+            as_of=base_curve_set.analysis_date,
         )
     except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Margin calibration error: {exc}")
+
+    # Submit all tasks to the persistent global pool (zero spawn overhead).
+    if _executor is None:
+        raise HTTPException(status_code=503, detail="Process pool not ready. Server may still be starting.")
+
+    import almready.workers as _workers
+
+    _eve_tag: dict = {}   # future → scenario_name | None  (None = base)
+    _nii_tag: dict = {}
+
+    # EVE base + stressed scenarios
+    _eve_tag[_executor.submit(
+        _workers.eve_base,
+        motor_df, base_curve_set, base_curve_set,
+        req.discount_curve_id, "exact",
+    )] = None
+    for sc_name, sc_set in scenario_curve_sets.items():
+        _eve_tag[_executor.submit(
+            _workers.eve_base,
+            motor_df, sc_set, sc_set,
+            req.discount_curve_id, "exact",
+        )] = sc_name
+
+    # NII base + stressed scenarios
+    _nii_tag[_executor.submit(
+        _workers.nii_base,
+        motor_df, base_curve_set, effective_margin_set,
+        risk_free_index, True, 12, "reprice_on_reset",
+    )] = None
+    for sc_name, sc_set in scenario_curve_sets.items():
+        _nii_tag[_executor.submit(
+            _workers.nii_base,
+            motor_df, sc_set, effective_margin_set,
+            risk_free_index, True, 12, "reprice_on_reset",
+        )] = sc_name
+
+    # Collect results — attempt every future, accumulate all errors before raising.
+    base_eve: float = 0.0
+    scenario_eve: dict[str, float] = {}
+    base_nii: float = 0.0
+    scenario_nii: dict[str, float] = {}
+    errors: list[str] = []
+
+    for fut in as_completed(_eve_tag):
+        sc = _eve_tag[fut]
+        label = sc if sc is not None else "base"
+        try:
+            v: float = fut.result()
+            if sc is None:
+                base_eve = v
+            else:
+                scenario_eve[sc] = v
+        except Exception as exc:
+            errors.append(f"EVE[{label}]: {type(exc).__name__}: {exc}")
+
+    for fut in as_completed(_nii_tag):
+        sc = _nii_tag[fut]
+        label = sc if sc is not None else "base"
+        try:
+            v = fut.result()
+            if sc is None:
+                base_nii = v
+            else:
+                scenario_nii[sc] = v
+        except Exception as exc:
+            errors.append(f"NII[{label}]: {type(exc).__name__}: {exc}")
+
+    if errors:
         raise HTTPException(
             status_code=500,
-            detail=f"NII calculation error: {exc}",
+            detail="Worker errors (all scenarios attempted):\n" + "\n".join(errors),
         )
 
     # ── 7. Map to frontend CalculationResults contract ────────────────────────
-    base_eve = eve_result.base_eve
-    base_nii = nii_result.base_nii_12m
 
     scenario_items: list[ScenarioResultItem] = []
     worst_eve = base_eve
@@ -2121,8 +2205,8 @@ def calculate_eve_nii(session_id: str, req: CalculateRequest) -> CalculationResu
     worst_scenario_name = "base"
 
     for scenario_name in req.scenarios:
-        sc_eve = eve_result.scenario_eve.get(scenario_name, base_eve)
-        sc_nii = nii_result.scenario_nii_12m.get(scenario_name, base_nii)
+        sc_eve = scenario_eve.get(scenario_name, base_eve)
+        sc_nii = scenario_nii.get(scenario_name, base_nii)
         delta_eve = sc_eve - base_eve
         delta_nii = sc_nii - base_nii
 

@@ -100,6 +100,39 @@ def _split_implemented_positions(positions: pd.DataFrame) -> pd.DataFrame:
     return positions.loc[mask].copy()
 
 
+def compute_nii_margin_set(
+    positions: pd.DataFrame,
+    *,
+    curve_set: ForwardCurveSet,
+    risk_free_index: str = "EUR_ESTR_OIS",
+    as_of=None,
+    lookback_months: int | None = 12,
+    start_date_col: str = "start_date",
+) -> CalibratedMarginSet | None:
+    """
+    Public helper: calibrate the NII margin set from a positions DataFrame.
+
+    Applies the same NII-eligibility filter as run_nii_12m_scenarios
+    (via _split_implemented_positions) before delegating to calibrate_margin_set.
+    Returns None if there are no eligible positions.
+
+    Use this to pre-compute the margin set once before running multiple
+    scenarios in parallel, so each worker receives the already-calibrated
+    set instead of re-computing it independently.
+    """
+    nii_pos = _split_implemented_positions(positions)
+    if nii_pos.empty:
+        return None
+    return calibrate_margin_set(
+        nii_pos,
+        curve_set=curve_set,
+        risk_free_index=risk_free_index,
+        as_of=as_of,
+        lookback_months=lookback_months,
+        start_date_col=start_date_col,
+    )
+
+
 def run_nii_12m_base(
     positions: pd.DataFrame,
     curve_set: ForwardCurveSet,

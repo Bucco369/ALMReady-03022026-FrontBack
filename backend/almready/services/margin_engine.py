@@ -241,24 +241,26 @@ def calibrate_margin_set(
 
     rows: list[dict[str, Any]] = []
 
-    for _, row in recent_positions.iterrows():
-        rt = _norm_rate_type(row.get("rate_type"))
+    for row in recent_positions.itertuples(index=False):
+        rt = _norm_rate_type(getattr(row, "rate_type", None))
         if rt is None:
             continue
 
-        weight = float(abs(float(row.get("notional", 0.0)))) if str(row.get("notional", "")).strip() != "" else 1.0
+        _notional_raw = getattr(row, "notional", "")
+        weight = float(abs(float(_notional_raw))) if str(_notional_raw).strip() != "" else 1.0
         if weight <= 0.0:
             weight = 1.0
 
-        source_contract_type = _norm_token(row.get("source_contract_type"))
-        side = _norm_token(row.get("side"))
-        repricing_freq = _norm_token(row.get("repricing_freq"))
-        index_name = _norm_token(row.get("index_name"))
+        source_contract_type = _norm_token(getattr(row, "source_contract_type", None))
+        side = _norm_token(getattr(row, "side", None))
+        repricing_freq = _norm_token(getattr(row, "repricing_freq", None))
+        index_name = _norm_token(getattr(row, "index_name", None))
 
         if rt == "fixed":
-            if pd.isna(row.get("fixed_rate")):
+            _fixed_rate_raw = getattr(row, "fixed_rate", None)
+            if pd.isna(_fixed_rate_raw):
                 continue
-            fixed_rate = float(row.get("fixed_rate"))
+            fixed_rate = float(_fixed_rate_raw)
             freq = _parse_frequency_token(repricing_freq)
             if freq is not None:
                 # Tipo fijo con repricing: benchmark al tenor del repricing.
@@ -269,8 +271,8 @@ def calibrate_margin_set(
                 # reflejar el punto de la curva al que se origino la posicion.
                 # Ejemplo: prestamo fijo a 20 anos -> rf(20Y), no rf(1Y).
                 # Fallback a 1Y solo si faltan fechas.
-                sd = pd.to_datetime(row.get("start_date"), errors="coerce")
-                md = pd.to_datetime(row.get("maturity_date"), errors="coerce")
+                sd = pd.to_datetime(getattr(row, "start_date", None), errors="coerce")
+                md = pd.to_datetime(getattr(row, "maturity_date", None), errors="coerce")
                 if pd.notna(sd) and pd.notna(md) and md > sd:
                     bench_date = as_of_date + (md - sd)
                 else:
@@ -278,9 +280,10 @@ def calibrate_margin_set(
             rf = float(curve_set.rate_on_date(risk_free_index, bench_date))
             margin_rate = fixed_rate - rf
         else:
-            if pd.isna(row.get("spread")):
+            _spread_raw = getattr(row, "spread", None)
+            if pd.isna(_spread_raw):
                 continue
-            margin_rate = float(row.get("spread"))
+            margin_rate = float(_spread_raw)
 
         rows.append(
             {

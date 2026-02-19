@@ -107,9 +107,9 @@ def build_regulatory_curve_set(
         return rf_stressed + basis
 
     rates_out: list[float] = []
-    for _, row in df_shifted.iterrows():
-        index_name = str(row["IndexName"])
-        t_years = float(row["YearFrac"])
+    for row in df_shifted.itertuples(index=False):
+        index_name = str(row.IndexName)
+        t_years = float(row.YearFrac)
         rates_out.append(_stressed_rate(index_name, t_years))
 
     df_shifted["FwdRate"] = rates_out
