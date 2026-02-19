@@ -592,7 +592,12 @@ def read_positions_dataframe(
         bad_dates = valid_dates & (df["start_date"] > df["maturity_date"])
         if bad_dates.any():
             rows = [int(i) + row_offset for i in df.index[bad_dates][:10].tolist()]
-            raise ValueError(f"start_date > maturity_date en filas {rows}")
+            import logging as _logging
+            _logging.getLogger(__name__).warning(
+                "Dropping %d rows with start_date > maturity_date (e.g. rows %s)",
+                int(bad_dates.sum()), rows,
+            )
+            df.drop(df.index[bad_dates], inplace=True)
 
     if "rate_type" in df.columns and "index_name" in df.columns:
         float_rows = df["rate_type"] == "float"

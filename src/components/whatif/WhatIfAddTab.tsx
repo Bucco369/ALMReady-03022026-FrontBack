@@ -76,7 +76,7 @@ export function WhatIfAddTab() {
     if (!selectedTemplate) return;
     
     const notional = formValues.notional || '—';
-    const currency = formValues.currency || 'USD';
+    const currency = formValues.currency || 'EUR';
     const rawRate = formValues.coupon || formValues.depositRate || formValues.fixedRate;
     const parsedRate = rawRate !== undefined ? parseFloat(rawRate) : NaN;
     const rate = Number.isFinite(parsedRate) ? parsedRate / 100 : undefined;
@@ -105,6 +105,14 @@ export function WhatIfAddTab() {
       rate,
       maturity,
       positionDelta: 1,
+      // Motor-specific fields for backend What-If calculation
+      productTemplateId: selectedTemplate.id,
+      startDate: formValues.startDate || undefined,
+      maturityDate: formValues.maturityDate || undefined,
+      paymentFreq: formValues.paymentFreq || undefined,
+      repricingFreq: formValues.repricingFreq || undefined,
+      refIndex: formValues.refIndex || undefined,
+      spread: formValues.spread ? parseFloat(formValues.spread) : undefined,
     });
 
     // Reset form

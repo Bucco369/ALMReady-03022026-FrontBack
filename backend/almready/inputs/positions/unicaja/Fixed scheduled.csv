@@ -7,8 +7,8 @@ Timestamp pattern;dd/MM/yyyy HH:mm
 Additional contract info;Not included
 Contract type;Fixed scheduled
 Reference day;30/11/2024
-;Identifier;Description;Interest anchor date;Interest payment period;Maturity date;Prepayment allowed;Position;Initial principal;Outstanding principal;Start date;Day count convention;Accrued interest;Purchase date;Purchase relative price;Purchase relative price type;Business day convention;Discount curve;Credit spread curve;Group identifier;Planned position;Planned date;Currency;Book value definition;Custom amortized cost;Fair value accounting;Market value;Market value type;Excess operational deposits;Haircut;Retained;Minimum encumbrance;Counterparty;Counterparty LEI;Counterparty national code;Counterparty residence;Client start date;Discarded;Discarding cause;Indexed rate;Comision cancelacion RI3;Interest spread;Fuente de datos;Producto;Segmento negocio;Tipo tasa;Moneda original;Código de producto;Código de sub-producto;Producto comercial;Apartado;Epigrafe M1;Cuenta contable;Código DRC;Clave ISIN cobertura;Código clasificación activo;Descripción tamaño empresa;Consolidado reservado;Consolidado público;F8 Primario;F8 Secundario;F18 Primario;F18 Secundario 1;F18 Secundario 2;Persona física/jurídica;Segmento negocio cartera;Marca transaccional;Marca empleado;Epigrafe RI2;Transferencia cuentas vista;Moneda de tratamiento;Categoria RI3;Mes de reprecio;Sensible;Código DRC contable;Código tamaño empresa;Cód. segmento estratégico;Des. segmento estratégico;Edad;Segmento estratégico;Coste amort./Valor razon.;Cod. ranking insolvencia;Des. ranking insolvencia;Clasificacion F V_J;Opcion Comprada;Opcion Vendida;Operacional;FINREP;Macrosegmento;Des. macrosegmento
-contract;1028563_210374000500021023;;20/12/2024;1M;20/12/2035;Yes;Long;7339094,15;7339094,15;20/12/2019;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;7339094,15;;;;;;;;;;;;;No;;3;0;0;UG;HIPOTECARIOS COMPRADOR DIRECTO;Servicios Centrales;FIX;EUR;050;460;112003;A;04.02.02.01.00 Con garantia hipotecaria;33152000003;01010300;;01;GRANDE;GLOBAL;GLOBAL;;;120;140;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01010102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+;Identifier;Description;Interest anchor date;Interest payment period;Maturity date;Prepayment allowed;Position;Initial principal;Outstanding principal;Start date;Day count convention;Accrued interest;Purchase date;Purchase relative price;Purchase relative price type;Business day convention;Discount curve;Credit spread curve;Group identifier;Planned position;Planned date;Currency;Book value definition;Custom amortized cost;Fair value accounting;Market value;Market value type;Excess operational deposits;Haircut;Retained;Minimum encumbrance;Counterparty;Counterparty LEI;Counterparty national code;Counterparty residence;Client start date;Discarded;Discarding cause;Indexed rate;Comision cancelacion RI3;Interest spread;Fuente de datos;Producto;Segmento negocio;Tipo tasa;Moneda original;Cï¿½digo de producto;Cï¿½digo de sub-producto;Producto comercial;Apartado;Epigrafe M1;Cuenta contable;Cï¿½digo DRC;Clave ISIN cobertura;Cï¿½digo clasificaciï¿½n activo;Descripciï¿½n tamaï¿½o empresa;Consolidado reservado;Consolidado pï¿½blico;F8 Primario;F8 Secundario;F18 Primario;F18 Secundario 1;F18 Secundario 2;Persona fï¿½sica/jurï¿½dica;Segmento negocio cartera;Marca transaccional;Marca empleado;Epigrafe RI2;Transferencia cuentas vista;Moneda de tratamiento;Categoria RI3;Mes de reprecio;Sensible;Cï¿½digo DRC contable;Cï¿½digo tamaï¿½o empresa;Cï¿½d. segmento estratï¿½gico;Des. segmento estratï¿½gico;Edad;Segmento estratï¿½gico;Coste amort./Valor razon.;Cod. ranking insolvencia;Des. ranking insolvencia;Clasificacion F V_J;Opcion Comprada;Opcion Vendida;Operacional;FINREP;Macrosegmento;Des. macrosegmento
+contract;1028563_210374000500021023;;20/12/2024;1M;20/12/2035;Yes;Long;7339094,15;7339094,15;20/12/2019;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;7339094,15;;;;;;;;;;;;;No;;3;0;0;UG;HIPOTECARIOS COMPRADOR DIRECTO;Servicios Centrales;FIX;EUR;050;460;112003;A;04.02.02.01.00 Con garantia hipotecaria;33152000003;01010300;;01;GRANDE;GLOBAL;GLOBAL;;;120;140;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01010102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;20/12/2024;100000
 payment;Principal;20/03/2025;100000
 payment;Principal;20/06/2025;100000
@@ -54,14 +54,14 @@ payment;Principal;20/03/2035;100000
 payment;Principal;20/06/2035;100000
 payment;Principal;20/09/2035;100000
 payment;Principal;20/12/2035;2939094,15
-contract;1089458_210380820500000548;;01/04/2025;1M;01/04/2025;Yes;Long;50000000;50000000;01/04/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;50000000;;;;;;;;;;;;;No;;0,47600000000000003;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33652000005;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;1089458_210380820500000548;;01/04/2025;1M;01/04/2025;Yes;Long;50000000;50000000;01/04/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;50000000;;;;;;;;;;;;;No;;0,47600000000000003;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33652000005;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;01/04/2025;50000000
-contract;1117417_210305010500035048;;01/04/2025;1M;01/10/2026;Yes;Long;125000000;125000000;14/02/2019;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;125000000;;;;;;;;;;;;;No;;0,3;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;110;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.4.1 Inversión crediticia;;
+contract;1117417_210305010500035048;;01/04/2025;1M;01/10/2026;Yes;Long;125000000;125000000;14/02/2019;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;125000000;;;;;;;;;;;;;No;;0,3;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;110;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.4.1 Inversiï¿½n crediticia;;
 payment;Principal;01/04/2025;0
 payment;Principal;01/10/2025;0
 payment;Principal;01/04/2026;0
 payment;Principal;01/10/2026;125000000
-contract;1134904_210330500500123264;;01/12/2024;1M;01/06/2028;Yes;Long;7500000;7500000;16/04/2018;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;7500000;;;;;;;;;;;;;No;;2,25;0,25;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552200000;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;1134904_210330500500123264;;01/12/2024;1M;01/06/2028;Yes;Long;7500000;7500000;16/04/2018;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;7500000;;;;;;;;;;;;;No;;2,25;0,25;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552200000;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;01/12/2024;500000
 payment;Principal;01/03/2025;500000
 payment;Principal;01/06/2025;500000
@@ -77,7 +77,7 @@ payment;Principal;01/09/2027;500000
 payment;Principal;01/12/2027;500000
 payment;Principal;01/03/2028;500000
 payment;Principal;01/06/2028;500000
-contract;1220106_210376370500083835;;23/02/2025;1M;23/11/2026;Yes;Long;4000000;4000000;23/11/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;4000000;;;;;;;;;;;;;No;;0,8;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;1220106_210376370500083835;;23/02/2025;1M;23/11/2026;Yes;Long;4000000;4000000;23/11/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;4000000;;;;;;;;;;;;;No;;0,8;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;23/02/2025;0
 payment;Principal;23/05/2025;0
 payment;Principal;23/08/2025;0
@@ -86,7 +86,7 @@ payment;Principal;23/02/2026;0
 payment;Principal;23/05/2026;0
 payment;Principal;23/08/2026;0
 payment;Principal;23/11/2026;2000000
-contract;1231002_210376370500029164;;31/12/2028;1M;15/03/2029;Yes;Long;43742669,24;43742669,24;11/06/2019;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;43742669,24;;;;;;;;;;;;;No;;0,5;0;0;UG;CONFIRMING;Banca Corporativa;FIX;EUR;050;001;111000;A;04.02.01.02.00 Operaciones sin recurso;33552000009;01030102;;03;PYME - MICROEMPRESA;FICTICIA AJUSTES;FICTICIA AJUSTES;;;120;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030102;01;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;1231002_210376370500029164;;31/12/2028;1M;15/03/2029;Yes;Long;43742669,24;43742669,24;11/06/2019;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;43742669,24;;;;;;;;;;;;;No;;0,5;0;0;UG;CONFIRMING;Banca Corporativa;FIX;EUR;050;001;111000;A;04.02.01.02.00 Operaciones sin recurso;33552000009;01030102;;03;PYME - MICROEMPRESA;FICTICIA AJUSTES;FICTICIA AJUSTES;;;120;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030102;01;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;15/12/2024;799793,506940399
 payment;Principal;15/01/2025;799793,506940399
 payment;Principal;15/02/2025;799793,506940399
@@ -139,7 +139,7 @@ payment;Principal;15/12/2028;872361,4506479454
 payment;Principal;15/01/2029;872361,4506479454
 payment;Principal;15/02/2029;872361,4506479454
 payment;Principal;15/03/2029;872361,4506479454
-contract;1236674_210326500500119355;;29/07/2025;1M;29/07/2035;Yes;Long;3548261,99;3548261,99;29/06/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;3548261,99;;;;;;;;;;;;;No;;1,4000000000000001;1;0;UG;PERSONALES AGRICOLAS;Banca Comercial;FIX;EUR;050;241;114113;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;170;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J08;Otras empresas y asociaciones sin ánimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;AMORTIZED_COST;;;FIJO;NO;NO;;;;
+contract;1236674_210326500500119355;;29/07/2025;1M;29/07/2035;Yes;Long;3548261,99;3548261,99;29/06/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;3548261,99;;;;;;;;;;;;;No;;1,4000000000000001;1;0;UG;PERSONALES AGRICOLAS;Banca Comercial;FIX;EUR;050;241;114113;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;170;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J08;Otras empresas y asociaciones sin ï¿½nimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;AMORTIZED_COST;;;FIJO;NO;NO;;;;
 payment;Principal;29/07/2025;300631,05
 payment;Principal;29/07/2026;304839,89
 payment;Principal;29/07/2027;309107,65
@@ -151,7 +151,7 @@ payment;Principal;29/07/2032;331306,18
 payment;Principal;29/07/2033;335996,38
 payment;Principal;29/07/2034;340700,33
 payment;Principal;29/07/2035;345470,08
-contract;1237615_210329250530000013;;31/01/2025;1M;31/01/2025;Yes;Long;10000000;10000000;23/05/2019;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;10000000;;;;;;;;;;;;;No;;0,63;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;101;111100;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;1237615_210329250530000013;;31/01/2025;1M;31/01/2025;Yes;Long;10000000;10000000;23/05/2019;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;10000000;;;;;;;;;;;;;No;;0,63;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;101;111100;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;31/01/2025;10000000
 contract;1344036_210309140510000753;;23/12/2024;1M;22/04/2025;Yes;Long;1084,33;1084,33;23/04/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;1084,33;;;;;;;;;;;;;No;;2,25;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;051;341;113144;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;;;;;;170;;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;;F06;Adultos 2B;52;ADULTOS_B;AMORTIZED_COST;;;FIJO;NO;NO;;;;
 payment;Principal;23/12/2024;216,04
@@ -159,7 +159,7 @@ payment;Principal;23/01/2025;216,39
 payment;Principal;23/02/2025;216,8
 payment;Principal;23/03/2025;217,3
 payment;Principal;22/04/2025;217,8
-contract;1374177_210376370500082391;;31/12/2024;1M;31/12/2040;Yes;Long;390284,77;390284,77;05/11/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;390284,77;;;;;;;;;;;;;No;;1,8499999999999999;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J04;Microempresas;;MICROEMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
+contract;1374177_210376370500082391;;31/12/2024;1M;31/12/2040;Yes;Long;390284,77;390284,77;05/11/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;390284,77;;;;;;;;;;;;;No;;1,8499999999999999;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J04;Microempresas;;MICROEMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversiï¿½n crediticia;;
 payment;Principal;31/12/2024;4278,69
 payment;Principal;31/03/2025;9043,6
 payment;Principal;30/06/2025;9043,6
@@ -286,12 +286,12 @@ payment;Principal;13/11/2037;528874
 payment;Principal;13/02/2038;528874
 payment;Principal;13/05/2038;528874
 payment;Principal;04/08/2038;2744206
-contract;1420085_210376370500068718;;02/06/2025;1M;02/06/2028;Yes;Long;6443750;6443750;02/06/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;6443750;;;;;;;;;;;;;No;;0;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;050;001;111000;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;1420085_210376370500068718;;02/06/2025;1M;02/06/2028;Yes;Long;6443750;6443750;02/06/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;6443750;;;;;;;;;;;;;No;;0;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;050;001;111000;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;02/06/2025;1610937,5
 payment;Principal;02/06/2026;1610937,5
 payment;Principal;02/06/2027;1610937,5
 payment;Principal;02/06/2028;1610937,5
-contract;1445850_210380820500000824;;31/12/2024;1M;31/12/2048;Yes;Long;5000000;5000000;16/07/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;5000000;;;;;;;;;;;;;No;;1;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33652000005;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;1445850_210380820500000824;;31/12/2024;1M;31/12/2048;Yes;Long;5000000;5000000;16/07/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;5000000;;;;;;;;;;;;;No;;1;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33652000005;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;31/12/2024;200000
 payment;Principal;31/12/2025;200000
 payment;Principal;31/12/2026;200000
@@ -317,7 +317,7 @@ payment;Principal;31/12/2045;200000
 payment;Principal;31/12/2046;200000
 payment;Principal;31/12/2047;200000
 payment;Principal;31/12/2048;200000
-contract;1483723_210376370500084246;;05/02/2025;1M;05/11/2028;Yes;Long;40000000;40000000;05/11/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;40000000;;;;;;;;;;;;;No;;0,6;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;1483723_210376370500084246;;05/02/2025;1M;05/11/2028;Yes;Long;40000000;40000000;05/11/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;40000000;;;;;;;;;;;;;No;;0,6;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;05/02/2025;2500000
 payment;Principal;05/05/2025;2500000
 payment;Principal;05/08/2025;2500000
@@ -334,7 +334,7 @@ payment;Principal;05/02/2028;2500000
 payment;Principal;05/05/2028;2500000
 payment;Principal;05/08/2028;2500000
 payment;Principal;05/11/2028;2500000
-contract;1493495_210380820500030999;;28/12/2024;1M;28/06/2027;Yes;Long;8235518,16;8235518,16;28/09/2023;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;8235518,16;;;;;;;;;;;;;No;;4;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;1493495_210380820500030999;;28/12/2024;1M;28/06/2027;Yes;Long;8235518,16;8235518,16;28/09/2023;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;8235518,16;;;;;;;;;;;;;No;;4;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;28/12/2024;265661,88
 payment;Principal;28/01/2025;265661,88
 payment;Principal;28/02/2025;265661,88
@@ -366,7 +366,7 @@ payment;Principal;28/03/2027;265661,88
 payment;Principal;28/04/2027;265661,88
 payment;Principal;28/05/2027;265661,88
 payment;Principal;28/06/2027;265661,76
-contract;1502168_210376370500072240;;31/01/2025;1M;31/01/2025;Yes;Long;6250000;6250000;04/05/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;6250000;;;;;;;;;;;;;No;;0;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;050;209;113105;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;1502168_210376370500072240;;31/01/2025;1M;31/01/2025;Yes;Long;6250000;6250000;04/05/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;6250000;;;;;;;;;;;;;No;;0;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;050;209;113105;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;31/01/2025;6250000
 contract;1530025_210372220500005680;;29/12/2024;1M;29/04/2030;Yes;Long;119122,83;119122,83;29/07/2015;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;119122,83;;;;;;;;;;;;;No;;3;0;0;UG;HIPOTECARIOS FINANCIACION ECONOMIA DOMESTICA;Banca Comercial;FIX;EUR;050;001;111000;A;04.02.02.01.00 Con garantia hipotecaria;33152000003;02010300;;04;;;;;;160;160;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02010100;;F06;Adultos 2B;61;ADULTOS_B;AMORTIZED_COST;;;FIJO;NO;NO;;;;
 payment;Principal;29/12/2024;1666,48
@@ -434,7 +434,7 @@ payment;Principal;29/01/2030;1940,65
 payment;Principal;28/02/2030;1945,5
 payment;Principal;29/03/2030;1946,1
 payment;Principal;29/04/2030;1960,13
-contract;1611676_210379350530000252;;05/06/2025;1M;05/06/2032;Yes;Long;75000000;75000000;05/06/2024;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;75000000;;;;;;;;;;;;;No;;3,15;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;101;111100;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;1611676_210379350530000252;;05/06/2025;1M;05/06/2032;Yes;Long;75000000;75000000;05/06/2024;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;75000000;;;;;;;;;;;;;No;;3,15;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;101;111100;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;05/06/2025;0
 payment;Principal;05/06/2026;0
 payment;Principal;05/06/2027;0
@@ -443,14 +443,14 @@ payment;Principal;05/06/2029;0
 payment;Principal;05/06/2030;37500000
 payment;Principal;05/06/2031;0
 payment;Principal;05/06/2032;37500000
-contract;1665877_210371270500033236;;10/12/2024;1M;29/04/2025;Yes;Long;2567,8;2567,8;29/04/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;2567,8;;;;;;;;;;;;;No;;1,5;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;051;337;113141;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J04;Microempresas;;MICROEMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
+contract;1665877_210371270500033236;;10/12/2024;1M;29/04/2025;Yes;Long;2567,8;2567,8;29/04/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;2567,8;;;;;;;;;;;;;No;;1,5;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;051;337;113141;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J04;Microempresas;;MICROEMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversiï¿½n crediticia;;
 payment;Principal;10/12/2024;426,53
 payment;Principal;10/01/2025;426,97
 payment;Principal;10/02/2025;427,53
 payment;Principal;10/03/2025;428,24
 payment;Principal;10/04/2025;428,63
 payment;Principal;29/04/2025;429,9
-contract;1669391_210343650500115654;;01/12/2024;1M;01/06/2032;Yes;Long;24059,95;24059,95;11/06/2024;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;24059,95;;;;;;;;;;;;;No;;8,5;0;0;UG;PERSONALES FINANCIACION ECONOMIA DOMESTICA;Banca Comercial;FIX;EUR;050;021;111006;A;04.02.05.04.00 Prestamos personales;33552000009;02030000;;05;;;;;;170;170;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02030000;;F02;Jóvenes;27;JOVENES;AMORTIZED_COST;;;FIJO;NO;NO;;;;
+contract;1669391_210343650500115654;;01/12/2024;1M;01/06/2032;Yes;Long;24059,95;24059,95;11/06/2024;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;24059,95;;;;;;;;;;;;;No;;8,5;0;0;UG;PERSONALES FINANCIACION ECONOMIA DOMESTICA;Banca Comercial;FIX;EUR;050;021;111006;A;04.02.05.04.00 Prestamos personales;33552000009;02030000;;05;;;;;;170;170;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02030000;;F02;Jï¿½venes;27;JOVENES;AMORTIZED_COST;;;FIJO;NO;NO;;;;
 payment;Principal;01/12/2024;192,03
 payment;Principal;01/01/2025;193,39
 payment;Principal;01/02/2025;194,76
@@ -544,29 +544,29 @@ payment;Principal;01/05/2032;310,17
 payment;Principal;01/06/2032;50
 contract;1689490_210346500500100281;;30/12/2024;1M;30/12/2024;Yes;Long;2500;2500;07/09/2016;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;2500;;;;;;;;;;;;;No;;5,75;3;0;UG;PERSONALES FINANCIACION ECONOMIA DOMESTICA;Banca Comercial;FIX;EUR;050;001;111000;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;;;;;;170;;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;;F09;Seniors 2;65;SENIOR;AMORTIZED_COST;;;FIJO;NO;NO;;;;
 payment;Principal;30/12/2024;2500
-contract;1729474_210348230530000156;;30/12/2024;1M;30/12/2027;Yes;Long;721214,53;721214,53;03/06/2024;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;721214,53;;;;;;;;;;;;;No;;3,913;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Comercial;FIX;EUR;053;201;111101;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;1729474_210348230530000156;;30/12/2024;1M;30/12/2027;Yes;Long;721214,53;721214,53;03/06/2024;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;721214,53;;;;;;;;;;;;;No;;3,913;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Comercial;FIX;EUR;053;201;111101;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;30/12/2024;180303,63
 payment;Principal;30/12/2025;180303,63
 payment;Principal;30/12/2026;180303,63
 payment;Principal;30/12/2027;180303,64
-contract;1740006_210305010530000705;;28/07/2025;1M;28/07/2035;Yes;Long;44500000;44500000;28/07/2022;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;44500000;;;;;;;;;;;;;No;;2,58;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;1740006_210305010530000705;;28/07/2025;1M;28/07/2035;Yes;Long;44500000;44500000;28/07/2022;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;44500000;;;;;;;;;;;;;No;;2,58;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;28/07/2025;5500000
 payment;Principal;28/07/2031;26250000
 payment;Principal;28/07/2034;9000000
 payment;Principal;28/07/2035;3750000
-contract;1787314_210329250530000031;;30/09/2025;1M;30/09/2029;Yes;Long;37500000;37500000;12/04/2022;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;37500000;;;;;;;;;;;;;No;;0,61;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;101;111100;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;1787314_210329250530000031;;30/09/2025;1M;30/09/2029;Yes;Long;37500000;37500000;12/04/2022;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;37500000;;;;;;;;;;;;;No;;0,61;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;101;111100;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;30/09/2025;7500000
 payment;Principal;30/09/2026;7500000
 payment;Principal;30/09/2027;7500000
 payment;Principal;30/09/2028;7500000
 payment;Principal;30/09/2029;7500000
-contract;1815878_210326510500149474;;27/01/2025;1M;27/01/2027;Yes;Long;40269,3;40269,3;04/06/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;40269,3;;;;;;;;;;;;;No;;1,4000000000000001;1;0;UG;PERSONALES AGRICOLAS;Banca Comercial;FIX;EUR;050;241;114113;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;170;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J08;Otras empresas y asociaciones sin ánimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;AMORTIZED_COST;;;FIJO;NO;NO;;;;
+contract;1815878_210326510500149474;;27/01/2025;1M;27/01/2027;Yes;Long;40269,3;40269,3;04/06/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;40269,3;;;;;;;;;;;;;No;;1,4000000000000001;1;0;UG;PERSONALES AGRICOLAS;Banca Comercial;FIX;EUR;050;241;114113;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;170;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J08;Otras empresas y asociaciones sin ï¿½nimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;AMORTIZED_COST;;;FIJO;NO;NO;;;;
 payment;Principal;27/01/2025;13423,09
 payment;Principal;27/07/2025;0
 payment;Principal;27/01/2026;13423,09
 payment;Principal;27/07/2026;0
 payment;Principal;27/01/2027;13423,12
-contract;1816255_210330570510002939;;08/12/2024;1M;08/09/2031;Yes;Long;308609,59;308609,59;08/03/2015;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;308609,59;;;;;;;;;;;;;No;;3;0;0;UG;PERSONALES COMPRADOR DIRECTO;Banca Comercial;FIX;EUR;050;422;112002;A;04.02.02.02.00 Con otras garantias reales;33351000000;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J08;Otras empresas y asociaciones sin ánimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
+contract;1816255_210330570510002939;;08/12/2024;1M;08/09/2031;Yes;Long;308609,59;308609,59;08/03/2015;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;308609,59;;;;;;;;;;;;;No;;3;0;0;UG;PERSONALES COMPRADOR DIRECTO;Banca Comercial;FIX;EUR;050;422;112002;A;04.02.02.02.00 Con otras garantias reales;33351000000;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J08;Otras empresas y asociaciones sin ï¿½nimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversiï¿½n crediticia;;
 payment;Principal;08/12/2024;1239,04
 payment;Principal;08/01/2025;1216,84
 payment;Principal;08/02/2025;1219,94
@@ -649,7 +649,7 @@ payment;Principal;08/06/2031;1482,91
 payment;Principal;08/07/2031;1503,25
 payment;Principal;08/08/2031;1490,52
 payment;Principal;08/09/2031;198466,01
-contract;1842737_210309100510001934;;08/12/2024;1M;07/05/2025;Yes;Long;5172,53;5172,53;08/05/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;5172,53;;;;;;;;;;;;;No;;1,95;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;051;337;113141;A;04.02.05.04.00 Prestamos personales;33552200000;01010300;;01;PYME - PEQUEÑA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01010300;02;J03;Pequeñas empresas;;PEQUEÑAS EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
+contract;1842737_210309100510001934;;08/12/2024;1M;07/05/2025;Yes;Long;5172,53;5172,53;08/05/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;5172,53;;;;;;;;;;;;;No;;1,95;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;051;337;113141;A;04.02.05.04.00 Prestamos personales;33552200000;01010300;;01;PYME - PEQUEï¿½A;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01010300;02;J03;Pequeï¿½as empresas;;PEQUEï¿½AS EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversiï¿½n crediticia;;
 payment;Principal;08/12/2024;858,7
 payment;Principal;08/01/2025;859,85
 payment;Principal;08/02/2025;861,27
@@ -678,10 +678,10 @@ payment;Principal;31/12/2030;1400
 payment;Principal;31/12/2031;1400
 payment;Principal;31/12/2032;1400
 payment;Principal;31/12/2033;1400
-contract;1897846_210376370530000020;;21/05/2025;1M;21/05/2026;Yes;Long;23231604,68;23231604,68;21/05/2018;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;23231604,68;;;;;;;;;;;;;No;;0,485;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;1897846_210376370530000020;;21/05/2025;1M;21/05/2026;Yes;Long;23231604,68;23231604,68;21/05/2018;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;23231604,68;;;;;;;;;;;;;No;;0,485;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;21/05/2025;11615802,34
 payment;Principal;21/05/2026;11615802,34
-contract;1990645_210305010500039026;;02/01/2025;1M;15/10/2026;Yes;Long;125000000;125000000;15/10/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;125000000;;;;;;;;;;;;;No;;0,09;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;101;113100;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;1990645_210305010500039026;;02/01/2025;1M;15/10/2026;Yes;Long;125000000;125000000;15/10/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;125000000;;;;;;;;;;;;;No;;0,09;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;101;113100;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;02/01/2025;0
 payment;Principal;01/04/2025;0
 payment;Principal;01/07/2025;0
@@ -690,7 +690,7 @@ payment;Principal;02/01/2026;0
 payment;Principal;01/04/2026;0
 payment;Principal;01/07/2026;0
 payment;Principal;15/10/2026;125000000
-contract;1993996_210380820500001930;;28/12/2024;1M;28/06/2027;Yes;Long;20064326,37;20064326,37;28/06/2022;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;20064326,37;;;;;;;;;;;;;No;;3,75;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;USD;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;PYME - MICROEMPRESA;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030102;01;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;1993996_210380820500001930;;28/12/2024;1M;28/06/2027;Yes;Long;20064326,37;20064326,37;28/06/2022;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;20064326,37;;;;;;;;;;;;;No;;3,75;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;USD;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;PYME - MICROEMPRESA;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030102;01;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;28/12/2024;1837451,57
 payment;Principal;28/03/2025;1856617,92
 payment;Principal;28/06/2025;1870191,89
@@ -702,7 +702,7 @@ payment;Principal;28/09/2026;1960301,16
 payment;Principal;28/12/2026;1979445,88
 payment;Principal;28/03/2027;1998364,82
 payment;Principal;28/06/2027;2016428,56
-contract;2009597_210371200500066242;;30/11/2024;1M;02/12/2024;Yes;Long;1432,11;1432,11;28/11/2018;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;1432,11;;;;;;;;;;;;;No;;3,95;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;PYME - PEQUEÑA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01020200;02;J03;Pequeñas empresas;;PEQUEÑAS EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
+contract;2009597_210371200500066242;;30/11/2024;1M;02/12/2024;Yes;Long;1432,11;1432,11;28/11/2018;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;1432,11;;;;;;;;;;;;;No;;3,95;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;PYME - PEQUEï¿½A;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01020200;02;J03;Pequeï¿½as empresas;;PEQUEï¿½AS EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversiï¿½n crediticia;;
 payment;Principal;30/11/2024;1432,11
 contract;2013489_210379990500008278;;19/01/2025;1M;19/01/2030;Yes;Long;31241,64;31241,64;19/05/2022;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;31241,64;;;;;;;;;;;;;No;;4,36;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552200000;01030202;;02;;;;;;170;;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;;F04;Adultos 1B;45;ADULTOS_B;AMORTIZED_COST;;;FIJO;NO;NO;;;;
 payment;Principal;19/01/2025;4667,61
@@ -711,7 +711,7 @@ payment;Principal;19/01/2027;5083,5
 payment;Principal;19/01/2028;5305,14
 payment;Principal;19/01/2029;5536,45
 payment;Principal;19/01/2030;5777,82
-contract;2020990_210376370500087136;;29/12/2024;1M;29/12/2028;Yes;Long;16666666,67;16666666,67;17/12/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;16666666,67;;;;;;;;;;;;;No;;0,44999999999999996;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.04.05.03.00 Resto;33553000004;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;2020990_210376370500087136;;29/12/2024;1M;29/12/2028;Yes;Long;16666666,67;16666666,67;17/12/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;16666666,67;;;;;;;;;;;;;No;;0,44999999999999996;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.04.05.03.00 Resto;33553000004;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;29/12/2024;3333333,33
 payment;Principal;29/03/2025;0
 payment;Principal;29/06/2025;0
@@ -729,7 +729,7 @@ payment;Principal;29/03/2028;0
 payment;Principal;29/06/2028;0
 payment;Principal;29/09/2028;0
 payment;Principal;29/12/2028;3333333,35
-contract;2046394_21030027SW59192P;;30/01/2025;6M;30/07/2066;Yes;Short;73215886,02;73215886,02;18/10/2021;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;59192;No;;EUR;Fair value;;Other;;;;;;;BANCO BILBAO VIZCAYA ARGENTARIA, S.A.;;;;;No;;0,40800000000000003;;0;TE;SWAP PAGA RF CAE;Tesoreria;FIX;EUR;987;006;;PFB;....;;;ES00000128U8_RF04;;GRANDE;;;;;;;;J;Gobierno Central;N;;P.6.1.4;Original;EUR;;;Sensible;;04;J08;Otras empresas y asociaciones sin ánimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;FAIR_VALUE_OTHER;;;FIJO;NO;NO;;;;
+contract;2046394_21030027SW59192P;;30/01/2025;6M;30/07/2066;Yes;Short;73215886,02;73215886,02;18/10/2021;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;59192;No;;EUR;Fair value;;Other;;;;;;;BANCO BILBAO VIZCAYA ARGENTARIA, S.A.;;;;;No;;0,40800000000000003;;0;TE;SWAP PAGA RF CAE;Tesoreria;FIX;EUR;987;006;;PFB;....;;;ES00000128U8_RF04;;GRANDE;;;;;;;;J;Gobierno Central;N;;P.6.1.4;Original;EUR;;;Sensible;;04;J08;Otras empresas y asociaciones sin ï¿½nimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;FAIR_VALUE_OTHER;;;FIJO;NO;NO;;;;
 payment;Principal;30/01/2025;-726019,83
 payment;Principal;30/07/2025;-721206,39
 payment;Principal;30/01/2026;-740370,75
@@ -813,13 +813,13 @@ payment;Principal;30/07/2064;-1556695,06
 payment;Principal;30/01/2065;-1589322,56
 payment;Principal;30/07/2065;-1578785,49
 payment;Principal;29/01/2066;-1620738,01
-contract;2059040_210330500500126653;;26/01/2025;1M;26/12/2025;Yes;Long;3508261,4;3508261,4;26/07/2019;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;3508261,4;;;;;;;;;;;;;No;;1,7000000000000002;0;0;UG;HIPOTECARIOS FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;210;113200;A;04.02.02.01.00 Con garantia hipotecaria;33152000003;01010300;;01;PYME - MICROEMPRESA;;;;;120;130;140;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01010103;01;J02;Medianas empresas;;MEDIANAS EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
+contract;2059040_210330500500126653;;26/01/2025;1M;26/12/2025;Yes;Long;3508261,4;3508261,4;26/07/2019;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;3508261,4;;;;;;;;;;;;;No;;1,7000000000000002;0;0;UG;HIPOTECARIOS FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;210;113200;A;04.02.02.01.00 Con garantia hipotecaria;33152000003;01010300;;01;PYME - MICROEMPRESA;;;;;120;130;140;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01010103;01;J02;Medianas empresas;;MEDIANAS EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversiï¿½n crediticia;;
 payment;Principal;26/01/2025;0
 payment;Principal;26/04/2025;0
 payment;Principal;26/07/2025;0
 payment;Principal;26/10/2025;0
 payment;Principal;26/12/2025;3508261,4
-contract;2065867_210374110510000079;;24/12/2024;1M;24/11/2025;Yes;Long;73621,28;73621,28;27/11/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;73621,28;;;;;;;;;;;;;No;;1,6500000000000001;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;051;579;113156;A;04.02.05.04.00 Prestamos personales;33552200000;01030202;;02;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030202;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;2065867_210374110510000079;;24/12/2024;1M;24/11/2025;Yes;Long;73621,28;73621,28;27/11/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;73621,28;;;;;;;;;;;;;No;;1,6500000000000001;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;051;579;113156;A;04.02.05.04.00 Prestamos personales;33552200000;01030202;;02;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030202;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;24/12/2024;2600,39
 payment;Principal;24/01/2025;2600,39
 payment;Principal;24/02/2025;2600,39
@@ -832,7 +832,7 @@ payment;Principal;24/08/2025;2600,39
 payment;Principal;24/09/2025;2600,39
 payment;Principal;24/10/2025;2600,39
 payment;Principal;24/11/2025;45016,99
-contract;2082408_210380820500043654;;31/12/2024;1M;01/07/2029;Yes;Long;32422500;32422500;01/07/2024;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;32422500;;;;;;;;;;;;;No;;3,15;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;PYME - PEQUEÑA;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030102;02;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;2082408_210380820500043654;;31/12/2024;1M;01/07/2029;Yes;Long;32422500;32422500;01/07/2024;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;32422500;;;;;;;;;;;;;No;;3,15;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;PYME - PEQUEï¿½A;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030102;02;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;31/12/2024;577500
 payment;Principal;31/03/2025;577500
 payment;Principal;30/06/2025;577500
@@ -852,7 +852,7 @@ payment;Principal;30/09/2028;577500
 payment;Principal;31/12/2028;577500
 payment;Principal;31/03/2029;577500
 payment;Principal;01/07/2029;22027500
-contract;2159640_210374110530000120;;30/12/2024;1M;30/06/2028;Yes;Long;3000000;3000000;02/11/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;3000000;;;;;;;;;;;;;No;;0,1;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Comercial;FIX;EUR;053;201;111101;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;2159640_210374110530000120;;30/12/2024;1M;30/06/2028;Yes;Long;3000000;3000000;02/11/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;3000000;;;;;;;;;;;;;No;;0,1;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Comercial;FIX;EUR;053;201;111101;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;30/12/2024;200000
 payment;Principal;30/03/2025;200000
 payment;Principal;30/06/2025;200000
@@ -868,7 +868,7 @@ payment;Principal;30/09/2027;200000
 payment;Principal;30/12/2027;200000
 payment;Principal;30/03/2028;200000
 payment;Principal;30/06/2028;200000
-contract;2185107_210376370500072268;;30/09/2025;1M;30/09/2028;Yes;Long;25000000;25000000;04/05/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;25000000;;;;;;;;;;;;;No;;0;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;050;209;113105;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;2185107_210376370500072268;;30/09/2025;1M;30/09/2028;Yes;Long;25000000;25000000;04/05/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;25000000;;;;;;;;;;;;;No;;0;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;050;209;113105;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;30/09/2025;6250000
 payment;Principal;30/09/2026;6250000
 payment;Principal;30/09/2027;6250000
@@ -889,7 +889,7 @@ contract;221311_210306010500057727;;15/08/2025;1M;23/08/2027;Yes;Long;21444,2;21
 payment;Principal;15/08/2025;7148,05
 payment;Principal;15/08/2026;7148,05
 payment;Principal;23/08/2027;7148,1
-contract;2261382_210308040500042150;;16/02/2025;1M;16/02/2036;Yes;Long;960000;960000;16/07/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;960000;;;;;;;;;;;;;No;;1,0999999999999999;0;0;UG;PERSONALES AGRICOLAS;Banca Comercial;FIX;EUR;050;241;114113;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;170;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J08;Otras empresas y asociaciones sin ánimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;AMORTIZED_COST;;;FIJO;NO;NO;;;;
+contract;2261382_210308040500042150;;16/02/2025;1M;16/02/2036;Yes;Long;960000;960000;16/07/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;960000;;;;;;;;;;;;;No;;1,0999999999999999;0;0;UG;PERSONALES AGRICOLAS;Banca Comercial;FIX;EUR;050;241;114113;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;170;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J08;Otras empresas y asociaciones sin ï¿½nimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;AMORTIZED_COST;;;FIJO;NO;NO;;;;
 payment;Principal;16/02/2025;80000
 payment;Principal;16/02/2026;80000
 payment;Principal;16/02/2027;80000
@@ -902,7 +902,7 @@ payment;Principal;16/02/2033;80000
 payment;Principal;16/02/2034;80000
 payment;Principal;16/02/2035;80000
 payment;Principal;16/02/2036;80000
-contract;2295947_210376370500061243;;03/10/2031;1M;23/01/2032;Yes;Long;4827691,62;4827691,62;03/11/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;4827691,62;;;;;;;;;;;;;No;;0,1;0;0;UG;CONFIRMING;Banca Corporativa;FIX;EUR;050;001;111000;A;04.02.01.02.00 Operaciones sin recurso;33552000009;01030102;;03;PYME - MICROEMPRESA;FICTICIA AJUSTES;FICTICIA AJUSTES;;;120;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030102;01;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;2295947_210376370500061243;;03/10/2031;1M;23/01/2032;Yes;Long;4827691,62;4827691,62;03/11/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;4827691,62;;;;;;;;;;;;;No;;0,1;0;0;UG;CONFIRMING;Banca Corporativa;FIX;EUR;050;001;111000;A;04.02.01.02.00 Operaciones sin recurso;33552000009;01030102;;03;PYME - MICROEMPRESA;FICTICIA AJUSTES;FICTICIA AJUSTES;;;120;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030102;01;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;31/12/2024;55613,300855411864
 payment;Principal;31/01/2025;55613,300855411864
 payment;Principal;28/02/2025;55613,300855411864
@@ -1000,19 +1000,19 @@ payment;Principal;31/12/2031;934,8
 payment;Principal;31/12/2032;934,8
 payment;Principal;31/12/2033;934,8
 payment;Principal;31/12/2034;934,8
-contract;2378702_210348230530000147;;23/05/2025;1M;23/05/2028;Yes;Long;1578709,88;1578709,88;03/06/2024;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;1578709,88;;;;;;;;;;;;;No;;4,165;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Comercial;FIX;EUR;053;201;111101;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;2378702_210348230530000147;;23/05/2025;1M;23/05/2028;Yes;Long;1578709,88;1578709,88;03/06/2024;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;1578709,88;;;;;;;;;;;;;No;;4,165;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Comercial;FIX;EUR;053;201;111101;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;23/05/2025;394677,48
 payment;Principal;23/05/2026;394677,48
 payment;Principal;23/05/2027;394677,48
 payment;Principal;23/05/2028;394677,44
-contract;2382670_210376370500052556;;23/06/2025;1M;23/06/2030;Yes;Long;100000000;100000000;23/06/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;100000000;;;;;;;;;;;;;No;;0,628;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;050;209;113105;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;2382670_210376370500052556;;23/06/2025;1M;23/06/2030;Yes;Long;100000000;100000000;23/06/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;100000000;;;;;;;;;;;;;No;;0,628;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;050;209;113105;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;23/06/2025;0
 payment;Principal;23/06/2026;0
 payment;Principal;23/06/2027;0
 payment;Principal;23/06/2028;0
 payment;Principal;23/06/2029;0
 payment;Principal;23/06/2030;100000000
-contract;2422545_21030027SW60072P;;27/12/2024;1M;27/04/2048;Yes;Short;450431030;450431030;26/10/2022;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;60072;No;;EUR;Amortized cost;;;;;;;;;J.P. MORGAN AG;;;;;No;;1,6920000000000002;;0;TE;SWAP PAGA HIPOT;Tesoreria;FIX;EUR;987;006;;PFB;....;;;1000264_;;GRANDE;;;;;;;;J;;N;;P.6.1.4;Original;EUR;;;Sensible;;04;J08;Otras empresas y asociaciones sin ánimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;AMORTIZED_COST;;;FIJO;NO;NO;;;;
+contract;2422545_21030027SW60072P;;27/12/2024;1M;27/04/2048;Yes;Short;450431030;450431030;26/10/2022;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;60072;No;;EUR;Amortized cost;;;;;;;;;J.P. MORGAN AG;;;;;No;;1,6920000000000002;;0;TE;SWAP PAGA HIPOT;Tesoreria;FIX;EUR;987;006;;PFB;....;;;1000264_;;GRANDE;;;;;;;;J;;N;;P.6.1.4;Original;EUR;;;Sensible;;04;J08;Otras empresas y asociaciones sin ï¿½nimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;AMORTIZED_COST;;;FIJO;NO;NO;;;;
 payment;Principal;27/12/2024;3410050
 payment;Principal;27/01/2025;3374610
 payment;Principal;26/02/2025;3371130
@@ -1293,7 +1293,7 @@ payment;Principal;27/12/2047;109970
 payment;Principal;27/01/2048;84690
 payment;Principal;26/02/2048;60650
 payment;Principal;26/03/2048;385590
-contract;2459394_210376370500063866;;31/12/2024;1M;31/12/2037;Yes;Long;2193361,72;2193361,72;29/03/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;2193361,72;;;;;;;;;;;;;No;;1,8499999999999999;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J04;Microempresas;;MICROEMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
+contract;2459394_210376370500063866;;31/12/2024;1M;31/12/2037;Yes;Long;2193361,72;2193361,72;29/03/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;2193361,72;;;;;;;;;;;;;No;;1,8499999999999999;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J04;Microempresas;;MICROEMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversiï¿½n crediticia;;
 payment;Principal;31/12/2024;30574,48
 payment;Principal;31/03/2025;30574,48
 payment;Principal;30/06/2025;50004,99
@@ -1347,7 +1347,7 @@ payment;Principal;31/03/2037;26859,82
 payment;Principal;30/06/2037;54291,13
 payment;Principal;30/09/2037;54291,13
 payment;Principal;31/12/2037;27431,3
-contract;2463806_210342010530000023;;30/06/2025;1M;30/11/2032;Yes;Long;7272727,27;7272727,27;26/11/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;7272727,27;;;;;;;;;;;;;No;;0,35000000000000003;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Comercial;FIX;EUR;053;201;111101;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;2463806_210342010530000023;;30/06/2025;1M;30/11/2032;Yes;Long;7272727,27;7272727,27;26/11/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;7272727,27;;;;;;;;;;;;;No;;0,35000000000000003;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Comercial;FIX;EUR;053;201;111101;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;30/06/2025;909090,91
 payment;Principal;30/06/2026;909090,91
 payment;Principal;30/06/2027;909090,91
@@ -1367,7 +1367,7 @@ payment;Principal;31/12/2031;2760
 payment;Principal;31/12/2032;2760
 payment;Principal;31/12/2033;2760
 payment;Principal;31/12/2034;2760
-contract;2502333_210322600530000454;;31/12/2024;1M;31/12/2042;Yes;Long;9125000;9125000;24/10/2022;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;9125000;;;;;;;;;;;;;No;;2,29;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;203;111102;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;2502333_210322600530000454;;31/12/2024;1M;31/12/2042;Yes;Long;9125000;9125000;24/10/2022;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;9125000;;;;;;;;;;;;;No;;2,29;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;203;111102;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;31/12/2024;125000
 payment;Principal;31/03/2025;125000
 payment;Principal;30/06/2025;125000
@@ -1430,7 +1430,7 @@ payment;Principal;30/06/2040;125000
 payment;Principal;30/09/2040;125000
 payment;Principal;31/12/2040;125000
 payment;Principal;31/12/2042;1500000
-contract;2533400_210376370500082408;;31/12/2024;1M;31/03/2040;Yes;Long;1178040,98;1178040,98;05/11/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;1178040,98;;;;;;;;;;;;;No;;1,8499999999999999;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J04;Microempresas;;MICROEMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
+contract;2533400_210376370500082408;;31/12/2024;1M;31/03/2040;Yes;Long;1178040,98;1178040,98;05/11/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;1178040,98;;;;;;;;;;;;;No;;1,8499999999999999;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J04;Microempresas;;MICROEMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversiï¿½n crediticia;;
 payment;Principal;31/12/2024;13079,31
 payment;Principal;31/03/2025;27644,9
 payment;Principal;30/06/2025;27644,9
@@ -1504,20 +1504,20 @@ payment;Principal;31/12/2031;389,7
 payment;Principal;31/12/2032;389,74
 payment;Principal;31/12/2033;389,74
 payment;Principal;31/12/2034;389,74
-contract;2555440_210305010500038875;;08/12/2024;1M;08/09/2025;Yes;Long;70000000;70000000;08/09/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;70000000;;;;;;;;;;;;;No;;0,25;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;101;113100;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;2555440_210305010500038875;;08/12/2024;1M;08/09/2025;Yes;Long;70000000;70000000;08/09/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;70000000;;;;;;;;;;;;;No;;0,25;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;101;113100;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;08/12/2024;0
 payment;Principal;08/03/2025;0
 payment;Principal;08/06/2025;0
 payment;Principal;08/09/2025;70000000
-contract;2570116_210326050500121035;;31/12/2024;1M;31/01/2025;Yes;Long;3529411,78;3529411,78;20/12/2019;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;3529411,78;;;;;;;;;;;;;No;;0,1;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;050;209;113105;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;2570116_210326050500121035;;31/12/2024;1M;31/01/2025;Yes;Long;3529411,78;3529411,78;20/12/2019;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;3529411,78;;;;;;;;;;;;;No;;0,1;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;050;209;113105;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;31/12/2024;1764705,89
 payment;Principal;31/01/2025;1764705,89
-contract;2599715_210371000500065416;;20/11/2025;1M;20/11/2025;Yes;Long;29000;29000;28/01/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;29000;;;;;;;;;;;;;No;;1,43;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - PEQUEÑA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;02;J03;Pequeñas empresas;;PEQUEÑAS EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
+contract;2599715_210371000500065416;;20/11/2025;1M;20/11/2025;Yes;Long;29000;29000;28/01/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;29000;;;;;;;;;;;;;No;;1,43;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - PEQUEï¿½A;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;02;J03;Pequeï¿½as empresas;;PEQUEï¿½AS EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversiï¿½n crediticia;;
 payment;Principal;20/11/2025;29000
-contract;2652204_210371180530000064;;06/08/2025;1M;30/06/2026;Yes;Long;985751,42;985751,42;06/08/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;985751,42;;;;;;;;;;;;;No;;0,079;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Comercial;FIX;EUR;053;201;111101;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;2652204_210371180530000064;;06/08/2025;1M;30/06/2026;Yes;Long;985751,42;985751,42;06/08/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;985751,42;;;;;;;;;;;;;No;;0,079;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Comercial;FIX;EUR;053;201;111101;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;06/08/2025;492875,71
 payment;Principal;30/06/2026;492875,71
-contract;2672506_210376370500026808;;31/12/2028;1M;15/03/2029;Yes;Long;42220196,11;42220196,11;29/03/2019;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;42220196,11;;;;;;;;;;;;;No;;0,73;0;0;UG;CONFIRMING;Banca Corporativa;FIX;EUR;050;001;111000;A;04.02.01.02.00 Operaciones sin recurso;33552000009;01030102;;03;PYME - MICROEMPRESA;FICTICIA AJUSTES;FICTICIA AJUSTES;;;120;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030102;01;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;2672506_210376370500026808;;31/12/2028;1M;15/03/2029;Yes;Long;42220196,11;42220196,11;29/03/2019;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;42220196,11;;;;;;;;;;;;;No;;0,73;0;0;UG;CONFIRMING;Banca Corporativa;FIX;EUR;050;001;111000;A;04.02.01.02.00 Operaciones sin recurso;33552000009;01030102;;03;PYME - MICROEMPRESA;FICTICIA AJUSTES;FICTICIA AJUSTES;;;120;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030102;01;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;15/12/2024;771956,520012512
 payment;Principal;15/01/2025;771956,520012512
 payment;Principal;15/02/2025;771956,520012512
@@ -1570,7 +1570,7 @@ payment;Principal;15/12/2028;841998,72065908
 payment;Principal;15/01/2029;841998,72065908
 payment;Principal;15/02/2029;841998,72065908
 payment;Principal;15/03/2029;841998,72065908
-contract;2674046_210380820530000322;;30/11/2024;1M;30/11/2029;Yes;Long;15261187,37;15261187,37;30/04/2024;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;15261187,37;;;;;;;;;;;;;No;;5,45;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;2674046_210380820530000322;;30/11/2024;1M;30/11/2029;Yes;Long;15261187,37;15261187,37;30/04/2024;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;15261187,37;;;;;;;;;;;;;No;;5,45;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;30/11/2024;2218393,63
 payment;Principal;30/11/2025;2339296,08
 payment;Principal;30/11/2026;2466787,72
@@ -1619,7 +1619,7 @@ payment;Principal;02/01/2028;216,28
 payment;Principal;02/02/2028;217,71
 payment;Principal;02/03/2028;219,29
 payment;Principal;15/03/2028;71,96
-contract;2783311_210376370500067666;;31/12/2024;1M;30/09/2031;Yes;Long;520008;520008;29/03/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;520008;;;;;;;;;;;;;No;;1,8499999999999999;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J04;Microempresas;;MICROEMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
+contract;2783311_210376370500067666;;31/12/2024;1M;30/09/2031;Yes;Long;520008;520008;29/03/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;520008;;;;;;;;;;;;;No;;1,8499999999999999;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J04;Microempresas;;MICROEMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversiï¿½n crediticia;;
 payment;Principal;31/12/2024;13633,24
 payment;Principal;31/03/2025;13633,24
 payment;Principal;30/06/2025;22297,36
@@ -1648,7 +1648,7 @@ payment;Principal;31/12/2030;14397,73
 payment;Principal;31/03/2031;14397,73
 payment;Principal;30/06/2031;23826,32
 payment;Principal;30/09/2031;20419,68
-contract;2788604_210382010500006487;;15/04/2025;1M;05/09/2038;Yes;Long;50000000;50000000;05/09/2024;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;50000000;;;;;;;;;;;;;No;;4,723;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.04.05.03.00 Resto;33553000004;01030102;;03;PYME - MEDIANA;;;;;110;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030102;03;J02;Medianas empresas;;MEDIANAS EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.4.1 Inversión crediticia;;
+contract;2788604_210382010500006487;;15/04/2025;1M;05/09/2038;Yes;Long;50000000;50000000;05/09/2024;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;50000000;;;;;;;;;;;;;No;;4,723;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.04.05.03.00 Resto;33553000004;01030102;;03;PYME - MEDIANA;;;;;110;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030102;03;J02;Medianas empresas;;MEDIANAS EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.4.1 Inversiï¿½n crediticia;;
 payment;Principal;15/04/2025;0
 payment;Principal;15/07/2025;0
 payment;Principal;15/10/2025;0
@@ -1772,7 +1772,7 @@ payment;Principal;10/05/2032;481,3
 payment;Principal;10/06/2032;484,13
 payment;Principal;10/07/2032;487,62
 payment;Principal;02/08/2032;470,93
-contract;2816057_210322600530000338;;25/06/2025;1M;25/06/2035;Yes;Long;100000000;100000000;25/06/2021;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;100000000;;;;;;;;;;;;;No;;0,59;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;101;111100;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;2816057_210322600530000338;;25/06/2025;1M;25/06/2035;Yes;Long;100000000;100000000;25/06/2021;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;100000000;;;;;;;;;;;;;No;;0,59;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;101;111100;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;25/06/2025;0
 payment;Principal;25/06/2026;0
 payment;Principal;25/06/2027;0
@@ -1784,7 +1784,7 @@ payment;Principal;25/06/2032;0
 payment;Principal;25/06/2033;0
 payment;Principal;25/06/2034;0
 payment;Principal;25/06/2035;55000000
-contract;2887985_210329750500114456;;31/12/2024;1M;31/12/2030;Yes;Long;8690000;8690000;28/12/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;8690000;;;;;;;;;;;;;No;;0,72;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;2887985_210329750500114456;;31/12/2024;1M;31/12/2030;Yes;Long;8690000;8690000;28/12/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;8690000;;;;;;;;;;;;;No;;0,72;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;31/12/2024;770000
 payment;Principal;30/06/2025;0
 payment;Principal;31/12/2025;770000
@@ -1798,7 +1798,7 @@ payment;Principal;30/06/2029;0
 payment;Principal;31/12/2029;770000
 payment;Principal;30/06/2030;0
 payment;Principal;31/12/2030;4070000
-contract;2904015_210376370500098749;;31/12/2024;1M;31/03/2027;Yes;Long;9078947,3;9078947,3;31/03/2022;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;9078947,3;;;;;;;;;;;;;No;;1,7000000000000002;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MEDIANA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;03;J02;Medianas empresas;;MEDIANAS EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
+contract;2904015_210376370500098749;;31/12/2024;1M;31/03/2027;Yes;Long;9078947,3;9078947,3;31/03/2022;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;9078947,3;;;;;;;;;;;;;No;;1,7000000000000002;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MEDIANA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;03;J02;Medianas empresas;;MEDIANAS EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversiï¿½n crediticia;;
 payment;Principal;31/12/2024;592105,27
 payment;Principal;31/03/2025;592105,27
 payment;Principal;30/06/2025;592105,27
@@ -1809,14 +1809,14 @@ payment;Principal;30/06/2026;592105,27
 payment;Principal;30/09/2026;592105,27
 payment;Principal;31/12/2026;592105,14
 payment;Principal;31/03/2027;3750000
-contract;2921886_210380820530000260;;30/11/2024;1M;30/11/2029;Yes;Long;4660000;4660000;30/04/2024;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;4660000;;;;;;;;;;;;;No;;5,81;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;2921886_210380820530000260;;30/11/2024;1M;30/11/2029;Yes;Long;4660000;4660000;30/04/2024;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;4660000;;;;;;;;;;;;;No;;5,81;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;30/11/2024;500000
 payment;Principal;30/11/2025;600000
 payment;Principal;30/11/2026;750000
 payment;Principal;30/11/2027;900000
 payment;Principal;30/11/2028;950000
 payment;Principal;30/11/2029;960000
-contract;2958045_210372710500023795;;28/12/2024;1M;28/04/2030;Yes;Long;49190,57;49190,57;28/07/2014;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;49190,57;;;;;;;;;;;;;No;;5,8999999999999995;0;0;UG;HIPOTECARIOS FINANCIACION ECONOMIA DOMESTICA;Banca Comercial;FIX;EUR;050;001;111000;A;04.02.02.01.00 Con garantia hipotecaria;33152000003;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030201;01;J08;Otras empresas y asociaciones sin ánimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
+contract;2958045_210372710500023795;;28/12/2024;1M;28/04/2030;Yes;Long;49190,57;49190,57;28/07/2014;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;49190,57;;;;;;;;;;;;;No;;5,8999999999999995;0;0;UG;HIPOTECARIOS FINANCIACION ECONOMIA DOMESTICA;Banca Comercial;FIX;EUR;050;001;111000;A;04.02.02.01.00 Con garantia hipotecaria;33152000003;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030201;01;J08;Otras empresas y asociaciones sin ï¿½nimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversiï¿½n crediticia;;
 payment;Principal;28/12/2024;620,01
 payment;Principal;28/01/2025;623,06
 payment;Principal;28/02/2025;626,12
@@ -1882,7 +1882,7 @@ payment;Principal;28/01/2030;836,24
 payment;Principal;28/02/2030;840,36
 payment;Principal;28/03/2030;844,49
 payment;Principal;28/04/2030;848,17
-contract;295905_210376370500069398;;17/12/2024;1M;17/06/2031;Yes;Long;17571856,68;17571856,68;17/06/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;17571856,68;;;;;;;;;;;;;No;;1,23;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;295905_210376370500069398;;17/12/2024;1M;17/06/2031;Yes;Long;17571856,68;17571856,68;17/06/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;17571856,68;;;;;;;;;;;;;No;;1,23;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;17/12/2024;587720,83
 payment;Principal;17/06/2025;587720,83
 payment;Principal;17/12/2025;587720,83
@@ -1897,7 +1897,7 @@ payment;Principal;17/12/2029;587720,83
 payment;Principal;17/06/2030;587720,83
 payment;Principal;17/12/2030;557836,72
 payment;Principal;17/06/2031;9961370
-contract;2987689_210332300530000137;;31/01/2025;1M;31/01/2031;Yes;Long;38888888,88;38888888,88;01/07/2022;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;38888888,88;;;;;;;;;;;;;No;;2,1;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;101;111100;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;2987689_210332300530000137;;31/01/2025;1M;31/01/2031;Yes;Long;38888888,88;38888888,88;01/07/2022;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;38888888,88;;;;;;;;;;;;;No;;2,1;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;101;111100;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;31/01/2025;5555555,56
 payment;Principal;31/01/2026;5555555,56
 payment;Principal;31/01/2027;5555555,56
@@ -1912,11 +1912,11 @@ payment;Principal;31/12/2026;1440
 payment;Principal;31/12/2027;1440
 payment;Principal;31/12/2028;1440
 payment;Principal;31/12/2029;1440
-contract;3144517_210322600530000043;;30/09/2025;1M;30/09/2027;Yes;Long;35000000;35000000;27/03/2017;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;35000000;;;;;;;;;;;;;No;;1,7930000000000001;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;3144517_210322600530000043;;30/09/2025;1M;30/09/2027;Yes;Long;35000000;35000000;27/03/2017;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;35000000;;;;;;;;;;;;;No;;1,7930000000000001;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;30/09/2025;25000000
 payment;Principal;30/09/2026;0
 payment;Principal;30/09/2027;10000000
-contract;3181084_210373970500041836;;23/12/2024;1M;23/12/2028;Yes;Long;173900;173900;23/12/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;173900;;;;;;;;;;;;;No;;1,3;0;0;UG;HIPOTECARIOS COMPRADOR DIRECTO;Banca Corporativa;FIX;EUR;050;412;112024;A;04.02.02.01.00 Con garantia hipotecaria;33152000003;01030102;;03;GRANDE;;;;;110;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030101;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.4.1 Inversión crediticia;;
+contract;3181084_210373970500041836;;23/12/2024;1M;23/12/2028;Yes;Long;173900;173900;23/12/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;173900;;;;;;;;;;;;;No;;1,3;0;0;UG;HIPOTECARIOS COMPRADOR DIRECTO;Banca Corporativa;FIX;EUR;050;412;112024;A;04.02.02.01.00 Con garantia hipotecaria;33152000003;01030102;;03;GRANDE;;;;;110;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030101;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.4.1 Inversiï¿½n crediticia;;
 payment;Principal;23/12/2024;3000
 payment;Principal;23/03/2025;0
 payment;Principal;23/06/2025;0
@@ -1934,21 +1934,21 @@ payment;Principal;23/03/2028;0
 payment;Principal;23/06/2028;0
 payment;Principal;23/09/2028;0
 payment;Principal;23/12/2028;161900
-contract;3263853_210376370540024352;;28/01/2025;1M;28/01/2028;Yes;Long;10000000;10000000;17/07/2020;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;10000000;;;;;;;;;;;;;No;;0,359;0;0;UG;SINDICADOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;054;001;181000;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;3263853_210376370540024352;;28/01/2025;1M;28/01/2028;Yes;Long;10000000;10000000;17/07/2020;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;10000000;;;;;;;;;;;;;No;;0,359;0;0;UG;SINDICADOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;054;001;181000;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;28/01/2025;0
 payment;Principal;28/01/2028;10000000
-contract;3279557_210376370530000119;;30/09/2025;1M;30/09/2028;Yes;Long;50000000;50000000;19/11/2019;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;50000000;;;;;;;;;;;;;No;;0,12;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;3279557_210376370530000119;;30/09/2025;1M;30/09/2028;Yes;Long;50000000;50000000;19/11/2019;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;50000000;;;;;;;;;;;;;No;;0,12;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;30/09/2025;12500000
 payment;Principal;30/09/2026;12500000
 payment;Principal;30/09/2027;12500000
 payment;Principal;30/09/2028;12500000
-contract;3316752_210385590530000111;;31/01/2025;1M;30/01/2026;Yes;Long;23684210,46;23684210,46;23/09/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;23684210,46;;;;;;;;;;;;;No;;0,01;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;3316752_210385590530000111;;31/01/2025;1M;30/01/2026;Yes;Long;23684210,46;23684210,46;23/09/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;23684210,46;;;;;;;;;;;;;No;;0,01;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;31/01/2025;4736842,11
 payment;Principal;30/04/2025;4736842,11
 payment;Principal;31/07/2025;4736842,11
 payment;Principal;31/10/2025;4736842,11
 payment;Principal;30/01/2026;4736842,02
-contract;3324017_21030027SW59383P;;30/01/2025;6M;30/07/2066;Yes;Short;76327216,12;76327216,12;29/10/2021;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;59383;No;;EUR;Fair value;;Other;;;;;;;BANCO BILBAO VIZCAYA ARGENTARIA, S.A.;;;;;No;;0,22699999999999998;;0;TE;SWAP PAGA RF CAE;Tesoreria;FIX;EUR;987;006;;PFB;....;;;ES00000128U8_RF04;;GRANDE;;;;;;;;J;Gobierno Central;N;;P.6.1.4;Original;EUR;;;Sensible;;04;J08;Otras empresas y asociaciones sin ánimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;FAIR_VALUE_OTHER;;;FIJO;NO;NO;;;;
+contract;3324017_21030027SW59383P;;30/01/2025;6M;30/07/2066;Yes;Short;76327216,12;76327216,12;29/10/2021;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;59383;No;;EUR;Fair value;;Other;;;;;;;BANCO BILBAO VIZCAYA ARGENTARIA, S.A.;;;;;No;;0,22699999999999998;;0;TE;SWAP PAGA RF CAE;Tesoreria;FIX;EUR;987;006;;PFB;....;;;ES00000128U8_RF04;;GRANDE;;;;;;;;J;Gobierno Central;N;;P.6.1.4;Original;EUR;;;Sensible;;04;J08;Otras empresas y asociaciones sin ï¿½nimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;FAIR_VALUE_OTHER;;;FIJO;NO;NO;;;;
 payment;Principal;30/01/2025;-718402,46
 payment;Principal;30/07/2025;-713286,28
 payment;Principal;30/01/2026;-731877,72
@@ -2032,9 +2032,9 @@ payment;Principal;30/07/2064;-1481237,02
 payment;Principal;30/01/2065;-1511532,34
 payment;Principal;30/07/2065;-1500767,78
 payment;Principal;29/01/2066;-1539884,52
-contract;3330117_210374090530000017;;31/01/2025;1M;31/01/2025;Yes;Long;25000000;25000000;23/05/2019;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;25000000;;;;;;;;;;;;;No;;0,19;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
+contract;3330117_210374090530000017;;31/01/2025;1M;31/01/2025;Yes;Long;25000000;25000000;23/05/2019;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;25000000;;;;;;;;;;;;;No;;0,19;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Pï¿½blicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversiï¿½n crediticia;;
 payment;Principal;31/01/2025;25000000
-contract;3401544_210328150500101561;;01/12/2024;1M;01/12/2029;Yes;Long;7088127,43;7088127,43;01/12/2017;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;7088127,43;;;;;;;;;;;;;No;;2,1999999999999997;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
+contract;3401544_210328150500101561;;01/12/2024;1M;01/12/2029;Yes;Long;7088127,43;7088127,43;01/12/2017;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;7088127,43;;;;;;;;;;;;;No;;2,1999999999999997;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversiï¿½n crediticia;;
 payment;Principal;01/12/2024;280000
 payment;Principal;01/03/2025;280000
 payment;Principal;01/06/2025;300000
@@ -2056,7 +2056,7 @@ payment;Principal;01/03/2029;370000
 payment;Principal;01/06/2029;395000
 payment;Principal;01/09/2029;395000
 payment;Principal;01/12/2029;398127,43
-contract;3410239_210301820500047932;;29/12/2024;1M;29/01/2032;Yes;Long;6015104,96;6015104,96;29/01/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;6015104,96;;;;;;;;;;;;;No;;1,5;1;0;UG;HIPOTECARIOS FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;210;113200;A;04.02.02.01.00 Con garantia hipotecaria;33152000003;01030202;;02;PYME - PEQUEÑA;;;;;120;130;140;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030201;02;J03;Pequeñas empresas;;PEQUEÑAS EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
+contract;3410239_210301820500047932;;29/12/2024;1M;29/01/2032;Yes;Long;6015104,96;6015104,96;29/01/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;6015104,96;;;;;;;;;;;;;No;;1,5;1;0;UG;HIPOTECARIOS FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;210;113200;A;04.02.02.01.00 Con garantia hipotecaria;33152000003;01030202;;02;PYME - PEQUEï¿½A;;;;;120;130;140;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030201;02;J03;Pequeï¿½as empresas;;PEQUEï¿½AS EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversiï¿½n crediticia;;
 payment;Principal;29/12/2024;41118,88
 payment;Principal;29/01/2025;41118,88
 payment;Principal;28/02/2025;41118,88
@@ -2143,7 +2143,7 @@ payment;Principal;29/10/2031;41118,88
 payment;Principal;29/11/2031;41118,88
 payment;Principal;29/12/2031;41118,88
 payment;Principal;29/01/2032;2520000,16
-contract;3424101_21030027SW60073P;;27/12/2024;1M;26/04/2048;Yes;Short;117970640;117970640;26/04/2022;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;60073;No;;EUR;Amortized cost;;;;;;;;;J.P. MORGAN AG;;;;;No;;1,574;;0;TE;SWAP PAGA HIPOT;Tesoreria;FIX;EUR;987;006;;PFB;....;;;1000263_;;GRANDE;;;;;;;;J;;N;;P.6.1.4;Original;EUR;;;Sensible;;04;J08;Otras empresas y asociaciones sin ánimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;AMORTIZED_COST;;;FIJO;NO;NO;;;;
+contract;3424101_21030027SW60073P;;27/12/2024;1M;26/04/2048;Yes;Short;117970640;117970640;26/04/2022;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;60073;No;;EUR;Amortized cost;;;;;;;;;J.P. MORGAN AG;;;;;No;;1,574;;0;TE;SWAP PAGA HIPOT;Tesoreria;FIX;EUR;987;006;;PFB;....;;;1000263_;;GRANDE;;;;;;;;J;;N;;P.6.1.4;Original;EUR;;;Sensible;;04;J08;Otras empresas y asociaciones sin ï¿½nimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;AMORTIZED_COST;;;FIJO;NO;NO;;;;
 payment;Principal;27/12/2024;1107880
 payment;Principal;27/01/2025;1110320
 payment;Principal;26/02/2025;1089750
@@ -2151,1603 +2151,3 @@ payment;Principal;26/03/2025;1124140
 payment;Principal;28/04/2025;1106000
 payment;Principal;26/05/2025;1100120
 payment;Principal;26/06/2025;1079970
-payment;Principal;28/07/2025;1083810
-payment;Principal;26/08/2025;1067790
-payment;Principal;26/09/2025;1084370
-payment;Principal;27/10/2025;1076420
-payment;Principal;26/11/2025;1066130
-payment;Principal;29/12/2025;1064820
-payment;Principal;26/01/2026;1068080
-payment;Principal;26/02/2026;1047550
-payment;Principal;26/03/2026;1080540
-payment;Principal;27/04/2026;1063660
-payment;Principal;26/05/2026;1057730
-payment;Principal;26/06/2026;1038280
-payment;Principal;27/07/2026;1041750
-payment;Principal;26/08/2026;1026390
-payment;Principal;28/09/2026;1043010
-payment;Principal;26/10/2026;1034630
-payment;Principal;26/11/2026;1024810
-payment;Principal;28/12/2026;1023240
-payment;Principal;26/01/2027;1027310
-payment;Principal;26/02/2027;1006810
-payment;Principal;30/03/2027;1038460
-payment;Principal;26/04/2027;1022790
-payment;Principal;26/05/2027;1016810
-payment;Principal;28/06/2027;998030
-payment;Principal;26/07/2027;1001140
-payment;Principal;26/08/2027;986430
-payment;Principal;27/09/2027;1003070
-payment;Principal;26/10/2027;994270
-payment;Principal;26/11/2027;984040
-payment;Principal;27/12/2027;982220
-payment;Principal;26/01/2028;987060
-payment;Principal;28/02/2028;965640
-payment;Principal;27/03/2028;992350
-payment;Principal;26/04/2028;976890
-payment;Principal;26/05/2028;967320
-payment;Principal;26/06/2028;946320
-payment;Principal;26/07/2028;945590
-payment;Principal;28/08/2028;925960
-payment;Principal;26/09/2028;939860
-payment;Principal;26/10/2028;922420
-payment;Principal;27/11/2028;910080
-payment;Principal;27/12/2028;905030
-payment;Principal;26/01/2029;898680
-payment;Principal;26/02/2029;879370
-payment;Principal;26/03/2029;897030
-payment;Principal;26/04/2029;880450
-payment;Principal;28/05/2029;863290
-payment;Principal;26/06/2029;851210
-payment;Principal;26/07/2029;838200
-payment;Principal;27/08/2029;824500
-payment;Principal;26/09/2029;820680
-payment;Principal;26/10/2029;811520
-payment;Principal;26/11/2029;803830
-payment;Principal;27/12/2029;797790
-payment;Principal;28/01/2030;791050
-payment;Principal;26/02/2030;771730
-payment;Principal;26/03/2030;771430
-payment;Principal;26/04/2030;759000
-payment;Principal;27/05/2030;758440
-payment;Principal;26/06/2030;743920
-payment;Principal;26/07/2030;730700
-payment;Principal;26/08/2030;722490
-payment;Principal;26/09/2030;722440
-payment;Principal;28/10/2030;707830
-payment;Principal;26/11/2030;694520
-payment;Principal;27/12/2030;692280
-payment;Principal;27/01/2031;677180
-payment;Principal;26/02/2031;669210
-payment;Principal;26/03/2031;669650
-payment;Principal;28/04/2031;652640
-payment;Principal;26/05/2031;655830
-payment;Principal;26/06/2031;638260
-payment;Principal;28/07/2031;622330
-payment;Principal;26/08/2031;610660
-payment;Principal;26/09/2031;605890
-payment;Principal;27/10/2031;593430
-payment;Principal;26/11/2031;574430
-payment;Principal;29/12/2031;557940
-payment;Principal;26/01/2032;538460
-payment;Principal;26/02/2032;518470
-payment;Principal;30/03/2032;503100
-payment;Principal;26/04/2032;479530
-payment;Principal;26/05/2032;463090
-payment;Principal;28/06/2032;441810
-payment;Principal;26/07/2032;423110
-payment;Principal;26/08/2032;396200
-payment;Principal;27/09/2032;390370
-payment;Principal;26/10/2032;391250
-payment;Principal;26/11/2032;387510
-payment;Principal;27/12/2032;387610
-payment;Principal;26/01/2033;361730
-payment;Principal;28/02/2033;346730
-payment;Principal;28/03/2033;339580
-payment;Principal;26/04/2033;327860
-payment;Principal;26/05/2033;328830
-payment;Principal;27/06/2033;325730
-payment;Principal;26/07/2033;326370
-payment;Principal;26/08/2033;323280
-payment;Principal;26/09/2033;322260
-payment;Principal;26/10/2033;323150
-payment;Principal;28/11/2033;320150
-payment;Principal;27/12/2033;321010
-payment;Principal;26/01/2034;318030
-payment;Principal;27/02/2034;317200
-payment;Principal;27/03/2034;321100
-payment;Principal;26/04/2034;314560
-payment;Principal;26/05/2034;315350
-payment;Principal;26/06/2034;312230
-payment;Principal;26/07/2034;312990
-payment;Principal;28/08/2034;309940
-payment;Principal;26/09/2034;308630
-payment;Principal;26/10/2034;309350
-payment;Principal;27/11/2034;306180
-payment;Principal;27/12/2034;306860
-payment;Principal;26/01/2035;303560
-payment;Principal;26/02/2035;302580
-payment;Principal;27/03/2035;306290
-payment;Principal;26/04/2035;300060
-payment;Principal;28/05/2035;300190
-payment;Principal;26/06/2035;297340
-payment;Principal;26/07/2035;297940
-payment;Principal;27/08/2035;294800
-payment;Principal;26/09/2035;293650
-payment;Principal;26/10/2035;294200
-payment;Principal;26/11/2035;291520
-payment;Principal;27/12/2035;292050
-payment;Principal;28/01/2036;288740
-payment;Principal;26/02/2036;286930
-payment;Principal;26/03/2036;287400
-payment;Principal;28/04/2036;283260
-payment;Principal;26/05/2036;283530
-payment;Principal;26/06/2036;281190
-payment;Principal;28/07/2036;281630
-payment;Principal;26/08/2036;278530
-payment;Principal;26/09/2036;277630
-payment;Principal;27/10/2036;278030
-payment;Principal;26/11/2036;275520
-payment;Principal;29/12/2036;275350
-payment;Principal;26/01/2037;272960
-payment;Principal;26/02/2037;271840
-payment;Principal;26/03/2037;273990
-payment;Principal;27/04/2037;268750
-payment;Principal;26/05/2037;268950
-payment;Principal;26/06/2037;266840
-payment;Principal;27/07/2037;267130
-payment;Principal;26/08/2037;265040
-payment;Principal;28/09/2037;263970
-payment;Principal;26/10/2037;264010
-payment;Principal;26/11/2037;262000
-payment;Principal;28/12/2037;262230
-payment;Principal;26/01/2038;246840
-payment;Principal;26/02/2038;231040
-payment;Principal;26/03/2038;220780
-payment;Principal;27/04/2038;211520
-payment;Principal;26/05/2038;211870
-payment;Principal;28/06/2038;209930
-payment;Principal;26/07/2038;210260
-payment;Principal;26/08/2038;208400
-payment;Principal;27/09/2038;207730
-payment;Principal;26/10/2038;208030
-payment;Principal;26/11/2038;206370
-payment;Principal;27/12/2038;206440
-payment;Principal;26/01/2039;204800
-payment;Principal;28/02/2039;203560
-payment;Principal;28/03/2039;205220
-payment;Principal;26/04/2039;201830
-payment;Principal;26/05/2039;201930
-payment;Principal;27/06/2039;200370
-payment;Principal;26/07/2039;200210
-payment;Principal;26/08/2039;198260
-payment;Principal;26/09/2039;197620
-payment;Principal;26/10/2039;197740
-payment;Principal;28/11/2039;196260
-payment;Principal;27/12/2039;196140
-payment;Principal;26/01/2040;193010
-payment;Principal;27/02/2040;192110
-payment;Principal;26/03/2040;192160
-payment;Principal;26/04/2040;189820
-payment;Principal;28/05/2040;189220
-payment;Principal;26/06/2040;187840
-payment;Principal;26/07/2040;187950
-payment;Principal;27/08/2040;186480
-payment;Principal;26/09/2040;184610
-payment;Principal;26/10/2040;184510
-payment;Principal;26/11/2040;183200
-payment;Principal;27/12/2040;183270
-payment;Principal;28/01/2041;181160
-payment;Principal;26/02/2041;179740
-payment;Principal;26/03/2041;180920
-payment;Principal;26/04/2041;177900
-payment;Principal;27/05/2041;177740
-payment;Principal;26/06/2041;176520
-payment;Principal;26/07/2041;176540
-payment;Principal;26/08/2041;175340
-payment;Principal;26/09/2041;174770
-payment;Principal;28/10/2041;174760
-payment;Principal;26/11/2041;173610
-payment;Principal;27/12/2041;173570
-payment;Principal;27/01/2042;170800
-payment;Principal;26/02/2042;169820
-payment;Principal;26/03/2042;169860
-payment;Principal;28/04/2042;167190
-payment;Principal;26/05/2042;167130
-payment;Principal;26/06/2042;165800
-payment;Principal;28/07/2042;165340
-payment;Principal;26/08/2042;164040
-payment;Principal;26/09/2042;163500
-payment;Principal;27/10/2042;163210
-payment;Principal;26/11/2042;162220
-payment;Principal;29/12/2042;162100
-payment;Principal;26/01/2043;151470
-payment;Principal;26/02/2043;137140
-payment;Principal;26/03/2043;128230
-payment;Principal;27/04/2043;122860
-payment;Principal;26/05/2043;122840
-payment;Principal;26/06/2043;121930
-payment;Principal;27/07/2043;121900
-payment;Principal;26/08/2043;121120
-payment;Principal;28/09/2043;120180
-payment;Principal;26/10/2043;120130
-payment;Principal;26/11/2043;119380
-payment;Principal;28/12/2043;119320
-payment;Principal;26/01/2044;118590
-payment;Principal;26/02/2044;117970
-payment;Principal;28/03/2044;117470
-payment;Principal;26/04/2044;116470
-payment;Principal;26/05/2044;116380
-payment;Principal;27/06/2044;115690
-payment;Principal;26/07/2044;115590
-payment;Principal;26/08/2044;114740
-payment;Principal;26/09/2044;114120
-payment;Principal;26/10/2044;114000
-payment;Principal;28/11/2044;113360
-payment;Principal;27/12/2044;113040
-payment;Principal;26/01/2045;112140
-payment;Principal;27/02/2045;111700
-payment;Principal;27/03/2045;111510
-payment;Principal;26/04/2045;110230
-payment;Principal;26/05/2045;110070
-payment;Principal;26/06/2045;109280
-payment;Principal;26/07/2045;109110
-payment;Principal;28/08/2045;108540
-payment;Principal;26/09/2045;108180
-payment;Principal;26/10/2045;108000
-payment;Principal;27/11/2045;107460
-payment;Principal;27/12/2045;107260
-payment;Principal;26/01/2046;105250
-payment;Principal;26/02/2046;104280
-payment;Principal;27/03/2046;103770
-payment;Principal;26/04/2046;102770
-payment;Principal;28/05/2046;102550
-payment;Principal;26/06/2046;101940
-payment;Principal;26/07/2046;101580
-payment;Principal;27/08/2046;101120
-payment;Principal;26/09/2046;100790
-payment;Principal;26/10/2046;100540
-payment;Principal;26/11/2046;100110
-payment;Principal;27/12/2046;99850
-payment;Principal;28/01/2047;98680
-payment;Principal;26/02/2047;97450
-payment;Principal;26/03/2047;96860
-payment;Principal;26/04/2047;95900
-payment;Principal;27/05/2047;95630
-payment;Principal;26/06/2047;95030
-payment;Principal;26/07/2047;94360
-payment;Principal;26/08/2047;93630
-payment;Principal;26/09/2047;93310
-payment;Principal;28/10/2047;93020
-payment;Principal;26/11/2047;92460
-payment;Principal;27/12/2047;91890
-payment;Principal;27/01/2048;69710
-payment;Principal;26/02/2048;44080
-payment;Principal;26/03/2048;19610
-contract;3456904_210323260510000644;;20/12/2024;1M;15/01/2025;Yes;Long;435,61;435,61;20/01/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;435,61;;;;;;;;;;;;;No;;2,34;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;051;577;113155;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J04;Microempresas;;MICROEMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
-payment;Principal;20/12/2024;217,59
-payment;Principal;15/01/2025;218,02
-contract;3494288_210376370500072259;;31/07/2025;1M;31/07/2027;Yes;Long;10714285,72;10714285,72;04/05/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;10714285,72;;;;;;;;;;;;;No;;0;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;050;209;113105;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;31/07/2025;3571428,57
-payment;Principal;31/07/2026;3571428,57
-payment;Principal;31/07/2027;3571428,58
-contract;3494591_210370170500131748;;04/12/2024;1M;04/07/2028;Yes;Long;5584,97;5584,97;15/07/2024;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;5584,97;;;;;;;;;;;;;No;;9,85;0;0;UG;PERSONALES FINANCIACION ECONOMIA DOMESTICA;Banca Comercial;FIX;EUR;050;011;111065;A;04.02.05.04.00 Prestamos personales;33552000009;02030000;;05;;;;;;170;170;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02030000;;F06;Adultos 2B;54;ADULTOS_B;AMORTIZED_COST;;;FIJO;NO;NO;;;;
-payment;Principal;04/12/2024;106,9
-payment;Principal;04/01/2025;106,77
-payment;Principal;04/02/2025;107,64
-payment;Principal;04/03/2025;108,53
-payment;Principal;04/04/2025;109,42
-payment;Principal;04/05/2025;110,31
-payment;Principal;04/06/2025;111,22
-payment;Principal;04/07/2025;112,13
-payment;Principal;04/08/2025;112,05
-payment;Principal;04/09/2025;113,98
-payment;Principal;04/10/2025;114,92
-payment;Principal;04/11/2025;115,86
-payment;Principal;04/12/2025;116,81
-payment;Principal;04/01/2026;117,77
-payment;Principal;04/02/2026;118,74
-payment;Principal;04/03/2026;119,71
-payment;Principal;04/04/2026;120,69
-payment;Principal;04/05/2026;121,69
-payment;Principal;04/06/2026;122,68
-payment;Principal;04/07/2026;123,69
-payment;Principal;04/08/2026;124,71
-payment;Principal;04/09/2026;125,73
-payment;Principal;04/10/2026;126,76
-payment;Principal;04/11/2026;127,8
-payment;Principal;04/12/2026;128,85
-payment;Principal;04/01/2027;129,91
-payment;Principal;04/02/2027;131,98
-payment;Principal;04/03/2027;132,05
-payment;Principal;04/04/2027;133,13
-payment;Principal;04/05/2027;134,23
-payment;Principal;04/06/2027;135,33
-payment;Principal;04/07/2027;136,44
-payment;Principal;04/08/2027;137,56
-payment;Principal;04/09/2027;138,69
-payment;Principal;04/10/2027;139,83
-payment;Principal;04/11/2027;141,98
-payment;Principal;04/12/2027;141,51
-payment;Principal;04/01/2028;142,3
-payment;Principal;04/02/2028;144,48
-payment;Principal;04/03/2028;145,66
-payment;Principal;04/04/2028;146,86
-payment;Principal;04/05/2028;148,06
-payment;Principal;04/06/2028;149,28
-payment;Principal;04/07/2028;150,33
-contract;3556327_210305010500034833;;14/01/2025;1M;14/01/2025;Yes;Long;375000;375000;31/12/2018;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;375000;;;;;;;;;;;;;No;;1,2;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
-payment;Principal;14/01/2025;375000
-contract;3573567_210322600530000258;;30/12/2025;1M;30/03/2031;Yes;Long;70000000;70000000;29/03/2019;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;70000000;;;;;;;;;;;;;No;;4,278;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;101;111100;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;30/12/2025;0
-payment;Principal;30/03/2031;70000000
-contract;3657538_210374100530000069;;31/12/2024;1M;30/09/2032;Yes;Long;2050020,13;2050020,13;12/11/2020;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;2050020,13;;;;;;;;;;;;;No;;0,24;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Comercial;FIX;EUR;053;201;111101;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;31/12/2024;64063,13
-payment;Principal;31/03/2025;64063,13
-payment;Principal;30/06/2025;64063,13
-payment;Principal;30/09/2025;64063,13
-payment;Principal;31/12/2025;64063,13
-payment;Principal;31/03/2026;64063,13
-payment;Principal;30/06/2026;64063,13
-payment;Principal;30/09/2026;64063,13
-payment;Principal;31/12/2026;64063,13
-payment;Principal;31/03/2027;64063,13
-payment;Principal;30/06/2027;64063,13
-payment;Principal;30/09/2027;64063,13
-payment;Principal;31/12/2027;64063,13
-payment;Principal;31/03/2028;64063,13
-payment;Principal;30/06/2028;64063,13
-payment;Principal;30/09/2028;64063,13
-payment;Principal;31/12/2028;64063,13
-payment;Principal;31/03/2029;64063,13
-payment;Principal;30/06/2029;64063,13
-payment;Principal;30/09/2029;64063,13
-payment;Principal;31/12/2029;64063,13
-payment;Principal;31/03/2030;64063,13
-payment;Principal;30/06/2030;64063,13
-payment;Principal;30/09/2030;64063,13
-payment;Principal;31/12/2030;64063,13
-payment;Principal;31/03/2031;64063,13
-payment;Principal;30/06/2031;64063,13
-payment;Principal;30/09/2031;64063,13
-payment;Principal;31/12/2031;64063,13
-payment;Principal;31/03/2032;64063,13
-payment;Principal;30/06/2032;64063,13
-payment;Principal;30/09/2032;64063,1
-contract;3661406_210382010500005754;;15/03/2029;1M;15/03/2029;Yes;Long;16783959,57;16783959,57;02/01/2015;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;16783959,57;;;;;;;;;;;;;No;;2,1;0;0;UG;CONFIRMING;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.01.02.00 Operaciones sin recurso;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
-payment;Principal;15/12/2024;321531,79252873565
-payment;Principal;15/01/2025;321531,79252873565
-payment;Principal;15/02/2025;321531,79252873565
-payment;Principal;15/03/2025;321531,79252873565
-payment;Principal;15/04/2025;321531,79252873565
-payment;Principal;15/05/2025;321531,79252873565
-payment;Principal;15/06/2025;321531,79252873565
-payment;Principal;15/07/2025;321531,79252873565
-payment;Principal;15/08/2025;321531,79252873565
-payment;Principal;15/09/2025;321531,79252873565
-payment;Principal;15/10/2025;321531,79252873565
-payment;Principal;15/11/2025;321531,79252873565
-payment;Principal;15/12/2025;321531,79252873565
-payment;Principal;15/01/2026;321531,79252873565
-payment;Principal;15/02/2026;321531,79252873565
-payment;Principal;15/03/2026;321531,79252873565
-payment;Principal;15/04/2026;321531,79252873565
-payment;Principal;15/05/2026;321531,79252873565
-payment;Principal;15/06/2026;321531,79252873565
-payment;Principal;15/07/2026;321531,79252873565
-payment;Principal;15/08/2026;321531,79252873565
-payment;Principal;15/09/2026;321531,79252873565
-payment;Principal;15/10/2026;321531,79252873565
-payment;Principal;15/11/2026;321531,79252873565
-payment;Principal;15/12/2026;321531,79252873565
-payment;Principal;15/01/2027;321531,79252873565
-payment;Principal;15/02/2027;321531,79252873565
-payment;Principal;15/03/2027;321531,79252873565
-payment;Principal;15/04/2027;321531,79252873565
-payment;Principal;15/05/2027;321531,79252873565
-payment;Principal;15/06/2027;321531,79252873565
-payment;Principal;15/07/2027;321531,79252873565
-payment;Principal;15/08/2027;321531,79252873565
-payment;Principal;15/09/2027;321531,79252873565
-payment;Principal;15/10/2027;321531,79252873565
-payment;Principal;15/11/2027;321531,79252873565
-payment;Principal;15/12/2027;321531,79252873565
-payment;Principal;15/01/2028;321531,79252873565
-payment;Principal;15/02/2028;321531,79252873565
-payment;Principal;15/03/2028;321531,79252873565
-payment;Principal;15/04/2028;321531,79252873565
-payment;Principal;15/05/2028;321531,79252873565
-payment;Principal;15/06/2028;321531,79252873565
-payment;Principal;15/07/2028;321531,79252873565
-payment;Principal;15/08/2028;321531,79252873565
-payment;Principal;15/09/2028;321531,79252873565
-payment;Principal;15/10/2028;321531,79252873565
-payment;Principal;15/11/2028;321531,79252873565
-payment;Principal;15/12/2028;321531,79252873565
-payment;Principal;15/01/2029;321531,79252873565
-payment;Principal;15/02/2029;321531,79252873565
-payment;Principal;15/03/2029;385838,15252873563
-contract;3726454_210379530500006522;;04/12/2024;1M;04/04/2028;Yes;Long;7880,77;7880,77;16/04/2024;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;7880,77;;;;;;;;;;;;;No;;8,95;0;0;UG;PERSONALES FINANCIACION ECONOMIA DOMESTICA;Banca Comercial;FIX;EUR;050;029;111063;A;04.02.05.04.00 Prestamos personales;33552000009;02030000;;05;;;;;;170;;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02030000;;F06;Adultos 2B;49;ADULTOS_B;AMORTIZED_COST;;;FIJO;NO;NO;;;;
-payment;Principal;04/12/2024;165,81
-payment;Principal;04/01/2025;165,14
-payment;Principal;04/02/2025;166,39
-payment;Principal;04/03/2025;173,09
-payment;Principal;04/04/2025;168,97
-payment;Principal;04/05/2025;171,98
-payment;Principal;04/06/2025;171,56
-payment;Principal;04/07/2025;174,51
-payment;Principal;04/08/2025;174,19
-payment;Principal;04/09/2025;175,52
-payment;Principal;04/10/2025;178,37
-payment;Principal;04/11/2025;178,21
-payment;Principal;04/12/2025;180,99
-payment;Principal;04/01/2026;180,94
-payment;Principal;04/02/2026;182,31
-payment;Principal;04/03/2026;187,58
-payment;Principal;04/04/2026;185,13
-payment;Principal;04/05/2026;187,73
-payment;Principal;04/06/2026;187,96
-payment;Principal;04/07/2026;190,5
-payment;Principal;04/08/2026;190,84
-payment;Principal;04/09/2026;192,29
-payment;Principal;04/10/2026;194,72
-payment;Principal;04/11/2026;195,23
-payment;Principal;04/12/2026;197,59
-payment;Principal;04/01/2027;198,21
-payment;Principal;04/02/2027;199,72
-payment;Principal;04/03/2027;203,42
-payment;Principal;04/04/2027;202,79
-payment;Principal;04/05/2027;204,95
-payment;Principal;04/06/2027;205,89
-payment;Principal;04/07/2027;207,98
-payment;Principal;04/08/2027;209,03
-payment;Principal;04/09/2027;210,62
-payment;Principal;04/10/2027;212,59
-payment;Principal;04/11/2027;213,84
-payment;Principal;04/12/2027;215,73
-payment;Principal;04/01/2028;217,1
-payment;Principal;04/02/2028;218,75
-payment;Principal;04/03/2028;220,63
-payment;Principal;04/04/2028;221,97
-contract;3756397_210305010500036449;;16/12/2024;1M;15/12/2026;Yes;Long;180000000;180000000;12/12/2019;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;180000000;;;;;;;;;;;;;No;;0,29;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33652000005;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
-payment;Principal;16/12/2024;60000000
-payment;Principal;16/06/2025;0
-payment;Principal;15/12/2025;60000000
-payment;Principal;15/06/2026;0
-payment;Principal;15/12/2026;60000000
-contract;3914545_210322600530000034;;30/09/2027;1M;30/09/2027;Yes;Long;34931492;34931492;27/03/2017;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;34931492;;;;;;;;;;;;;No;;5,158;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;101;111100;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;30/09/2027;34931492
-contract;392243_210385590530000120;;28/02/2025;1M;29/09/2028;Yes;Long;80000000;80000000;26/04/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;80000000;;;;;;;;;;;;;No;;0;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;28/02/2025;5000000
-payment;Principal;30/05/2025;5000000
-payment;Principal;29/08/2025;5000000
-payment;Principal;28/11/2025;5000000
-payment;Principal;27/02/2026;5000000
-payment;Principal;29/05/2026;5000000
-payment;Principal;31/08/2026;5000000
-payment;Principal;30/11/2026;5000000
-payment;Principal;26/02/2027;5000000
-payment;Principal;31/05/2027;5000000
-payment;Principal;31/08/2027;5000000
-payment;Principal;30/11/2027;5000000
-payment;Principal;29/02/2028;5000000
-payment;Principal;31/05/2028;5000000
-payment;Principal;31/08/2028;5000000
-payment;Principal;29/09/2028;5000000
-contract;3971973_210322600530000025;;23/12/2025;1M;23/06/2026;Yes;Long;35000000;35000000;23/06/2016;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;35000000;;;;;;;;;;;;;No;;4,68;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;401;111104;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;23/12/2025;0
-payment;Principal;23/06/2026;35000000
-contract;4039732_210307220500063108;;30/11/2024;1M;30/11/2031;Yes;Long;24358192,51;24358192,51;30/11/2017;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;24358192,51;;;;;;;;;;;;;No;;1,28;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;050;209;113105;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;30/11/2024;2158690,17
-payment;Principal;30/11/2025;272688,32
-payment;Principal;30/11/2026;1425618,49
-payment;Principal;30/11/2027;4532924,16
-payment;Principal;30/11/2028;4532924,16
-payment;Principal;30/11/2029;4532924,16
-payment;Principal;30/11/2030;4532924,16
-payment;Principal;30/11/2031;2369498,89
-contract;4043954_210380820500003288;;31/12/2024;1M;30/06/2038;Yes;Long;14156394;14156394;31/12/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;14156394;;;;;;;;;;;;;No;;1,7000000000000002;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
-payment;Principal;31/12/2024;513736,2
-payment;Principal;30/06/2025;526971
-payment;Principal;31/12/2025;522774,6
-payment;Principal;30/06/2026;520837,8
-payment;Principal;31/12/2026;516802,8
-payment;Principal;30/06/2027;517932,6
-payment;Principal;31/12/2027;514381,8
-payment;Principal;30/06/2028;527132,4
-payment;Principal;31/12/2028;524550
-payment;Principal;30/06/2029;537623,4
-payment;Principal;31/12/2029;534718,2
-payment;Principal;30/06/2030;547791,6
-payment;Principal;31/12/2030;545047,8
-payment;Principal;30/06/2031;558121,2
-payment;Principal;31/12/2031;555700,2
-payment;Principal;30/06/2032;532781,4
-payment;Principal;31/12/2032;531167,4
-payment;Principal;30/06/2033;528262,2
-payment;Principal;31/12/2033;470965,2
-payment;Principal;30/06/2034;526648,2
-payment;Principal;31/12/2034;427710
-payment;Principal;30/06/2035;528262,2
-payment;Principal;31/12/2035;400917,6
-payment;Principal;30/06/2036;520030,8
-payment;Principal;31/12/2036;331999,8
-payment;Principal;30/06/2037;526971
-payment;Principal;31/12/2037;333613,8
-payment;Principal;30/06/2038;532942,8
-contract;4113448_210340010520000534;;31/12/2024;1M;31/12/2033;Yes;Long;13520;13520;27/08/2009;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;13520;;;;;;;;;;;;;No;;0;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;052;023;113121;A;04.02.05.04.00 Prestamos personales;35553000000;02030000;;05;;;;;;170;170;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02030000;;F07;Adultos 3;43;ADULTOS_A;AMORTIZED_COST;;;FIJO;NO;NO;;;;
-payment;Principal;31/12/2024;1352
-payment;Principal;31/12/2025;1352
-payment;Principal;31/12/2026;1352
-payment;Principal;31/12/2027;1352
-payment;Principal;31/12/2028;1352
-payment;Principal;31/12/2029;1352
-payment;Principal;31/12/2030;1352
-payment;Principal;31/12/2031;1352
-payment;Principal;31/12/2032;1352
-payment;Principal;31/12/2033;1352
-contract;4118110_210376790500009050;;05/01/2025;1M;05/01/2029;Yes;Long;9719,7;9719,7;06/06/2019;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;9719,7;;;;;;;;;;;;;No;;5,949999999999999;1;0;UG;PERSONALES FINANCIACION ECONOMIA DOMESTICA;Banca Comercial;FIX;EUR;050;017;111005;A;04.02.05.04.00 Prestamos personales;33552000009;02030000;;05;;;;;;170;170;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02030000;;F07;Adultos 3;49;ADULTOS_B;AMORTIZED_COST;;;FIJO;NO;NO;;;;
-payment;Principal;05/01/2025;1725,97
-payment;Principal;05/01/2026;1828,66
-payment;Principal;05/01/2027;1937,47
-payment;Principal;05/01/2028;2052,75
-payment;Principal;05/01/2029;2174,85
-contract;411986_210373970500041845;;23/12/2024;1M;23/12/2028;Yes;Long;28999000;28999000;23/12/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;28999000;;;;;;;;;;;;;No;;1,3;0;0;UG;HIPOTECARIOS COMPRADOR DIRECTO;Banca Corporativa;FIX;EUR;050;412;112024;A;04.02.02.01.00 Con garantia hipotecaria;33152000003;01030102;;03;GRANDE;;;;;110;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030101;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.4.1 Inversión crediticia;;
-payment;Principal;23/12/2024;500000
-payment;Principal;23/03/2025;0
-payment;Principal;23/06/2025;0
-payment;Principal;23/09/2025;0
-payment;Principal;23/12/2025;500000
-payment;Principal;23/03/2026;0
-payment;Principal;23/06/2026;0
-payment;Principal;23/09/2026;0
-payment;Principal;23/12/2026;500000
-payment;Principal;23/03/2027;0
-payment;Principal;23/06/2027;0
-payment;Principal;23/09/2027;0
-payment;Principal;23/12/2027;500000
-payment;Principal;23/03/2028;0
-payment;Principal;23/06/2028;0
-payment;Principal;23/09/2028;0
-payment;Principal;23/12/2028;26999000
-contract;4162951_210373950500066749;;08/12/2024;1M;08/06/2026;Yes;Long;16666666,67;16666666,67;08/06/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;16666666,67;;;;;;;;;;;;;No;;0,35000000000000003;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
-payment;Principal;08/12/2024;0
-payment;Principal;08/03/2025;0
-payment;Principal;08/06/2025;8333333,33
-payment;Principal;08/09/2025;0
-payment;Principal;08/12/2025;0
-payment;Principal;08/03/2026;0
-payment;Principal;08/06/2026;8333333,34
-contract;4180487_210370410500124177;;05/12/2024;1M;20/09/2025;Yes;Long;3416,66;3416,66;20/09/2023;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;3416,66;;;;;;;;;;;;;No;;12;0;0;UG;PERSONALES OTRAS FINALIDADES;Banca Comercial;FIX;EUR;050;303;111015;A;04.02.05.04.00 Prestamos personales;33552200000;02030000;;05;;;;;;170;;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02030000;;F07;Adultos 3;57;ADULTOS_B;AMORTIZED_COST;;;FIJO;NO;NO;;;;
-payment;Principal;05/12/2024;294,73
-payment;Principal;05/01/2025;298,76
-payment;Principal;05/02/2025;300,78
-payment;Principal;05/03/2025;303,84
-payment;Principal;05/04/2025;309,13
-payment;Principal;05/05/2025;310,09
-payment;Principal;05/06/2025;313,78
-payment;Principal;05/07/2025;316,45
-payment;Principal;05/08/2025;319,99
-payment;Principal;05/09/2025;322,93
-payment;Principal;20/09/2025;326,18
-contract;4244538_210380820500043681;;22/01/2025;1M;21/07/2029;Yes;Long;50000000;50000000;22/07/2024;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;50000000;;;;;;;;;;;;;No;;3,8739999999999997;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33652000005;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
-payment;Principal;22/01/2025;0
-payment;Principal;22/07/2025;0
-payment;Principal;22/01/2026;0
-payment;Principal;22/07/2026;0
-payment;Principal;22/01/2027;0
-payment;Principal;22/07/2027;0
-payment;Principal;22/01/2028;0
-payment;Principal;22/07/2028;0
-payment;Principal;22/01/2029;0
-payment;Principal;21/07/2029;50000000
-contract;4316677_210376370500057640;;31/07/2025;1M;31/07/2027;Yes;Long;10714285,72;10714285,72;04/11/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;10714285,72;;;;;;;;;;;;;No;;0;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;050;209;113105;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;31/07/2025;3571428,57
-payment;Principal;31/07/2026;3571428,57
-payment;Principal;31/07/2027;3571428,58
-contract;435865_210376370500057631;;31/01/2025;1M;31/01/2025;Yes;Long;5000000;5000000;04/11/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;5000000;;;;;;;;;;;;;No;;0;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;050;209;113105;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;31/01/2025;5000000
-contract;4367243_210376370500012742;;31/12/2024;1M;31/03/2025;Yes;Long;2175000;2175000;26/03/2018;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;2175000;;;;;;;;;;;;;No;;1;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
-payment;Principal;31/12/2024;1087500
-payment;Principal;31/03/2025;1087500
-contract;437043_210330120520000523;;31/12/2024;1M;31/12/2029;Yes;Long;2250;2250;22/07/2011;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;2250;;;;;;;;;;;;;No;;2,555;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;052;023;113121;A;04.02.05.04.00 Prestamos personales;35553000000;02030000;;05;;;;;;170;170;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02030000;;F07;Adultos 3;38;ADULTOS_A;AMORTIZED_COST;;;FIJO;NO;NO;;;;
-payment;Principal;31/12/2024;375
-payment;Principal;31/12/2025;375
-payment;Principal;31/12/2026;375
-payment;Principal;31/12/2027;375
-payment;Principal;31/12/2028;375
-payment;Principal;31/12/2029;375
-contract;4374310_210380820530000082;;30/09/2025;1M;14/04/2028;Yes;Long;17500000;17500000;14/04/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;17500000;;;;;;;;;;;;;No;;0;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;101;111100;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;30/09/2025;4375000
-payment;Principal;30/09/2026;4375000
-payment;Principal;30/09/2027;4375000
-payment;Principal;14/04/2028;4375000
-contract;4385759_210302130500035092;;15/08/2025;1M;15/08/2044;Yes;Long;428721,32;428721,32;05/02/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;428721,32;;;;;;;;;;;;;No;;1,7000000000000002;3;0;UG;PERSONALES FINANCIACION ECONOMIA DOMESTICA;Banca Comercial;FIX;EUR;050;709;111039;A;04.02.05.04.00 Prestamos personales;33552000009;02030000;;05;;;;;;170;;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02030000;;F09;Seniors 2;73;SENIOR;AMORTIZED_COST;;;FIJO;NO;NO;;;;
-payment;Principal;15/08/2025;18180,47
-payment;Principal;15/08/2026;18489,54
-payment;Principal;15/08/2027;18803,86
-payment;Principal;15/08/2028;19106,14
-payment;Principal;15/08/2029;19448,33
-payment;Principal;15/08/2030;19778,95
-payment;Principal;15/08/2031;20115,19
-payment;Principal;15/08/2032;20443,42
-payment;Principal;15/08/2033;20804,69
-payment;Principal;15/08/2034;21158,37
-payment;Principal;15/08/2035;21518,06
-payment;Principal;15/08/2036;21874,05
-payment;Principal;15/08/2037;22255,73
-payment;Principal;15/08/2038;22634,07
-payment;Principal;15/08/2039;23018,85
-payment;Principal;15/08/2040;23404,53
-payment;Principal;15/08/2041;23808,05
-payment;Principal;15/08/2042;24212,79
-payment;Principal;15/08/2043;24624,4
-payment;Principal;15/08/2044;25041,83
-contract;4418228_21030027SW59406P;;30/01/2025;6M;30/07/2066;Yes;Short;70714967,73;70714967,73;11/11/2021;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;59406;No;;EUR;Fair value;;Other;;;;;;;BANCO BILBAO VIZCAYA ARGENTARIA, S.A.;;;;;No;;0,11;;0;TE;SWAP PAGA RF CAE;Tesoreria;FIX;EUR;987;006;;PFB;....;;;ES00000128U8_RF04;;GRANDE;;;;;;;;J;Gobierno Central;N;;P.6.1.4;Original;EUR;;;Sensible;;04;J08;Otras empresas y asociaciones sin ánimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;FAIR_VALUE_OTHER;;;FIJO;NO;NO;;;;
-payment;Principal;30/01/2025;-659578
-payment;Principal;30/07/2025;-654826,13
-payment;Principal;30/01/2026;-671837,8
-payment;Principal;30/07/2026;-666997,62
-payment;Principal;29/01/2027;-684325,49
-payment;Principal;30/07/2027;-679395,34
-payment;Principal;31/01/2028;-697045,29
-payment;Principal;31/07/2028;-695864,41
-payment;Principal;30/01/2029;-710037,35
-payment;Principal;30/07/2029;-704921,95
-payment;Principal;30/01/2030;-723235,06
-payment;Principal;30/07/2030;-718024,58
-payment;Principal;30/01/2031;-736678,09
-payment;Principal;30/07/2031;-731370,76
-payment;Principal;30/01/2032;-750370,98
-payment;Principal;30/07/2032;-749099,77
-payment;Principal;31/01/2033;-764356,96
-payment;Principal;29/07/2033;-758850,22
-payment;Principal;30/01/2034;-778564,33
-payment;Principal;31/07/2034;-772955,24
-payment;Principal;30/01/2035;-793035,79
-payment;Principal;30/07/2035;-787322,43
-payment;Principal;30/01/2036;-807776,22
-payment;Principal;30/07/2036;-806407,75
-payment;Principal;30/01/2037;-822832,16
-payment;Principal;30/07/2037;-816904,15
-payment;Principal;29/01/2038;-838126,43
-payment;Principal;30/07/2038;-832088,23
-payment;Principal;31/01/2039;-853704,99
-payment;Principal;29/07/2039;-847554,54
-payment;Principal;30/01/2040;-869573,11
-payment;Principal;30/07/2040;-868099,93
-payment;Principal;30/01/2041;-885780,86
-payment;Principal;30/07/2041;-879399,34
-payment;Principal;30/01/2042;-902245,18
-payment;Principal;30/07/2042;-895745,03
-payment;Principal;30/01/2043;-919015,53
-payment;Principal;30/07/2043;-912394,57
-payment;Principal;29/01/2044;-936097,6
-payment;Principal;29/07/2044;-934511,73
-payment;Principal;30/01/2045;-953545,29
-payment;Principal;31/07/2045;-946675,56
-payment;Principal;30/01/2046;-971269,17
-payment;Principal;30/07/2046;-964271,75
-payment;Principal;30/01/2047;-989322,49
-payment;Principal;30/07/2047;-982195,02
-payment;Principal;30/01/2048;-1007711,38
-payment;Principal;30/07/2048;-1006004,19
-payment;Principal;29/01/2049;-1026493,86
-payment;Principal;30/07/2049;-1019098,58
-payment;Principal;31/01/2050;-1045573,67
-payment;Principal;29/07/2050;-1038040,93
-payment;Principal;30/01/2051;-1065008,11
-payment;Principal;31/07/2051;-1057335,36
-payment;Principal;30/01/2052;-1084803,8
-payment;Principal;30/07/2052;-1082966
-payment;Principal;30/01/2053;-1105023,18
-payment;Principal;30/07/2053;-1097062,15
-payment;Principal;30/01/2054;-1125562,64
-payment;Principal;30/07/2054;-1117453,63
-payment;Principal;29/01/2055;-1146483,87
-payment;Principal;30/07/2055;-1138224,13
-payment;Principal;31/01/2056;-1167793,97
-payment;Principal;31/07/2056;-1165815,59
-payment;Principal;30/01/2057;-1189560,19
-payment;Principal;30/07/2057;-1180990,12
-payment;Principal;30/01/2058;-1211670,96
-payment;Principal;30/07/2058;-1202941,6
-payment;Principal;30/01/2059;-1234192,72
-payment;Principal;30/07/2059;-1225301,1
-payment;Principal;30/01/2060;-1257133,1
-payment;Principal;30/07/2060;-1255003,37
-payment;Principal;31/01/2061;-1280564,49
-payment;Principal;29/07/2061;-1271338,78
-payment;Principal;30/01/2062;-1304366,8
-payment;Principal;31/07/2062;-1294969,6
-payment;Principal;30/01/2063;-1328611,53
-payment;Principal;30/07/2063;-1319039,66
-payment;Principal;30/01/2064;-1353306,9
-payment;Principal;30/07/2064;-1351014,22
-payment;Principal;30/01/2065;-1378530,85
-payment;Principal;30/07/2065;-1368599,34
-payment;Principal;29/01/2066;-1404154,09
-contract;4468582_210305650500024543;;01/07/2025;1M;01/07/2026;Yes;Long;73100;73100;20/04/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;73100;;;;;;;;;;;;;No;;1,15;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - PEQUEÑA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;02;J03;Pequeñas empresas;;PEQUEÑAS EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
-payment;Principal;01/07/2025;36550
-payment;Principal;01/07/2026;36550
-contract;4515969_210302010510003663;;30/11/2024;1M;29/04/2025;Yes;Long;32215,75;32215,75;30/04/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;32215,75;;;;;;;;;;;;;No;;1,7500000000000002;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Empresas;FIX;EUR;051;337;113141;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J02;Medianas empresas;;MEDIANAS EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
-payment;Principal;30/11/2024;5348,82
-payment;Principal;30/12/2024;5358,06
-payment;Principal;30/01/2025;5364,73
-payment;Principal;28/02/2025;5374,25
-payment;Principal;30/03/2025;5381,21
-payment;Principal;29/04/2025;5388,68
-contract;4523001_210374030500013066;;31/12/2024;1M;30/06/2037;Yes;Long;8242055,77;8242055,77;22/12/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;8242055,77;;;;;;;;;;;;;No;;2,25;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Empresas;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
-payment;Principal;31/12/2024;244083,85
-payment;Principal;30/06/2025;418429,56
-payment;Principal;31/12/2025;212316,51
-payment;Principal;30/06/2037;7367225,85
-contract;4550232_210310720520000287;;31/12/2024;1M;31/12/2032;Yes;Long;8100;8100;22/09/2009;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;8100;;;;;;;;;;;;;No;;0;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;052;023;113121;A;04.02.05.04.00 Prestamos personales;35553000000;02030000;;05;;;;;;170;170;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02030000;;F07;Adultos 3;45;ADULTOS_B;AMORTIZED_COST;;;FIJO;NO;NO;;;;
-payment;Principal;31/12/2024;900
-payment;Principal;31/12/2025;900
-payment;Principal;31/12/2026;900
-payment;Principal;31/12/2027;900
-payment;Principal;31/12/2028;900
-payment;Principal;31/12/2029;900
-payment;Principal;31/12/2030;900
-payment;Principal;31/12/2031;900
-payment;Principal;31/12/2032;900
-contract;4614807_210348230530000165;;31/05/2025;1M;31/05/2035;Yes;Long;4417877,36;4417877,36;03/06/2024;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;4417877,36;;;;;;;;;;;;;No;;4,088;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Comercial;FIX;EUR;053;201;111101;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;31/05/2025;401625,22
-payment;Principal;31/05/2026;401625,22
-payment;Principal;31/05/2027;401625,22
-payment;Principal;31/05/2028;401625,22
-payment;Principal;31/05/2029;401625,22
-payment;Principal;31/05/2030;401625,22
-payment;Principal;31/05/2031;401625,22
-payment;Principal;31/05/2032;401625,22
-payment;Principal;31/05/2033;401625,22
-payment;Principal;31/05/2034;401625,22
-payment;Principal;31/05/2035;401625,16
-contract;4644855_210376970500003955;;19/12/2024;1M;20/05/2025;Yes;Long;2998,41;2998,41;20/05/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;2998,41;;;;;;;;;;;;;No;;1,6;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;051;337;113141;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J04;Microempresas;;MICROEMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
-payment;Principal;19/12/2024;426,62
-payment;Principal;19/01/2025;427,08
-payment;Principal;19/02/2025;427,67
-payment;Principal;19/03/2025;428,48
-payment;Principal;19/04/2025;428,84
-payment;Principal;19/05/2025;429,47
-payment;Principal;20/05/2025;430,25
-contract;4690082_210305010500038651;;02/01/2025;1M;28/06/2028;Yes;Long;74500000;74500000;28/06/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;74500000;;;;;;;;;;;;;No;;0,27;3;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;101;113100;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
-payment;Principal;02/01/2025;0
-payment;Principal;01/04/2025;0
-payment;Principal;01/07/2025;0
-payment;Principal;01/10/2025;0
-payment;Principal;02/01/2026;0
-payment;Principal;01/04/2026;0
-payment;Principal;01/07/2026;0
-payment;Principal;01/10/2026;0
-payment;Principal;04/01/2027;0
-payment;Principal;01/04/2027;0
-payment;Principal;01/07/2027;0
-payment;Principal;01/10/2027;0
-payment;Principal;03/01/2028;0
-payment;Principal;28/06/2028;74500000
-contract;4690686_210376370500044254;;01/12/2024;1M;01/03/2027;Yes;Long;18000000;18000000;13/03/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;18000000;;;;;;;;;;;;;No;;0,75;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
-payment;Principal;01/12/2024;0
-payment;Principal;01/03/2025;4200000
-payment;Principal;01/06/2025;0
-payment;Principal;01/09/2025;0
-payment;Principal;01/12/2025;0
-payment;Principal;01/03/2026;4200000
-payment;Principal;01/06/2026;0
-payment;Principal;01/09/2026;0
-payment;Principal;01/12/2026;0
-payment;Principal;01/03/2027;9600000
-contract;4697352_210376370500056437;;04/12/2031;1M;23/01/2032;Yes;Long;8628146,13;8628146,13;04/08/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;8628146,13;;;;;;;;;;;;;No;;0,1;1;0;UG;CONFIRMING;Banca Corporativa;FIX;EUR;050;001;111000;A;04.02.01.02.00 Operaciones sin recurso;33552000009;01030102;;03;PYME - MICROEMPRESA;FICTICIA AJUSTES;FICTICIA AJUSTES;;;120;;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030102;01;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
-payment;Principal;31/12/2024;99393,21429641783
-payment;Principal;31/01/2025;99393,21429641783
-payment;Principal;28/02/2025;99393,21429641785
-payment;Principal;31/03/2025;99393,21429641783
-payment;Principal;30/04/2025;99393,21429641783
-payment;Principal;31/05/2025;99393,21429641783
-payment;Principal;30/06/2025;99393,21429641783
-payment;Principal;31/07/2025;99393,21429641785
-payment;Principal;31/08/2025;99393,21429641783
-payment;Principal;30/09/2025;99393,21429641783
-payment;Principal;31/10/2025;99393,21429641785
-payment;Principal;30/11/2025;99393,21429641783
-payment;Principal;31/12/2025;99393,21429641785
-payment;Principal;31/01/2026;99393,21429641785
-payment;Principal;28/02/2026;99393,21429641783
-payment;Principal;31/03/2026;99393,21429641785
-payment;Principal;30/04/2026;99393,21429641786
-payment;Principal;31/05/2026;99393,21429641785
-payment;Principal;30/06/2026;99393,21429641785
-payment;Principal;31/07/2026;99393,21429641785
-payment;Principal;31/08/2026;99393,21429641785
-payment;Principal;30/09/2026;99393,21429641786
-payment;Principal;31/10/2026;99393,21429641786
-payment;Principal;30/11/2026;99393,21429641785
-payment;Principal;31/12/2026;99393,21429641786
-payment;Principal;31/01/2027;99393,21429641786
-payment;Principal;28/02/2027;99393,21429641786
-payment;Principal;31/03/2027;99393,21429641788
-payment;Principal;30/04/2027;99393,21429641788
-payment;Principal;31/05/2027;99393,21429641786
-payment;Principal;30/06/2027;99393,21429641786
-payment;Principal;31/07/2027;99393,21429641788
-payment;Principal;31/08/2027;99393,21429641788
-payment;Principal;30/09/2027;99393,21429641788
-payment;Principal;31/10/2027;99393,21429641788
-payment;Principal;30/11/2027;99393,21429641786
-payment;Principal;31/12/2027;99393,21429641785
-payment;Principal;31/01/2028;99393,21429641785
-payment;Principal;29/02/2028;99393,21429641783
-payment;Principal;31/03/2028;99393,21429641782
-payment;Principal;30/04/2028;99393,2142964178
-payment;Principal;31/05/2028;99393,2142964178
-payment;Principal;30/06/2028;99393,21429641779
-payment;Principal;31/07/2028;99393,21429641776
-payment;Principal;31/08/2028;99393,21429641776
-payment;Principal;30/09/2028;99393,21429641776
-payment;Principal;31/10/2028;99393,21429641776
-payment;Principal;30/11/2028;99393,21429641776
-payment;Principal;31/12/2028;99393,21429641776
-payment;Principal;31/01/2029;99393,21429641776
-payment;Principal;28/02/2029;99393,21429641776
-payment;Principal;31/03/2029;99393,21429641776
-payment;Principal;30/04/2029;99393,21429641775
-payment;Principal;31/05/2029;99393,21429641775
-payment;Principal;30/06/2029;99393,21429641775
-payment;Principal;31/07/2029;99393,21429641775
-payment;Principal;31/08/2029;99393,21429641773
-payment;Principal;30/09/2029;99393,21429641773
-payment;Principal;31/10/2029;99393,21429641773
-payment;Principal;30/11/2029;99393,21429641772
-payment;Principal;31/12/2029;99393,21429641772
-payment;Principal;31/01/2030;99393,21429641772
-payment;Principal;28/02/2030;99393,2142964177
-payment;Principal;31/03/2030;99393,21429641769
-payment;Principal;30/04/2030;99393,21429641769
-payment;Principal;31/05/2030;99393,21429641769
-payment;Principal;30/06/2030;99393,21429641767
-payment;Principal;31/07/2030;99393,21429641765
-payment;Principal;31/08/2030;99393,21429641766
-payment;Principal;30/09/2030;99393,21429641766
-payment;Principal;31/10/2030;99393,21429641765
-payment;Principal;30/11/2030;99393,21429641765
-payment;Principal;31/12/2030;99393,21429641766
-payment;Principal;31/01/2031;99393,21429641766
-payment;Principal;28/02/2031;99393,21429641763
-payment;Principal;31/03/2031;99393,21429641766
-payment;Principal;30/04/2031;99393,21429641766
-payment;Principal;31/05/2031;99393,21429641766
-payment;Principal;30/06/2031;99393,21429641766
-payment;Principal;31/07/2031;99393,21429641767
-payment;Principal;31/08/2031;99393,21429641767
-payment;Principal;30/09/2031;99393,21429641769
-payment;Principal;31/10/2031;99393,21429641769
-payment;Principal;30/11/2031;198786,4285928354
-payment;Principal;31/12/2031;89862,35877194062
-payment;Principal;23/01/2032;89860,5287719406
-contract;4706063_21030027SW59618P;;30/01/2025;6M;30/07/2066;Yes;Short;83281892,03;83281892,03;11/01/2022;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;59618;No;;EUR;Fair value;;Other;;;;;;;BANCO BILBAO VIZCAYA ARGENTARIA, S.A.;;;;;No;;0,378;;0;TE;SWAP PAGA RF CAE;Tesoreria;FIX;EUR;987;006;;PFB;....;;;ES00000128U8_RF04;;GRANDE;;;;;;;;J;Gobierno Central;N;;P.6.1.4;Original;EUR;;;Sensible;;04;J08;Otras empresas y asociaciones sin ánimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;FAIR_VALUE_OTHER;;;FIJO;NO;NO;;;;
-payment;Principal;30/01/2025;-879829,94
-payment;Principal;30/07/2025;-874553,22
-payment;Principal;30/01/2026;-898364,09
-payment;Principal;30/07/2026;-892976,22
-payment;Principal;29/01/2027;-917288,67
-payment;Principal;30/07/2027;-911787,29
-payment;Principal;31/01/2028;-936611,91
-payment;Principal;31/07/2028;-936165,04
-payment;Principal;30/01/2029;-956396,82
-payment;Principal;30/07/2029;-950660,91
-payment;Principal;30/01/2030;-976543,89
-payment;Principal;30/07/2030;-970687,15
-payment;Principal;30/01/2031;-997115,38
-payment;Principal;30/07/2031;-991135,25
-payment;Principal;30/01/2032;-1018120,22
-payment;Principal;30/07/2032;-1017634,47
-payment;Principal;31/01/2033;-1039626,9
-payment;Principal;29/07/2033;-1033391,83
-payment;Principal;30/01/2034;-1061527,27
-payment;Principal;31/07/2034;-1055160,84
-payment;Principal;30/01/2035;-1083888,98
-payment;Principal;30/07/2035;-1077388,45
-payment;Principal;30/01/2036;-1106721,75
-payment;Principal;30/07/2036;-1106193,74
-payment;Principal;30/01/2037;-1130100,06
-payment;Principal;30/07/2037;-1123322,37
-payment;Principal;29/01/2038;-1153906,3
-payment;Principal;30/07/2038;-1146985,83
-payment;Principal;31/01/2039;-1178214,03
-payment;Principal;29/07/2039;-1171147,78
-payment;Principal;30/01/2040;-1203033,81
-payment;Principal;30/07/2040;-1202459,85
-payment;Principal;30/01/2041;-1228446,6
-payment;Principal;30/07/2041;-1221079,1
-payment;Principal;30/01/2042;-1254324,57
-payment;Principal;30/07/2042;-1246801,86
-payment;Principal;30/01/2043;-1280747,67
-payment;Principal;30/07/2043;-1273066,49
-payment;Principal;29/01/2044;-1307727,4
-payment;Principal;29/07/2044;-1307103,47
-payment;Principal;30/01/2045;-1335351,73
-payment;Principal;31/07/2045;-1327343,06
-payment;Principal;30/01/2046;-1363481,71
-payment;Principal;30/07/2046;-1355304,34
-payment;Principal;30/01/2047;-1392204,27
-payment;Principal;30/07/2047;-1383854,64
-payment;Principal;30/01/2048;-1421531,9
-payment;Principal;30/07/2048;-1420853,68
-payment;Principal;29/01/2049;-1451560,22
-payment;Principal;30/07/2049;-1442854,61
-payment;Principal;31/01/2050;-1482138,21
-payment;Principal;29/07/2050;-1473249,2
-payment;Principal;30/01/2051;-1513360,35
-payment;Principal;31/07/2051;-1504284,09
-payment;Principal;30/01/2052;-1545240,19
-payment;Principal;30/07/2052;-1544502,95
-payment;Principal;30/01/2053;-1577881,73
-payment;Principal;30/07/2053;-1568418,5
-payment;Principal;30/01/2054;-1611120,75
-payment;Principal;30/07/2054;-1601458,18
-payment;Principal;29/01/2055;-1645059,99
-payment;Principal;30/07/2055;-1635193,86
-payment;Principal;31/01/2056;-1679714,16
-payment;Principal;31/07/2056;-1678912,76
-payment;Principal;30/01/2057;-1715196,31
-payment;Principal;30/07/2057;-1704909,55
-payment;Principal;30/01/2058;-1751327,95
-payment;Principal;30/07/2058;-1740824,5
-payment;Principal;30/01/2059;-1788220,73
-payment;Principal;30/07/2059;-1777496,01
-payment;Principal;30/01/2060;-1825890,67
-payment;Principal;30/07/2060;-1825019,54
-payment;Principal;31/01/2061;-1864460,64
-payment;Principal;29/07/2061;-1853278,69
-payment;Principal;30/01/2062;-1903736,63
-payment;Principal;31/07/2062;-1892319,11
-payment;Principal;30/01/2063;-1943839,99
-payment;Principal;30/07/2063;-1932181,96
-payment;Principal;30/01/2064;-1984788,15
-payment;Principal;30/07/2064;-1983841,19
-payment;Principal;30/01/2065;-2026714,66
-payment;Principal;30/07/2065;-2014559,59
-payment;Principal;29/01/2066;-2069408,61
-contract;4769127_210376370540021676;;29/01/2025;1M;29/01/2030;Yes;Long;25000000;25000000;28/11/2019;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;25000000;;;;;;;;;;;;;No;;0,692;0;0;UG;SINDICADOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;054;001;181000;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;29/01/2025;0
-payment;Principal;29/01/2030;25000000
-contract;4778749_210380820500000833;;24/12/2024;1M;24/06/2031;Yes;Long;50000000;50000000;24/06/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;50000000;;;;;;;;;;;;;No;;0,561;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33652000005;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
-payment;Principal;24/12/2024;0
-payment;Principal;24/03/2025;0
-payment;Principal;24/06/2025;0
-payment;Principal;24/09/2025;0
-payment;Principal;24/12/2025;0
-payment;Principal;24/03/2026;0
-payment;Principal;24/06/2026;0
-payment;Principal;24/09/2026;0
-payment;Principal;24/12/2026;0
-payment;Principal;24/03/2027;0
-payment;Principal;24/06/2027;0
-payment;Principal;24/09/2027;0
-payment;Principal;24/12/2027;0
-payment;Principal;24/03/2028;0
-payment;Principal;26/06/2028;0
-payment;Principal;25/09/2028;0
-payment;Principal;27/12/2028;0
-payment;Principal;26/03/2029;0
-payment;Principal;25/06/2029;0
-payment;Principal;24/09/2029;0
-payment;Principal;24/12/2029;0
-payment;Principal;25/03/2030;0
-payment;Principal;24/06/2030;0
-payment;Principal;24/09/2030;0
-payment;Principal;24/12/2030;0
-payment;Principal;24/03/2031;0
-payment;Principal;24/06/2031;50000000
-contract;4816676_210380820500000600;;30/11/2024;1M;30/11/2027;Yes;Long;60000000;60000000;01/12/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;60000000;;;;;;;;;;;;;No;;0,42500000000000004;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;101;113100;A;04.04.05.03.00 Resto;33553000004;01030102;;03;GRANDE;;;;;110;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.4.1 Inversión crediticia;;
-payment;Principal;30/11/2024;0
-payment;Principal;28/02/2025;0
-payment;Principal;31/05/2025;0
-payment;Principal;31/08/2025;0
-payment;Principal;30/11/2025;0
-payment;Principal;28/02/2026;0
-payment;Principal;31/05/2026;0
-payment;Principal;31/08/2026;0
-payment;Principal;30/11/2026;0
-payment;Principal;28/02/2027;0
-payment;Principal;31/05/2027;0
-payment;Principal;31/08/2027;0
-payment;Principal;30/11/2027;60000000
-contract;4863014_210376370500057613;;31/07/2025;1M;31/07/2027;Yes;Long;10714285,72;10714285,72;20/11/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;10714285,72;;;;;;;;;;;;;No;;0;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;050;209;113105;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;31/07/2025;3571428,57
-payment;Principal;31/07/2026;3571428,57
-payment;Principal;31/07/2027;3571428,58
-contract;4870438_210376370500076406;;25/12/2024;1M;25/06/2026;Yes;Long;7500000;7500000;25/06/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;7500000;;;;;;;;;;;;;No;;0,8;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
-payment;Principal;25/12/2024;0
-payment;Principal;25/03/2025;0
-payment;Principal;25/06/2025;0
-payment;Principal;25/09/2025;0
-payment;Principal;25/12/2025;0
-payment;Principal;25/03/2026;0
-payment;Principal;25/06/2026;7500000
-contract;4896649_210347830530000038;;31/01/2025;1M;31/01/2025;Yes;Long;6666666,65;6666666,65;20/05/2019;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;6666666,65;;;;;;;;;;;;;No;;0,1;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;101;111100;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;31/01/2025;6666666,65
-contract;4896689_21030027SW59160P;;30/01/2025;6M;30/07/2066;Yes;Short;145859876,23;145859876,23;28/09/2021;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;59160;No;;EUR;Fair value;;Other;;;;;;;BANCO BILBAO VIZCAYA ARGENTARIA, S.A.;;;;;No;;0,3275;;0;TE;SWAP PAGA RF CAE;Tesoreria;FIX;EUR;987;006;;PFB;....;;;ES00000128U8_RF04;;GRANDE;;;;;;;;J;Gobierno Central;N;;P.6.1.4;Original;EUR;;;Sensible;;04;J08;Otras empresas y asociaciones sin ánimo de lucro;;RESTO DE EMPRESAS / SIN_ANIMO_DE_LUCRO ;FAIR_VALUE_OTHER;;;FIJO;NO;NO;;;;
-payment;Principal;30/01/2025;-1453283
-payment;Principal;30/07/2025;-1443716
-payment;Principal;30/01/2026;-1482147
-payment;Principal;30/07/2026;-1472390
-payment;Principal;29/01/2027;-1511585
-payment;Principal;30/07/2027;-1501633
-payment;Principal;31/01/2028;-1541608
-payment;Principal;31/07/2028;-1539961
-payment;Principal;30/01/2029;-1572311
-payment;Principal;30/07/2029;-1561959
-payment;Principal;30/01/2030;-1603540
-payment;Principal;30/07/2030;-1592982
-payment;Principal;30/01/2031;-1635388
-payment;Principal;30/07/2031;-1624621
-payment;Principal;30/01/2032;-1667870
-payment;Principal;30/07/2032;-1666088
-payment;Principal;31/01/2033;-1701087
-payment;Principal;29/07/2033;-1689888
-payment;Principal;30/01/2034;-1734874
-payment;Principal;31/07/2034;-1723452
-payment;Principal;30/01/2035;-1769331
-payment;Principal;30/07/2035;-1757682
-payment;Principal;30/01/2036;-1804473
-payment;Principal;30/07/2036;-1802545
-payment;Principal;30/01/2037;-1840411
-payment;Principal;30/07/2037;-1828295
-payment;Principal;29/01/2038;-1876964
-payment;Principal;30/07/2038;-1864608
-payment;Principal;31/01/2039;-1914244
-payment;Principal;29/07/2039;-1901641
-payment;Principal;30/01/2040;-1952264
-payment;Principal;30/07/2040;-1950178
-payment;Principal;30/01/2041;-1991146
-payment;Principal;30/07/2041;-1978037
-payment;Principal;30/01/2042;-2030693
-payment;Principal;30/07/2042;-2017324
-payment;Principal;30/01/2043;-2071026
-payment;Principal;30/07/2043;-2057391
-payment;Principal;29/01/2044;-2112159
-payment;Principal;29/07/2044;-2109903
-payment;Principal;30/01/2045;-2154227
-payment;Principal;31/07/2045;-2140043
-payment;Principal;30/01/2046;-2197013
-payment;Principal;30/07/2046;-2182548
-payment;Principal;30/01/2047;-2240648
-payment;Principal;30/07/2047;-2225897
-payment;Principal;30/01/2048;-2285151
-payment;Principal;30/07/2048;-2282710
-payment;Principal;29/01/2049;-2330664
-payment;Principal;30/07/2049;-2315319
-payment;Principal;31/01/2050;-2376953
-payment;Principal;29/07/2050;-2361305
-payment;Principal;30/01/2051;-2424164
-payment;Principal;31/07/2051;-2408204
-payment;Principal;30/01/2052;-2472311
-payment;Principal;30/07/2052;-2469670
-payment;Principal;30/01/2053;-2521551
-payment;Principal;30/07/2053;-2504950
-payment;Principal;30/01/2054;-2571633
-payment;Principal;30/07/2054;-2554702
-payment;Principal;29/01/2055;-2622709
-payment;Principal;30/07/2055;-2605443
-payment;Principal;31/01/2056;-2674800
-payment;Principal;31/07/2056;-2671943
-payment;Principal;30/01/2057;-2728073
-payment;Principal;30/07/2057;-2710112
-payment;Principal;30/01/2058;-2782257
-payment;Principal;30/07/2058;-2763939
-payment;Principal;30/01/2059;-2837516
-payment;Principal;30/07/2059;-2818836
-payment;Principal;30/01/2060;-2893873
-payment;Principal;30/07/2060;-2890783
-payment;Principal;31/01/2061;-2951509
-payment;Principal;29/07/2061;-2932078
-payment;Principal;30/01/2062;-3010131
-payment;Principal;31/07/2062;-2990314
-payment;Principal;30/01/2063;-3069916
-payment;Principal;30/07/2063;-3049706
-payment;Principal;30/01/2064;-3130890
-payment;Principal;30/07/2064;-3127545
-payment;Principal;30/01/2065;-3193246
-payment;Principal;30/07/2065;-3172223
-payment;Principal;29/01/2066;-3256669
-contract;512228_210343650500115850;;01/12/2024;1M;01/08/2032;Yes;Long;10813,53;10813,53;13/08/2024;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;10813,53;;;;;;;;;;;;;No;;8,95;0;0;UG;PERSONALES FINANCIACION ECONOMIA DOMESTICA;Banca Comercial;FIX;EUR;050;027;111062;A;04.02.05.04.00 Prestamos personales;33552000009;02030000;;05;;;;;;170;;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02030000;;F07;Adultos 3;50;ADULTOS_B;AMORTIZED_COST;;;FIJO;NO;NO;;;;
-payment;Principal;01/12/2024;78,19
-payment;Principal;01/01/2025;79,79
-payment;Principal;01/02/2025;80,4
-payment;Principal;01/03/2025;81,02
-payment;Principal;01/04/2025;82,64
-payment;Principal;01/05/2025;83,26
-payment;Principal;01/06/2025;84,89
-payment;Principal;01/07/2025;85,52
-payment;Principal;01/08/2025;86,16
-payment;Principal;01/09/2025;87,8
-payment;Principal;01/10/2025;86,45
-payment;Principal;01/11/2025;87,1
-payment;Principal;01/12/2025;88,76
-payment;Principal;01/01/2026;88,42
-payment;Principal;01/02/2026;89,09
-payment;Principal;01/03/2026;89,76
-payment;Principal;01/04/2026;90,44
-payment;Principal;01/05/2026;91,12
-payment;Principal;01/06/2026;91,8
-payment;Principal;01/07/2026;92,5
-payment;Principal;01/08/2026;93,19
-payment;Principal;01/09/2026;93,9
-payment;Principal;01/10/2026;94,6
-payment;Principal;01/11/2026;95,32
-payment;Principal;01/12/2026;96,04
-payment;Principal;01/01/2027;97,76
-payment;Principal;01/02/2027;98,49
-payment;Principal;01/03/2027;99,22
-payment;Principal;01/04/2027;99,96
-payment;Principal;01/05/2027;100,71
-payment;Principal;01/06/2027;101,46
-payment;Principal;01/07/2027;102,22
-payment;Principal;01/08/2027;102,98
-payment;Principal;01/09/2027;103,75
-payment;Principal;01/10/2027;104,52
-payment;Principal;01/11/2027;105,3
-payment;Principal;01/12/2027;106,09
-payment;Principal;01/01/2028;106,88
-payment;Principal;01/02/2028;107,67
-payment;Principal;01/03/2028;108,48
-payment;Principal;01/04/2028;109,29
-payment;Principal;01/05/2028;110,1
-payment;Principal;01/06/2028;110,92
-payment;Principal;01/07/2028;111,75
-payment;Principal;01/08/2028;112,58
-payment;Principal;01/09/2028;113,42
-payment;Principal;01/10/2028;114,27
-payment;Principal;01/11/2028;115,12
-payment;Principal;01/12/2028;115,98
-payment;Principal;01/01/2029;116,84
-payment;Principal;01/02/2029;117,72
-payment;Principal;01/03/2029;118,59
-payment;Principal;01/04/2029;119,48
-payment;Principal;01/05/2029;120,37
-payment;Principal;01/06/2029;121,27
-payment;Principal;01/07/2029;122,17
-payment;Principal;01/08/2029;123,08
-payment;Principal;01/09/2029;124
-payment;Principal;01/10/2029;124,93
-payment;Principal;01/11/2029;125,86
-payment;Principal;01/12/2029;126,8
-payment;Principal;01/01/2030;127,74
-payment;Principal;01/02/2030;128,69
-payment;Principal;01/03/2030;129,65
-payment;Principal;01/04/2030;130,62
-payment;Principal;01/05/2030;131,6
-payment;Principal;01/06/2030;132,58
-payment;Principal;01/07/2030;133,57
-payment;Principal;01/08/2030;134,56
-payment;Principal;01/09/2030;135,57
-payment;Principal;01/10/2030;136,58
-payment;Principal;01/11/2030;137,6
-payment;Principal;01/12/2030;138,62
-payment;Principal;01/01/2031;139,66
-payment;Principal;01/02/2031;140,7
-payment;Principal;01/03/2031;141,75
-payment;Principal;01/04/2031;142,8
-payment;Principal;01/05/2031;143,87
-payment;Principal;01/06/2031;144,94
-payment;Principal;01/07/2031;146,02
-payment;Principal;01/08/2031;147,11
-payment;Principal;01/09/2031;148,21
-payment;Principal;01/10/2031;149,32
-payment;Principal;01/11/2031;150,43
-payment;Principal;01/12/2031;151,55
-payment;Principal;01/01/2032;152,68
-payment;Principal;01/02/2032;153,82
-payment;Principal;01/03/2032;154,97
-payment;Principal;01/04/2032;156,12
-payment;Principal;01/05/2032;157,29
-payment;Principal;01/06/2032;158,46
-payment;Principal;01/07/2032;158,64
-payment;Principal;01/08/2032;159,62
-contract;514407_210371020500173235;;05/12/2024;1M;29/08/2032;Yes;Long;9853,31;9853,31;29/08/2024;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;9853,31;;;;;;;;;;;;;No;;8,5;0;0;UG;PERSONALES FINANCIACION ECONOMIA DOMESTICA;Banca Comercial;FIX;EUR;050;021;111006;A;04.02.05.04.00 Prestamos personales;33552000009;02030000;;05;;;;;;170;;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02030000;;F02;Jóvenes;25;JOVENES;AMORTIZED_COST;;;FIJO;NO;NO;;;;
-payment;Principal;05/12/2024;74,13
-payment;Principal;05/01/2025;74,65
-payment;Principal;05/02/2025;75,18
-payment;Principal;05/03/2025;75,71
-payment;Principal;05/04/2025;76,25
-payment;Principal;05/05/2025;76,79
-payment;Principal;05/06/2025;77,33
-payment;Principal;05/07/2025;77,88
-payment;Principal;05/08/2025;78,43
-payment;Principal;05/09/2025;78,99
-payment;Principal;05/10/2025;79,55
-payment;Principal;05/11/2025;80,11
-payment;Principal;05/12/2025;80,68
-payment;Principal;05/01/2026;81,25
-payment;Principal;05/02/2026;81,82
-payment;Principal;05/03/2026;82,4
-payment;Principal;05/04/2026;82,99
-payment;Principal;05/05/2026;83,58
-payment;Principal;05/06/2026;84,17
-payment;Principal;05/07/2026;84,76
-payment;Principal;05/08/2026;85,36
-payment;Principal;05/09/2026;85,97
-payment;Principal;05/10/2026;86,58
-payment;Principal;05/11/2026;87,19
-payment;Principal;05/12/2026;87,81
-payment;Principal;05/01/2027;88,43
-payment;Principal;05/02/2027;89,06
-payment;Principal;05/03/2027;89,69
-payment;Principal;05/04/2027;90,32
-payment;Principal;05/05/2027;90,96
-payment;Principal;05/06/2027;91,61
-payment;Principal;05/07/2027;92,26
-payment;Principal;05/08/2027;92,91
-payment;Principal;05/09/2027;93,57
-payment;Principal;05/10/2027;94,23
-payment;Principal;05/11/2027;94,9
-payment;Principal;05/12/2027;95,57
-payment;Principal;05/01/2028;96,25
-payment;Principal;05/02/2028;96,93
-payment;Principal;05/03/2028;97,62
-payment;Principal;05/04/2028;98,31
-payment;Principal;05/05/2028;99
-payment;Principal;05/06/2028;99,7
-payment;Principal;05/07/2028;100,41
-payment;Principal;05/08/2028;101,12
-payment;Principal;05/09/2028;101,84
-payment;Principal;05/10/2028;102,56
-payment;Principal;05/11/2028;103,29
-payment;Principal;05/12/2028;104,02
-payment;Principal;05/01/2029;104,75
-payment;Principal;05/02/2029;105,5
-payment;Principal;05/03/2029;106,24
-payment;Principal;05/04/2029;107
-payment;Principal;05/05/2029;107,75
-payment;Principal;05/06/2029;108,52
-payment;Principal;05/07/2029;109,29
-payment;Principal;05/08/2029;110,06
-payment;Principal;05/09/2029;110,84
-payment;Principal;05/10/2029;111,63
-payment;Principal;05/11/2029;112,42
-payment;Principal;05/12/2029;113,21
-payment;Principal;05/01/2030;114,01
-payment;Principal;05/02/2030;114,82
-payment;Principal;05/03/2030;115,64
-payment;Principal;05/04/2030;116,45
-payment;Principal;05/05/2030;117,28
-payment;Principal;05/06/2030;118,11
-payment;Principal;05/07/2030;118,95
-payment;Principal;05/08/2030;119,79
-payment;Principal;05/09/2030;120,64
-payment;Principal;05/10/2030;121,49
-payment;Principal;05/11/2030;122,35
-payment;Principal;05/12/2030;123,22
-payment;Principal;05/01/2031;124,09
-payment;Principal;05/02/2031;124,97
-payment;Principal;05/03/2031;125,86
-payment;Principal;05/04/2031;126,75
-payment;Principal;05/05/2031;127,65
-payment;Principal;05/06/2031;128,55
-payment;Principal;05/07/2031;129,46
-payment;Principal;05/08/2031;130,38
-payment;Principal;05/09/2031;131,3
-payment;Principal;05/10/2031;132,23
-payment;Principal;05/11/2031;133,17
-payment;Principal;05/12/2031;134,11
-payment;Principal;05/01/2032;135,06
-payment;Principal;05/02/2032;136,02
-payment;Principal;05/03/2032;136,98
-payment;Principal;05/04/2032;137,95
-payment;Principal;05/05/2032;138,93
-payment;Principal;05/06/2032;139,91
-payment;Principal;05/07/2032;140,9
-payment;Principal;05/08/2032;141,9
-payment;Principal;29/08/2032;143,06
-contract;551377_210302680520000083;;31/12/2025;1M;31/12/2034;Yes;Long;14100;14100;06/10/2009;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;14100;;;;;;;;;;;;;No;;0;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;052;023;113121;A;04.02.05.04.00 Prestamos personales;35553000000;02030000;;05;;;;;;170;170;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02030000;;F07;Adultos 3;49;ADULTOS_B;AMORTIZED_COST;;;FIJO;NO;NO;;;;
-payment;Principal;31/12/2025;1410
-payment;Principal;31/12/2026;1410
-payment;Principal;31/12/2027;1410
-payment;Principal;31/12/2028;1410
-payment;Principal;31/12/2029;1410
-payment;Principal;31/12/2030;1410
-payment;Principal;31/12/2031;1410
-payment;Principal;31/12/2032;1410
-payment;Principal;31/12/2033;1410
-payment;Principal;31/12/2034;1410
-contract;607770_210371660500042950;;04/12/2024;1M;04/11/2030;Yes;Long;10000;10000;22/11/2024;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;10000;;;;;;;;;;;;;No;;6,49;0;0;UG;PERSONALES FINANCIACION ECONOMIA DOMESTICA;Banca Comercial;FIX;EUR;050;027;111062;A;04.02.05.04.00 Prestamos personales;33552000009;02030000;;05;;;;;;170;170;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02030000;;F05;Adultos 2A;44;ADULTOS_A;AMORTIZED_COST;;;FIJO;NO;NO;;;;
-payment;Principal;04/12/2024;113,96
-payment;Principal;04/01/2025;114,58
-payment;Principal;04/02/2025;115,2
-payment;Principal;04/03/2025;115,83
-payment;Principal;04/04/2025;116,45
-payment;Principal;04/05/2025;117,08
-payment;Principal;04/06/2025;117,72
-payment;Principal;04/07/2025;118,35
-payment;Principal;04/08/2025;118,99
-payment;Principal;04/09/2025;119,64
-payment;Principal;04/10/2025;120,28
-payment;Principal;04/11/2025;120,93
-payment;Principal;04/12/2025;121,59
-payment;Principal;04/01/2026;122,24
-payment;Principal;04/02/2026;122,91
-payment;Principal;04/03/2026;123,57
-payment;Principal;04/04/2026;124,24
-payment;Principal;04/05/2026;124,91
-payment;Principal;04/06/2026;125,59
-payment;Principal;04/07/2026;126,27
-payment;Principal;04/08/2026;126,95
-payment;Principal;04/09/2026;127,64
-payment;Principal;04/10/2026;128,33
-payment;Principal;04/11/2026;129,02
-payment;Principal;04/12/2026;129,72
-payment;Principal;04/01/2027;130,42
-payment;Principal;04/02/2027;131,12
-payment;Principal;04/03/2027;131,83
-payment;Principal;04/04/2027;132,55
-payment;Principal;04/05/2027;133,26
-payment;Principal;04/06/2027;133,98
-payment;Principal;04/07/2027;134,71
-payment;Principal;04/08/2027;135,44
-payment;Principal;04/09/2027;136,17
-payment;Principal;04/10/2027;136,91
-payment;Principal;04/11/2027;137,65
-payment;Principal;04/12/2027;138,39
-payment;Principal;04/01/2028;139,14
-payment;Principal;04/02/2028;139,89
-payment;Principal;04/03/2028;140,65
-payment;Principal;04/04/2028;141,41
-payment;Principal;04/05/2028;142,17
-payment;Principal;04/06/2028;142,94
-payment;Principal;04/07/2028;143,72
-payment;Principal;04/08/2028;144,49
-payment;Principal;04/09/2028;145,27
-payment;Principal;04/10/2028;146,06
-payment;Principal;04/11/2028;146,85
-payment;Principal;04/12/2028;147,64
-payment;Principal;04/01/2029;148,44
-payment;Principal;04/02/2029;149,25
-payment;Principal;04/03/2029;150,05
-payment;Principal;04/04/2029;150,86
-payment;Principal;04/05/2029;151,68
-payment;Principal;04/06/2029;152,5
-payment;Principal;04/07/2029;153,33
-payment;Principal;04/08/2029;154,15
-payment;Principal;04/09/2029;154,99
-payment;Principal;04/10/2029;155,83
-payment;Principal;04/11/2029;156,67
-payment;Principal;04/12/2029;157,52
-payment;Principal;04/01/2030;158,37
-payment;Principal;04/02/2030;159,23
-payment;Principal;04/03/2030;160,09
-payment;Principal;04/04/2030;160,95
-payment;Principal;04/05/2030;161,82
-payment;Principal;04/06/2030;162,7
-payment;Principal;04/07/2030;163,58
-payment;Principal;04/08/2030;164,46
-payment;Principal;04/09/2030;165,35
-payment;Principal;04/10/2030;166,25
-payment;Principal;04/11/2030;167,28
-contract;612460_210301770510003798;;18/12/2024;1M;17/06/2025;Yes;Long;4220,89;4220,89;18/06/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;4220,89;;;;;;;;;;;;;No;;1,95;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;051;337;113141;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J04;Microempresas;;MICROEMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
-payment;Principal;18/12/2024;600,11
-payment;Principal;18/01/2025;600,87
-payment;Principal;18/02/2025;601,87
-payment;Principal;18/03/2025;603,25
-payment;Principal;18/04/2025;603,86
-payment;Principal;18/05/2025;604,93
-payment;Principal;17/06/2025;606
-contract;71883_210374020530000158;;30/11/2024;1M;30/11/2031;Yes;Long;6643072,97;6643072,97;30/11/2017;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;6643072,97;;;;;;;;;;;;;No;;1,48;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;201;111101;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;30/11/2024;729664,21
-payment;Principal;30/11/2025;906584,83
-payment;Principal;30/11/2026;906584,83
-payment;Principal;30/11/2027;906584,83
-payment;Principal;30/11/2028;906584,83
-payment;Principal;30/11/2029;906584,83
-payment;Principal;30/11/2030;906584,83
-payment;Principal;30/11/2031;473899,78
-contract;781742_210374030530000102;;25/10/2036;1M;25/10/2036;Yes;Long;1961538,48;1961538,48;25/10/2021;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;1961538,48;;;;;;;;;;;;;No;;4,469;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Comercial;FIX;EUR;053;201;111101;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;25/10/2036;1961538,48
-contract;787180_210380820530000251;;15/06/2025;1M;15/06/2027;Yes;Long;1000000,05;1000000,05;30/07/2024;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;1000000,05;;;;;;;;;;;;;No;;3,39;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Comercial;FIX;EUR;053;201;111101;A;04.01.03.00.00 Administraciones Locales;33551110006;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;15/06/2025;333333,35
-payment;Principal;15/06/2026;333333,35
-payment;Principal;15/06/2027;333333,35
-contract;81905_210374080500005695;;30/03/2025;1M;30/03/2039;Yes;Long;5967950;5967950;30/06/2021;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;5967950;;;;;;;;;;;;;No;;2,4;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Empresas;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - MICROEMPRESA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;01;J04;Microempresas;;MICROEMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
-payment;Principal;30/03/2025;207840
-payment;Principal;30/09/2025;207320
-payment;Principal;30/03/2026;212510
-payment;Principal;30/09/2026;208930
-payment;Principal;30/03/2027;212650
-payment;Principal;30/09/2027;208080
-payment;Principal;30/03/2028;211580
-payment;Principal;30/09/2028;208790
-payment;Principal;30/03/2029;211570
-payment;Principal;30/09/2029;208780
-payment;Principal;30/03/2030;212140
-payment;Principal;30/09/2030;204970
-payment;Principal;30/03/2031;209170
-payment;Principal;30/09/2031;205670
-payment;Principal;30/03/2032;209660
-payment;Principal;30/09/2032;205460
-payment;Principal;30/03/2033;207890
-payment;Principal;30/09/2033;205340
-payment;Principal;30/03/2034;209910
-payment;Principal;30/09/2034;206800
-payment;Principal;30/03/2035;210900
-payment;Principal;30/09/2035;206150
-payment;Principal;30/03/2036;210860
-payment;Principal;30/09/2036;208190
-payment;Principal;30/03/2037;210330
-payment;Principal;30/09/2037;201590
-payment;Principal;30/03/2038;203340
-payment;Principal;30/09/2038;200280
-payment;Principal;30/03/2039;141250
-contract;823182_210370070500110665;;29/12/2024;1M;29/06/2027;Yes;Long;68429,6;68429,6;04/07/2017;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;68429,6;;;;;;;;;;;;;No;;1,6;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;PYME - PEQUEÑA;;;;;120;130;;J;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;02;J03;Pequeñas empresas;;PEQUEÑAS EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.1.1 Inversión crediticia;;
-payment;Principal;29/12/2024;17107,4
-payment;Principal;29/03/2025;0
-payment;Principal;29/06/2025;0
-payment;Principal;29/09/2025;0
-payment;Principal;29/12/2025;17107,4
-payment;Principal;29/03/2026;0
-payment;Principal;29/06/2026;0
-payment;Principal;29/09/2026;0
-payment;Principal;29/12/2026;17107,4
-payment;Principal;29/03/2027;0
-payment;Principal;29/06/2027;17107,4
-contract;861710_210302380510011722;;10/12/2024;1M;04/12/2025;Yes;Long;2789,95;2789,95;10/12/2020;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;2789,95;;;;;;;;;;;;;No;;2,0500000000000003;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;051;341;113144;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;;;;;;170;;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;;F06;Adultos 2B;60;ADULTOS_B;AMORTIZED_COST;;;FIJO;NO;NO;;;;
-payment;Principal;10/12/2024;212,47
-payment;Principal;10/01/2025;212,68
-payment;Principal;10/02/2025;213,05
-payment;Principal;10/03/2025;213,79
-payment;Principal;10/04/2025;213,8
-payment;Principal;10/05/2025;214,26
-payment;Principal;10/06/2025;214,54
-payment;Principal;10/07/2025;214,99
-payment;Principal;10/08/2025;215,29
-payment;Principal;10/09/2025;215,66
-payment;Principal;10/10/2025;216,08
-payment;Principal;10/11/2025;216,42
-payment;Principal;04/12/2025;216,92
-contract;884922_210320870520000236;;31/12/2024;1M;31/12/2031;Yes;Long;3866,84;3866,84;05/04/2010;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;3866,84;;;;;;;;;;;;;No;;0;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;052;023;113121;A;04.02.05.04.00 Prestamos personales;35553000000;02030000;;05;;;;;;170;170;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02030000;;F05;Adultos 2A;37;ADULTOS_A;AMORTIZED_COST;;;FIJO;NO;NO;;;;
-payment;Principal;31/12/2024;483,35
-payment;Principal;31/12/2025;483,35
-payment;Principal;31/12/2026;483,35
-payment;Principal;31/12/2027;483,35
-payment;Principal;31/12/2028;483,35
-payment;Principal;31/12/2029;483,39
-payment;Principal;31/12/2030;483,35
-payment;Principal;31/12/2031;483,35
-contract;895059_210305510520000280;;31/12/2025;1M;31/12/2034;Yes;Long;4600;4600;11/05/2011;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;4600;;;;;;;;;;;;;No;;0;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;052;023;113121;A;04.02.05.04.00 Prestamos personales;35553000000;02030000;;05;;;;;;170;170;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02030000;;F07;Adultos 3;46;ADULTOS_B;AMORTIZED_COST;;;FIJO;NO;NO;;;;
-payment;Principal;31/12/2025;460
-payment;Principal;31/12/2026;460
-payment;Principal;31/12/2027;460
-payment;Principal;31/12/2028;460
-payment;Principal;31/12/2029;460
-payment;Principal;31/12/2030;460
-payment;Principal;31/12/2031;460
-payment;Principal;31/12/2032;460
-payment;Principal;31/12/2033;460
-payment;Principal;31/12/2034;460
-contract;929178_210371000500060689;;01/12/2024;1M;28/04/2025;Yes;Long;2684,61;2684,61;28/04/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;2684,61;;;;;;;;;;;;;No;;1,5;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Comercial;FIX;EUR;051;337;113141;A;04.02.05.04.00 Prestamos personales;33552000009;01030202;;02;;;;;;170;;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;01030202;;F04;Adultos 1B;52;ADULTOS_B;AMORTIZED_COST;;;FIJO;NO;NO;;;;
-payment;Principal;01/12/2024;446,1
-payment;Principal;01/01/2025;446,57
-payment;Principal;01/02/2025;447,15
-payment;Principal;01/03/2025;447,89
-payment;Principal;01/04/2025;448,3
-payment;Principal;28/04/2025;448,6
-contract;941786_210305010500032540;;24/07/2025;1M;24/07/2026;Yes;Long;3333333,31;3333333,31;24/07/2017;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;3333333,31;;;;;;;;;;;;;No;;0,7000000000000001;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33652000005;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
-payment;Principal;24/07/2025;1666666,67
-payment;Principal;24/07/2026;1666666,64
-contract;977988_210376370500008463;;30/12/2024;1M;30/06/2029;Yes;Long;9090909,08;9090909,08;29/05/2017;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;9090909,08;;;;;;;;;;;;;No;;2,069;0;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33652000005;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
-payment;Principal;30/12/2024;909090,91
-payment;Principal;30/06/2025;909090,91
-payment;Principal;30/12/2025;909090,91
-payment;Principal;30/06/2026;909090,91
-payment;Principal;30/12/2026;909090,91
-payment;Principal;30/06/2027;909090,91
-payment;Principal;30/12/2027;909090,91
-payment;Principal;30/06/2028;909090,91
-payment;Principal;30/12/2028;909090,91
-payment;Principal;30/06/2029;909090,89
-contract;982465_210342090500113264;;07/12/2024;1M;13/06/2028;Yes;Long;2740,09;2740,09;13/06/2024;30E/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;2740,09;;;;;;;;;;;;;No;;9,85;0;0;UG;PERSONALES FINANCIACION ECONOMIA DOMESTICA;Banca Comercial;FIX;EUR;050;011;111065;A;04.02.05.04.00 Prestamos personales;33552000009;02030000;;05;;;;;;170;170;;F;;N;N;A.2.2;Original;EUR;Activo general;;Sensible;02030000;;F07;Adultos 3;45;ADULTOS_B;AMORTIZED_COST;;;FIJO;NO;NO;;;;
-payment;Principal;07/12/2024;53,7
-payment;Principal;07/01/2025;53,41
-payment;Principal;07/02/2025;53,85
-payment;Principal;07/03/2025;56,39
-payment;Principal;07/04/2025;54,78
-payment;Principal;07/05/2025;55,9
-payment;Principal;07/06/2025;55,7
-payment;Principal;07/07/2025;56,8
-payment;Principal;07/08/2025;56,64
-payment;Principal;07/09/2025;57,12
-payment;Principal;07/10/2025;58,18
-payment;Principal;07/11/2025;58,08
-payment;Principal;07/12/2025;59,13
-payment;Principal;07/01/2026;59,06
-payment;Principal;07/02/2026;59,56
-payment;Principal;07/03/2026;61,59
-payment;Principal;07/04/2026;60,57
-payment;Principal;07/05/2026;61,55
-payment;Principal;07/06/2026;61,59
-payment;Principal;07/07/2026;62,55
-payment;Principal;07/08/2026;62,63
-payment;Principal;07/09/2026;63,15
-payment;Principal;07/10/2026;64,07
-payment;Principal;07/11/2026;64,22
-payment;Principal;07/12/2026;65,11
-payment;Principal;07/01/2027;65,3
-payment;Principal;07/02/2027;65,85
-payment;Principal;07/03/2027;67,31
-payment;Principal;07/04/2027;66,96
-payment;Principal;07/05/2027;67,79
-payment;Principal;07/06/2027;68,09
-payment;Principal;07/07/2027;68,89
-payment;Principal;07/08/2027;69,23
-payment;Principal;07/09/2027;69,81
-payment;Principal;07/10/2027;70,57
-payment;Principal;07/11/2027;70,99
-payment;Principal;07/12/2027;71,72
-payment;Principal;07/01/2028;72,18
-payment;Principal;07/02/2028;72,78
-payment;Principal;07/03/2028;73,55
-payment;Principal;07/04/2028;74,01
-payment;Principal;07/05/2028;74,67
-payment;Principal;13/06/2028;75,06
-contract;987461_210305010530000689;;31/07/2025;1M;31/07/2027;Yes;Long;15000000;15000000;25/04/2022;Actual/Actual ISDA;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;15000000;;;;;;;;;;;;;No;;0,5499999999999999;0;0;UG;OTROS PRESTAMOS SECTOR PUBLICO;Banca Empresas;FIX;EUR;053;101;111100;A;04.01.02.00.00 Administraciones Autonomicas;33651100000;03000000;;00;GRANDE;;;;;090;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;;04;J06;Organismos Públicos;;SECTOR_PUBLICO;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.2.1 Inversión crediticia;;
-payment;Principal;31/07/2025;5000000
-payment;Principal;31/07/2026;5000000
-payment;Principal;31/07/2027;5000000
-contract;999611_210376370500063429;;31/12/2024;1M;31/12/2038;Yes;Long;20669250;20669250;31/12/2020;Actual/360;;;;;No Adjustment;EURIBOR_SWAP;;;No;;EUR;Amortized cost;20669250;;;;;;;;;;;;;No;;2,75;1;0;UG;PERSONALES FINANCIACION EMPRESAS;Banca Corporativa;FIX;EUR;050;209;113105;A;04.02.05.04.00 Prestamos personales;33552000009;01030102;;03;GRANDE;;;;;120;;;J;;N;N;A.2.2;Original;EUR;Prestamo fijo mayorista;;Sensible;01030102;04;J01;Grandes empresas;;GRANDES EMPRESAS;AMORTIZED_COST;;;FIJO;NO;NO;;1.8.2.5.2.1 Inversión crediticia;;
-payment;Principal;31/12/2024;249500
-payment;Principal;31/03/2025;275750
-payment;Principal;30/06/2025;483500
-payment;Principal;30/09/2025;439750
-payment;Principal;31/12/2025;219250
-payment;Principal;31/03/2026;259000
-payment;Principal;30/06/2026;454250
-payment;Principal;30/09/2026;431000
-payment;Principal;31/12/2026;214750
-payment;Principal;31/03/2027;261000
-payment;Principal;30/06/2027;458000
-payment;Principal;30/09/2027;437000
-payment;Principal;31/12/2027;217750
-payment;Principal;31/03/2028;263250
-payment;Principal;30/06/2028;461750
-payment;Principal;30/09/2028;443000
-payment;Principal;31/12/2028;220750
-payment;Principal;31/03/2029;267250
-payment;Principal;30/06/2029;468750
-payment;Principal;30/09/2029;449500
-payment;Principal;31/12/2029;224000
-payment;Principal;31/03/2030;270500
-payment;Principal;30/06/2030;474500
-payment;Principal;30/09/2030;455750
-payment;Principal;31/12/2030;227250
-payment;Principal;31/03/2031;273750
-payment;Principal;30/06/2031;480250
-payment;Principal;30/09/2031;462500
-payment;Principal;31/12/2031;230500
-payment;Principal;31/03/2032;276250
-payment;Principal;30/06/2032;484750
-payment;Principal;30/09/2032;469000
-payment;Principal;31/12/2032;233750
-payment;Principal;31/03/2033;280500
-payment;Principal;30/06/2033;492000
-payment;Principal;30/09/2033;476000
-payment;Principal;31/12/2033;237250
-payment;Principal;31/03/2034;284000
-payment;Principal;30/06/2034;498250
-payment;Principal;30/09/2034;482750
-payment;Principal;31/12/2034;240750
-payment;Principal;31/03/2035;287750
-payment;Principal;30/06/2035;504500
-payment;Principal;30/09/2035;490000
-payment;Principal;31/12/2035;244250
-payment;Principal;31/03/2036;280250
-payment;Principal;30/06/2036;491500
-payment;Principal;30/09/2036;475750
-payment;Principal;31/12/2036;237250
-payment;Principal;31/03/2037;293750
-payment;Principal;30/06/2037;515250
-payment;Principal;30/09/2037;504000
-payment;Principal;31/12/2037;251250
-payment;Principal;31/03/2038;301000
-payment;Principal;30/06/2038;528000
-payment;Principal;30/09/2038;491000
-payment;Principal;31/12/2038;244750

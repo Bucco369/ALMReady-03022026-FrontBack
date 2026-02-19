@@ -258,6 +258,40 @@ export type CalculateRequest = {
   risk_free_index?: string;
 };
 
+export type WhatIfModificationRequest = {
+  id: string;
+  type: 'add' | 'remove';
+  label: string;
+  notional?: number;
+  currency?: string;
+  category?: string;
+  subcategory?: string;
+  rate?: number;
+  maturity?: number;
+  removeMode?: string;
+  contractIds?: string[];
+  productTemplateId?: string;
+  startDate?: string;
+  maturityDate?: string;
+  paymentFreq?: string;
+  repricingFreq?: string;
+  refIndex?: string;
+  spread?: number;
+};
+
+export type WhatIfCalculateRequestBody = {
+  modifications: WhatIfModificationRequest[];
+};
+
+export type WhatIfResultsResponse = {
+  session_id: string;
+  base_eve_delta: number;
+  worst_eve_delta: number;
+  base_nii_delta: number;
+  worst_nii_delta: number;
+  calculated_at: string;
+};
+
 export type ScenarioResultItem = {
   scenario_id: string;
   scenario_name: string;
@@ -324,6 +358,19 @@ export async function uploadBalanceZip(
     fd,
     onProgress,
     onBytesSent
+  );
+}
+
+export type UploadProgressResponse = {
+  phase: "idle" | "parsing" | "persisting" | "canonicalizing";
+  step: number;
+  total: number;
+  pct: number;
+};
+
+export async function getUploadProgress(sessionId: string): Promise<UploadProgressResponse> {
+  return http<UploadProgressResponse>(
+    `/api/sessions/${encodeURIComponent(sessionId)}/upload-progress`
   );
 }
 
@@ -417,5 +464,19 @@ export async function getCalculationResults(
 ): Promise<CalculationResultsResponse> {
   return http<CalculationResultsResponse>(
     `/api/sessions/${encodeURIComponent(sessionId)}/results`
+  );
+}
+
+export async function calculateWhatIf(
+  sessionId: string,
+  request: WhatIfCalculateRequestBody,
+): Promise<WhatIfResultsResponse> {
+  return http<WhatIfResultsResponse>(
+    `/api/sessions/${encodeURIComponent(sessionId)}/calculate/whatif`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    }
   );
 }

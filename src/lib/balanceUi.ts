@@ -27,6 +27,10 @@ import type {
   BalanceTreeCategory,
   BalanceTreeNode,
 } from "@/lib/api";
+import {
+  ASSET_SUBCATEGORY_ORDER,
+  LIABILITY_SUBCATEGORY_ORDER,
+} from "@/config/balanceSchema";
 
 export type BalanceUiCategory = "asset" | "liability";
 
@@ -65,22 +69,6 @@ export interface BalanceUiTree {
   assets: BalanceCategoryUiTree;
   liabilities: BalanceCategoryUiTree;
 }
-
-const ASSET_SUBCATEGORY_ORDER = [
-  "mortgages",
-  "loans",
-  "securities",
-  "interbank",
-  "other-assets",
-];
-
-const LIABILITY_SUBCATEGORY_ORDER = [
-  "deposits",
-  "term-deposits",
-  "wholesale-funding",
-  "debt-issued",
-  "other-liabilities",
-];
 
 function normalizeId(input: string): string {
   const ascii = input.normalize("NFD").replace(/[\u0300-\u036f]/g, "");

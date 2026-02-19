@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import pandas as pd
 
@@ -35,6 +35,7 @@ def load_positions_from_specs(
     mapping_module: Any,
     *,
     source_specs: Sequence[Mapping[str, Any]] | None = None,
+    on_progress: Callable[[int, int], None] | None = None,
 ) -> pd.DataFrame:
     """
     Loads and canonicalises positions from multiple files using declarative SOURCE_SPECS.
@@ -65,6 +66,7 @@ def load_positions_from_specs(
         raise ValueError("SOURCE_SPECS vacio: define al menos una fuente.")
 
     frames: list[pd.DataFrame] = []
+    total_specs = len(specs)
 
     for idx, raw_spec in enumerate(specs, start=1):
         if not isinstance(raw_spec, Mapping):
@@ -125,6 +127,9 @@ def load_positions_from_specs(
                     df["source_contract_type"] = raw_spec.get("source_contract_type")
 
                 frames.append(df)
+
+        if on_progress:
+            on_progress(idx, total_specs)
 
     if not frames:
         raise ValueError("No se cargaron posiciones con SOURCE_SPECS.")

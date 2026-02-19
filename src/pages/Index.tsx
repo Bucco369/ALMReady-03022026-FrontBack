@@ -35,7 +35,7 @@ import { runCalculation } from '@/lib/calculationEngine';
 import type { Position, YieldCurve, Scenario, CalculationResults } from '@/types/financial';
 import { DEFAULT_SCENARIOS, SAMPLE_YIELD_CURVE } from '@/types/financial';
 import { Button } from '@/components/ui/button';
-import { Calculator, TrendingUp } from 'lucide-react';
+import { Calculator } from 'lucide-react';
 
 const Index = () => {
   // ─── Top-level application state ───────────────────────────────────────
@@ -149,11 +149,9 @@ const Index = () => {
         <header className="shrink-0 bg-white/70 backdrop-blur-xl border-b border-border/50 sticky top-0 z-50">
           <div className="flex items-center justify-between px-5 py-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary shadow-sm">
-                <TrendingUp className="h-4 w-4 text-primary-foreground" />
-              </div>
+              <img src="/logo.svg" alt="ALMReady" className="h-8 w-8" />
               <div>
-                <h1 className="text-sm font-semibold text-foreground leading-tight tracking-tight">EVE/NII Calculator</h1>
+                <h1 className="text-sm font-semibold text-foreground leading-tight tracking-tight">ALMReady</h1>
                 <p className="text-[11px] text-muted-foreground leading-tight">IRRBB Analysis Dashboard</p>
               </div>
             </div>
@@ -206,6 +204,8 @@ const Index = () => {
                 results={results}
                 isCalculating={isCalculating}
                 calcProgress={calcProgress}
+                sessionId={sessionId}
+                scenarios={scenarios}
               />
             </div>
           </div>

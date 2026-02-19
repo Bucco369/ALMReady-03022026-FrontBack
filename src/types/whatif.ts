@@ -9,18 +9,12 @@
  * These modifications live in WhatIfContext (frontend state only) and are
  * displayed as green/red overlays in the BalancePositionsCard.
  *
- * === CURRENT LIMITATION ===
- * Modifications are NOT sent to the backend for calculation. ResultsCard
- * uses HARDCODED mock impact values (+12.5M EVE, -2.1M NII, etc.) when
- * hasModifications is true. Phase 1 will send modifications to the backend
- * as part of the /calculate request, and the backend will apply them as
- * overlays on the canonical positions before running the engine.
- *
- * === FUTURE: WHAT-IF INSTANTÁNEO ===
- * Phase 2 aims for instantaneous What-If by caching per-contract EVE/NII
- * contributions from the base run. Removes = subtract contributions.
- * Adds = mini-run only for new positions. This requires the engine to
- * output granular contributions, not just totals.
+ * === BACKEND INTEGRATION ===
+ * When the user clicks "Apply to Analysis", ResultsCard sends the modifications
+ * to POST /api/sessions/{id}/calculate/whatif. The backend converts 'add'
+ * modifications to synthetic motor positions (via productTemplateId mapping)
+ * and 'remove' modifications to extracted existing positions, then runs
+ * EVE/NII on just the delta to compute impact values.
  */
 
 export interface WhatIfModification {
@@ -37,6 +31,14 @@ export interface WhatIfModification {
   positionDelta?: number;         // For remove_all: count of positions removed
   removeMode?: 'all' | 'contracts';  // Remove entire subcategory vs specific contracts
   contractIds?: string[];         // Specific contract_ids to remove
+  // Motor-specific fields for backend EVE/NII calculation (Phase 2)
+  productTemplateId?: string;     // e.g. 'fixed-loan', 'floating-loan'
+  startDate?: string;             // ISO date for start
+  maturityDate?: string;          // ISO date for maturity
+  paymentFreq?: string;           // 'Monthly'|'Quarterly'|'Semi-Annual'|'Annual'
+  repricingFreq?: string;         // For floating products
+  refIndex?: string;              // Reference index for floating (e.g. 'EURIBOR 3M')
+  spread?: number;                // Spread in bps for floating products
 }
 
 export interface ProductTemplate {
