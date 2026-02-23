@@ -6,11 +6,14 @@ Startup: uvicorn app.main:app --reload
 
 from __future__ import annotations
 
+import json
 import logging
 import os
+import shutil
 import time
 from concurrent.futures import ProcessPoolExecutor, wait as _cf_wait
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,10 +30,37 @@ logging.basicConfig(
 _log = logging.getLogger("almready")
 
 
+def _cleanup_old_sessions(max_age_days: int = 7) -> None:
+    """Remove session directories older than *max_age_days* from disk."""
+    cutoff = datetime.now(timezone.utc) - timedelta(days=max_age_days)
+    purged = 0
+    for entry in state.SESSIONS_DIR.iterdir():
+        if not entry.is_dir():
+            continue
+        meta_path = entry / "meta.json"
+        try:
+            if meta_path.exists():
+                created = datetime.fromisoformat(
+                    json.loads(meta_path.read_text(encoding="utf-8"))["created_at"]
+                )
+                if created.tzinfo is None:
+                    created = created.replace(tzinfo=timezone.utc)
+                if created >= cutoff:
+                    continue
+            shutil.rmtree(entry)
+            purged += 1
+        except Exception:
+            _log.debug("Skipping cleanup of %s", entry.name, exc_info=True)
+    if purged:
+        _log.info("Purged %d session(s) older than %d days", purged, max_age_days)
+
+
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
-    """Pre-warm the process pool before accepting requests."""
+    """Startup: purge stale sessions, pre-warm process pool."""
     import almready.workers as _workers
+
+    _cleanup_old_sessions()
 
     n_workers = os.cpu_count() or 1
     state._executor = ProcessPoolExecutor(max_workers=n_workers)
