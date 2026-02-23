@@ -1,5 +1,12 @@
-# Logs
-logs
+# ── Dependencies ──
+node_modules/
+
+# ── Build output ──
+dist/
+dist-ssr/
+
+# ── Logs ──
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,28 +14,40 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# ── Environment / secrets ──
 *.local
+.env
+.env.*
 
-# Editor directories and files
+# ── Editor / IDE ──
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-# --- Local Python / caches / runtime data ---
-backend/.venv/
-backend/app/__pycache__/
-backend/data/
+# ── macOS ──
+.DS_Store
+**/.DS_Store
+
+# ── Python ──
 **/__pycache__/
 *.pyc
 *.pyo
-.DS_Store
+.pytest_cache/
+backend/.venv/
+
+# ── Backend runtime data (sessions, uploads, caches) ──
+backend/data/
+
+# ── Test artifacts (generated PNGs, CSVs) ──
+backend/almready/tests/out/
+
+# ── Test fixture ZIPs (too large to track) ──
+backend/almready/tests/fixtures/positions/*.zip
+
+# ── Claude Code ──
 .claude/
