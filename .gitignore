@@ -44,10 +44,10 @@ backend/.venv/
 backend/data/
 
 # ── Test artifacts (generated PNGs, CSVs) ──
-tests/out/
+**/tests/out/
 
 # ── Test fixture ZIPs (too large to track) ──
-tests/fixtures/positions/*.zip
+**/tests/fixtures/**/*.zip
 
 # ── Claude Code ──
 .claude/

@@ -7,6 +7,7 @@ import sys
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]   # backend/
 _REPO_ROOT = _PROJECT_ROOT.parent                     # repository root
+_DATA_ROOT = _REPO_ROOT.parent / "data"               # ../data/ (sibling of repo)
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
@@ -27,7 +28,7 @@ def _parse_sheet(value: str) -> int | str:
 
 
 def _default_curve_file() -> Path:
-    curves_dir = _REPO_ROOT / "tests" / "fixtures" / "curves" / "forwards"
+    curves_dir = _DATA_ROOT / "fixtures" / "curves" / "forwards"
     if not curves_dir.exists():
         return curves_dir / "curve_input.xlsx"
     matches = sorted(curves_dir.glob("*.xlsx"))
@@ -42,7 +43,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--positions-root",
-        default=str(_REPO_ROOT / "tests" / "fixtures" / "positions" / "unicaja"),
+        default=str(_DATA_ROOT / "fixtures" / "positions" / "unicaja"),
         help="Ruta carpeta con CSV de posiciones Unicaja.",
     )
     parser.add_argument(
@@ -110,7 +111,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--charts-out-dir",
-        default=str(_REPO_ROOT / "tests" / "out"),
+        default=str(_DATA_ROOT / "out"),
         help="Directorio de salida para PNG de EVE.",
     )
 
