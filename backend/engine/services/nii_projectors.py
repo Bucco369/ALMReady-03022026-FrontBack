@@ -146,6 +146,191 @@ def _horizon_end(analysis_date: date, *, horizon_months: int = 12) -> date:
     return analysis_date + relativedelta(months=months)
 
 
+def _batch_prepare(
+    positions: pd.DataFrame,
+    required_columns: tuple[str, ...],
+    label: str,
+    analysis_date: date,
+    horizon_end: date,
+) -> pd.DataFrame:
+    """Batch validate, coerce types, and filter to active positions.
+
+    Returns a copy of *positions* with:
+    - ``start_date``, ``maturity_date`` coerced to ``datetime.date``
+    - ``notional`` (and ``fixed_rate``/``spread`` if required) coerced to float
+    - ``daycount_base`` normalised to canonical string
+    - ``side_sign`` column: +1.0 (asset) / -1.0 (liability)
+    - ``accrual_start``, ``accrual_end`` columns (date objects)
+    Only rows where ``accrual_end > accrual_start`` are returned.
+
+    Raises ``ValueError`` with the first offending ``contract_id`` on any
+    validation failure, matching the per-row error messages of the original
+    ``coerce_date``/``coerce_float``/``side_sign`` helpers.
+    """
+    ensure_required_columns(positions, required_columns, label)
+    df = positions.copy()
+
+    # ── 1. Batch null/blank check on required columns ──────────────────
+    for col in required_columns:
+        s = df[col]
+        blank = s.isna()
+        if s.dtype == object:
+            blank = blank | s.astype(str).str.strip().eq("")
+        if blank.any():
+            idx = df.index[blank][0]
+            row_id = (
+                df.at[idx, "contract_id"]
+                if "contract_id" in df.columns
+                else "<missing>"
+            )
+            raise ValueError(
+                f"Required value is empty in {col!r} for contract_id={row_id!r}"
+            )
+
+    # ── 2. Coerce dates ────────────────────────────────────────────────
+    start_ts = pd.to_datetime(df["start_date"], errors="coerce")
+    bad = start_ts.isna()
+    if bad.any():
+        idx = df.index[bad][0]
+        row_id = (
+            df.at[idx, "contract_id"]
+            if "contract_id" in df.columns
+            else "<missing>"
+        )
+        raise ValueError(
+            f"Invalid date in 'start_date' for contract_id={row_id!r}: "
+            f"{df.at[idx, 'start_date']!r}"
+        )
+
+    mat_ts = pd.to_datetime(df["maturity_date"], errors="coerce")
+    bad = mat_ts.isna()
+    if bad.any():
+        idx = df.index[bad][0]
+        row_id = (
+            df.at[idx, "contract_id"]
+            if "contract_id" in df.columns
+            else "<missing>"
+        )
+        raise ValueError(
+            f"Invalid date in 'maturity_date' for contract_id={row_id!r}: "
+            f"{df.at[idx, 'maturity_date']!r}"
+        )
+
+    # Validate maturity >= start
+    bad_order = mat_ts < start_ts
+    if bad_order.any():
+        idx = df.index[bad_order][0]
+        row_id = (
+            df.at[idx, "contract_id"]
+            if "contract_id" in df.columns
+            else "<missing>"
+        )
+        raise ValueError(
+            f"maturity_date < start_date for contract_id={row_id!r}: "
+            f"{df.at[idx, 'start_date']} > {df.at[idx, 'maturity_date']}"
+        )
+
+    # ── 3. Coerce numerics ─────────────────────────────────────────────
+    df["notional"] = pd.to_numeric(df["notional"], errors="coerce")
+    bad = df["notional"].isna()
+    if bad.any():
+        idx = df.index[bad][0]
+        row_id = (
+            df.at[idx, "contract_id"]
+            if "contract_id" in df.columns
+            else "<missing>"
+        )
+        raise ValueError(
+            f"Invalid number in 'notional' for contract_id={row_id!r}"
+        )
+    df["notional"] = df["notional"].astype(float)
+
+    if "fixed_rate" in required_columns and "fixed_rate" in df.columns:
+        df["fixed_rate"] = pd.to_numeric(df["fixed_rate"], errors="coerce")
+        bad = df["fixed_rate"].isna()
+        if bad.any():
+            idx = df.index[bad][0]
+            row_id = (
+                df.at[idx, "contract_id"]
+                if "contract_id" in df.columns
+                else "<missing>"
+            )
+            raise ValueError(
+                f"Invalid number in 'fixed_rate' for contract_id={row_id!r}"
+            )
+        df["fixed_rate"] = df["fixed_rate"].astype(float)
+
+    if "spread" in required_columns and "spread" in df.columns:
+        df["spread"] = pd.to_numeric(df["spread"], errors="coerce")
+        bad = df["spread"].isna()
+        if bad.any():
+            idx = df.index[bad][0]
+            row_id = (
+                df.at[idx, "contract_id"]
+                if "contract_id" in df.columns
+                else "<missing>"
+            )
+            raise ValueError(
+                f"Invalid number in 'spread' for contract_id={row_id!r}"
+            )
+        df["spread"] = df["spread"].astype(float)
+
+    # ── 4. Normalise daycount_base via unique-value lookup ─────────────
+    unique_bases = df["daycount_base"].unique()
+    base_map: dict = {}
+    for v in unique_bases:
+        try:
+            base_map[v] = normalize_daycount_base(str(v))
+        except ValueError:
+            idx = df.index[df["daycount_base"] == v][0]
+            row_id = (
+                df.at[idx, "contract_id"]
+                if "contract_id" in df.columns
+                else "<missing>"
+            )
+            raise ValueError(
+                f"Unrecognized daycount base for contract_id={row_id!r}: {v!r}"
+            )
+    df["daycount_base"] = df["daycount_base"].map(base_map)
+
+    # ── 5. Side sign ───────────────────────────────────────────────────
+    side_upper = df["side"].astype(str).str.strip().str.upper()
+    bad_side = ~side_upper.isin({"A", "L"})
+    if bad_side.any():
+        idx = df.index[bad_side][0]
+        row_id = (
+            df.at[idx, "contract_id"]
+            if "contract_id" in df.columns
+            else "<missing>"
+        )
+        raise ValueError(
+            f"Invalid side for contract_id={row_id!r}: "
+            f"{df.at[idx, 'side']!r} (expected 'A' or 'L')"
+        )
+    df["side_sign"] = side_upper.map({"A": 1.0, "L": -1.0})
+
+    # ── 6. Accrual window + filter ─────────────────────────────────────
+    analysis_ts = pd.Timestamp(analysis_date)
+    horizon_ts = pd.Timestamp(horizon_end)
+    accrual_start_ts = start_ts.clip(lower=analysis_ts)
+    accrual_end_ts = mat_ts.clip(upper=horizon_ts)
+
+    active = accrual_end_ts > accrual_start_ts
+    df = df.loc[active].copy()
+    if df.empty:
+        df["side_sign"] = pd.Series(dtype=float)
+        df["accrual_start"] = pd.Series(dtype=object)
+        df["accrual_end"] = pd.Series(dtype=object)
+        return df
+
+    df["start_date"] = start_ts.loc[active].dt.date.values
+    df["maturity_date"] = mat_ts.loc[active].dt.date.values
+    df["accrual_start"] = accrual_start_ts.loc[active].dt.date.values
+    df["accrual_end"] = accrual_end_ts.loc[active].dt.date.values
+
+    return df
+
+
 def original_term_days(start_date: date, maturity_date: date) -> int:
     return max(1, int((maturity_date - start_date).days))
 
@@ -782,30 +967,21 @@ def project_fixed_bullet_nii_12m(
     """
     if positions.empty:
         return 0.0
-    ensure_required_columns(positions, FIXED_BULLET_REQUIRED_COLUMNS, "fixed_bullet")
     horizon_end = _horizon_end(analysis_date, horizon_months=horizon_months)
+    prep = _batch_prepare(positions, FIXED_BULLET_REQUIRED_COLUMNS, "fixed_bullet", analysis_date, horizon_end)
+    if prep.empty:
+        return 0.0
 
     total = 0.0
-    for row in positions.itertuples(index=False):
-        row_id = getattr(row, "contract_id", "<missing>")
-        for col in FIXED_BULLET_REQUIRED_COLUMNS:
-            if is_blank(getattr(row, col, None)):
-                raise ValueError(f"Required value is empty in {col!r} for contract_id={row_id!r}")
-
-        start_date = coerce_date(row.start_date, field_name="start_date", row_id=row_id)
-        maturity_date = coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
-        if maturity_date < start_date:
-            raise ValueError(f"maturity_date < start_date for contract_id={row_id!r}: {start_date} > {maturity_date}")
-
-        notional = coerce_float(row.notional, field_name="notional", row_id=row_id)
-        fixed_rate = coerce_float(row.fixed_rate, field_name="fixed_rate", row_id=row_id)
-        base = normalize_daycount_base(str(row.daycount_base))
-        sign = side_sign(row.side, row_id=row_id)
-
-        accrual_start = max(start_date, analysis_date)
-        accrual_end = min(maturity_date, horizon_end)
-        if accrual_end <= accrual_start:
-            continue
+    for row in prep.itertuples(index=False):
+        start_date = row.start_date
+        maturity_date = row.maturity_date
+        notional = row.notional
+        fixed_rate = row.fixed_rate
+        base = row.daycount_base
+        sign = row.side_sign
+        accrual_start = row.accrual_start
+        accrual_end = row.accrual_end
 
         total += sign * notional * fixed_rate * yearfrac(accrual_start, accrual_end, base)
 
@@ -851,30 +1027,21 @@ def project_fixed_linear_nii_12m(
     """
     if positions.empty:
         return 0.0
-    ensure_required_columns(positions, FIXED_LINEAR_REQUIRED_COLUMNS, "fixed_linear")
     horizon_end = _horizon_end(analysis_date, horizon_months=horizon_months)
+    prep = _batch_prepare(positions, FIXED_LINEAR_REQUIRED_COLUMNS, "fixed_linear", analysis_date, horizon_end)
+    if prep.empty:
+        return 0.0
 
     total = 0.0
-    for row in positions.itertuples(index=False):
-        row_id = getattr(row, "contract_id", "<missing>")
-        for col in FIXED_LINEAR_REQUIRED_COLUMNS:
-            if is_blank(getattr(row, col, None)):
-                raise ValueError(f"Required value is empty in {col!r} for contract_id={row_id!r}")
-
-        start_date = coerce_date(row.start_date, field_name="start_date", row_id=row_id)
-        maturity_date = coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
-        if maturity_date < start_date:
-            raise ValueError(f"maturity_date < start_date for contract_id={row_id!r}: {start_date} > {maturity_date}")
-
-        outstanding = coerce_float(row.notional, field_name="notional", row_id=row_id)
-        fixed_rate = coerce_float(row.fixed_rate, field_name="fixed_rate", row_id=row_id)
-        base = normalize_daycount_base(str(row.daycount_base))
-        sign = side_sign(row.side, row_id=row_id)
-
-        accrual_start = max(start_date, analysis_date)
-        accrual_end = min(maturity_date, horizon_end)
-        if accrual_end <= accrual_start:
-            continue
+    for row in prep.itertuples(index=False):
+        start_date = row.start_date
+        maturity_date = row.maturity_date
+        outstanding = row.notional
+        fixed_rate = row.fixed_rate
+        base = row.daycount_base
+        sign = row.side_sign
+        accrual_start = row.accrual_start
+        accrual_end = row.accrual_end
 
         n0 = linear_notional_at(
             accrual_start,
@@ -946,42 +1113,34 @@ def project_variable_bullet_nii_12m(
     """
     if positions.empty:
         return 0.0
-    ensure_required_columns(positions, VARIABLE_BULLET_REQUIRED_COLUMNS, "variable_bullet")
     horizon_end = _horizon_end(analysis_date, horizon_months=horizon_months)
+    prep = _batch_prepare(positions, VARIABLE_BULLET_REQUIRED_COLUMNS, "variable_bullet", analysis_date, horizon_end)
+    if prep.empty:
+        return 0.0
     total = 0.0
 
-    for row in positions.itertuples(index=False):
-        row_id = getattr(row, "contract_id", "<missing>")
-        for col in VARIABLE_BULLET_REQUIRED_COLUMNS:
-            if is_blank(getattr(row, col, None)):
-                raise ValueError(f"Required value is empty in {col!r} for contract_id={row_id!r}")
-
-        start_date = coerce_date(row.start_date, field_name="start_date", row_id=row_id)
-        maturity_date = coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
-        if maturity_date < start_date:
-            raise ValueError(f"maturity_date < start_date for contract_id={row_id!r}: {start_date} > {maturity_date}")
-
-        accrual_start = max(start_date, analysis_date)
-        accrual_end = min(maturity_date, horizon_end)
-        if accrual_end <= accrual_start:
-            continue
-
-        notional = coerce_float(row.notional, field_name="notional", row_id=row_id)
-        sign = side_sign(row.side, row_id=row_id)
-        base = normalize_daycount_base(str(row.daycount_base))
+    for row in prep.itertuples(index=False):
+        row_id = row.contract_id
+        start_date = row.start_date
+        maturity_date = row.maturity_date
+        notional = row.notional
+        sign = row.side_sign
+        base = row.daycount_base
+        accrual_start = row.accrual_start
+        accrual_end = row.accrual_end
 
         index_name = str(row.index_name).strip()
         curve_set.get(index_name)
-        spread = coerce_float(row.spread, field_name="spread", row_id=row_id)
+        spread = row.spread
         floor_rate = getattr(row, "floor_rate", None)
         cap_rate = getattr(row, "cap_rate", None)
         fixed_rate_stub = None if is_blank(getattr(row, "fixed_rate", None)) else coerce_float(getattr(row, "fixed_rate", None), field_name="fixed_rate", row_id=row_id)
 
         anchor_date = None
-        if "next_reprice_date" in positions.columns and not is_blank(getattr(row, "next_reprice_date", None)):
+        if "next_reprice_date" in prep.columns and not is_blank(getattr(row, "next_reprice_date", None)):
             anchor_date = coerce_date(getattr(row, "next_reprice_date", None), field_name="next_reprice_date", row_id=row_id)
         frequency = None
-        if "repricing_freq" in positions.columns:
+        if "repricing_freq" in prep.columns:
             frequency = parse_frequency_token(getattr(row, "repricing_freq", None), row_id=row_id)
 
         total += project_variable_bullet_cycle(
@@ -1053,42 +1212,34 @@ def project_variable_linear_nii_12m(
     """
     if positions.empty:
         return 0.0
-    ensure_required_columns(positions, VARIABLE_LINEAR_REQUIRED_COLUMNS, "variable_linear")
     horizon_end = _horizon_end(analysis_date, horizon_months=horizon_months)
+    prep = _batch_prepare(positions, VARIABLE_LINEAR_REQUIRED_COLUMNS, "variable_linear", analysis_date, horizon_end)
+    if prep.empty:
+        return 0.0
     total = 0.0
 
-    for row in positions.itertuples(index=False):
-        row_id = getattr(row, "contract_id", "<missing>")
-        for col in VARIABLE_LINEAR_REQUIRED_COLUMNS:
-            if is_blank(getattr(row, col, None)):
-                raise ValueError(f"Required value is empty in {col!r} for contract_id={row_id!r}")
-
-        start_date = coerce_date(row.start_date, field_name="start_date", row_id=row_id)
-        maturity_date = coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
-        if maturity_date < start_date:
-            raise ValueError(f"maturity_date < start_date for contract_id={row_id!r}: {start_date} > {maturity_date}")
-
-        accrual_start = max(start_date, analysis_date)
-        accrual_end = min(maturity_date, horizon_end)
-        if accrual_end <= accrual_start:
-            continue
-
-        outstanding = coerce_float(row.notional, field_name="notional", row_id=row_id)
-        sign = side_sign(row.side, row_id=row_id)
-        base = normalize_daycount_base(str(row.daycount_base))
+    for row in prep.itertuples(index=False):
+        row_id = row.contract_id
+        start_date = row.start_date
+        maturity_date = row.maturity_date
+        outstanding = row.notional
+        sign = row.side_sign
+        base = row.daycount_base
+        accrual_start = row.accrual_start
+        accrual_end = row.accrual_end
 
         index_name = str(row.index_name).strip()
         curve_set.get(index_name)
-        spread = coerce_float(row.spread, field_name="spread", row_id=row_id)
+        spread = row.spread
         floor_rate = getattr(row, "floor_rate", None)
         cap_rate = getattr(row, "cap_rate", None)
         fixed_rate_stub = None if is_blank(getattr(row, "fixed_rate", None)) else coerce_float(getattr(row, "fixed_rate", None), field_name="fixed_rate", row_id=row_id)
 
         anchor_date = None
-        if "next_reprice_date" in positions.columns and not is_blank(getattr(row, "next_reprice_date", None)):
+        if "next_reprice_date" in prep.columns and not is_blank(getattr(row, "next_reprice_date", None)):
             anchor_date = coerce_date(getattr(row, "next_reprice_date", None), field_name="next_reprice_date", row_id=row_id)
         frequency = None
-        if "repricing_freq" in positions.columns:
+        if "repricing_freq" in prep.columns:
             frequency = parse_frequency_token(getattr(row, "repricing_freq", None), row_id=row_id)
 
         total += project_variable_linear_cycle(
@@ -1162,31 +1313,22 @@ def project_fixed_annuity_nii_12m(
     """
     if positions.empty:
         return 0.0
-    ensure_required_columns(positions, FIXED_ANNUITY_REQUIRED_COLUMNS, "fixed_annuity")
     horizon_end = _horizon_end(analysis_date, horizon_months=horizon_months)
+    prep = _batch_prepare(positions, FIXED_ANNUITY_REQUIRED_COLUMNS, "fixed_annuity", analysis_date, horizon_end)
+    if prep.empty:
+        return 0.0
 
     total = 0.0
-    for row in positions.itertuples(index=False):
-        row_id = getattr(row, "contract_id", "<missing>")
-        for col in FIXED_ANNUITY_REQUIRED_COLUMNS:
-            if is_blank(getattr(row, col, None)):
-                raise ValueError(f"Required value is empty in {col!r} for contract_id={row_id!r}")
-
-        start_date = coerce_date(row.start_date, field_name="start_date", row_id=row_id)
-        maturity_date = coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
-        if maturity_date < start_date:
-            raise ValueError(f"maturity_date < start_date for contract_id={row_id!r}: {start_date} > {maturity_date}")
-
-        outstanding = coerce_float(row.notional, field_name="notional", row_id=row_id)
-        fixed_rate = coerce_float(row.fixed_rate, field_name="fixed_rate", row_id=row_id)
-        base = normalize_daycount_base(str(row.daycount_base))
-        sign = side_sign(row.side, row_id=row_id)
-        payment_frequency = payment_frequency_or_default(row, row_id=row_id)
-
-        accrual_start = max(start_date, analysis_date)
-        accrual_end = min(maturity_date, horizon_end)
-        if accrual_end <= accrual_start:
-            continue
+    for row in prep.itertuples(index=False):
+        start_date = row.start_date
+        maturity_date = row.maturity_date
+        outstanding = row.notional
+        fixed_rate = row.fixed_rate
+        base = row.daycount_base
+        sign = row.side_sign
+        payment_frequency = payment_frequency_or_default(row, row_id=row.contract_id)
+        accrual_start = row.accrual_start
+        accrual_end = row.accrual_end
 
         total += project_fixed_annuity_cycle(
             cycle_start=accrual_start,
@@ -1257,8 +1399,10 @@ def project_variable_annuity_nii_12m(
     """
     if positions.empty:
         return 0.0
-    ensure_required_columns(positions, VARIABLE_ANNUITY_REQUIRED_COLUMNS, "variable_annuity")
     horizon_end = _horizon_end(analysis_date, horizon_months=horizon_months)
+    prep = _batch_prepare(positions, VARIABLE_ANNUITY_REQUIRED_COLUMNS, "variable_annuity", analysis_date, horizon_end)
+    if prep.empty:
+        return 0.0
     # Backward compatibility: if nothing is configured, we keep
     # exactly the historical behavior (reprice_on_reset).
     global_annuity_payment_mode = normalise_annuity_payment_mode(
@@ -1268,30 +1412,20 @@ def project_variable_annuity_nii_12m(
     )
     total = 0.0
 
-    for row in positions.itertuples(index=False):
-        row_id = getattr(row, "contract_id", "<missing>")
-        for col in VARIABLE_ANNUITY_REQUIRED_COLUMNS:
-            if is_blank(getattr(row, col, None)):
-                raise ValueError(f"Required value is empty in {col!r} for contract_id={row_id!r}")
-
-        start_date = coerce_date(row.start_date, field_name="start_date", row_id=row_id)
-        maturity_date = coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
-        if maturity_date < start_date:
-            raise ValueError(f"maturity_date < start_date for contract_id={row_id!r}: {start_date} > {maturity_date}")
-
-        accrual_start = max(start_date, analysis_date)
-        accrual_end = min(maturity_date, horizon_end)
-        if accrual_end <= accrual_start:
-            continue
-
-        outstanding = coerce_float(row.notional, field_name="notional", row_id=row_id)
-        sign = side_sign(row.side, row_id=row_id)
-        base = normalize_daycount_base(str(row.daycount_base))
+    for row in prep.itertuples(index=False):
+        row_id = row.contract_id
+        start_date = row.start_date
+        maturity_date = row.maturity_date
+        outstanding = row.notional
+        sign = row.side_sign
+        base = row.daycount_base
+        accrual_start = row.accrual_start
+        accrual_end = row.accrual_end
         payment_frequency = payment_frequency_or_default(row, row_id=row_id)
 
         index_name = str(row.index_name).strip()
         curve_set.get(index_name)
-        spread = coerce_float(row.spread, field_name="spread", row_id=row_id)
+        spread = row.spread
         floor_rate = getattr(row, "floor_rate", None)
         cap_rate = getattr(row, "cap_rate", None)
         fixed_rate_stub = (
@@ -1301,14 +1435,14 @@ def project_variable_annuity_nii_12m(
         )
 
         anchor_date = None
-        if "next_reprice_date" in positions.columns and not is_blank(getattr(row, "next_reprice_date", None)):
+        if "next_reprice_date" in prep.columns and not is_blank(getattr(row, "next_reprice_date", None)):
             anchor_date = coerce_date(getattr(row, "next_reprice_date", None), field_name="next_reprice_date", row_id=row_id)
         frequency = None
-        if "repricing_freq" in positions.columns:
+        if "repricing_freq" in prep.columns:
             frequency = parse_frequency_token(getattr(row, "repricing_freq", None), row_id=row_id)
 
         row_annuity_payment_mode = global_annuity_payment_mode
-        if "annuity_payment_mode" in positions.columns and not is_blank(getattr(row, "annuity_payment_mode", None)):
+        if "annuity_payment_mode" in prep.columns and not is_blank(getattr(row, "annuity_payment_mode", None)):
             # Override per contract for banks/products with mixed rules.
             row_annuity_payment_mode = normalise_annuity_payment_mode(
                 getattr(row, "annuity_payment_mode", None),
@@ -1644,34 +1778,25 @@ def project_fixed_scheduled_nii_12m(
     """
     if positions.empty:
         return 0.0
-    ensure_required_columns(positions, FIXED_SCHEDULED_REQUIRED_COLUMNS, "fixed_scheduled")
     flows_by_contract = prepare_scheduled_principal_flows(principal_flows)
     horizon_end = _horizon_end(analysis_date, horizon_months=horizon_months)
+    prep = _batch_prepare(positions, FIXED_SCHEDULED_REQUIRED_COLUMNS, "fixed_scheduled", analysis_date, horizon_end)
+    if prep.empty:
+        return 0.0
 
     total = 0.0
-    for row in positions.itertuples(index=False):
-        row_id = getattr(row, "contract_id", "<missing>")
-        for col in FIXED_SCHEDULED_REQUIRED_COLUMNS:
-            if is_blank(getattr(row, col, None)):
-                raise ValueError(f"Required value is empty in {col!r} for contract_id={row_id!r}")
-
+    for row in prep.itertuples(index=False):
         contract_id = str(row.contract_id).strip()
         contract_flows = flows_by_contract.get(contract_id, [])
 
-        start_date = coerce_date(row.start_date, field_name="start_date", row_id=row_id)
-        maturity_date = coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
-        if maturity_date < start_date:
-            raise ValueError(f"maturity_date < start_date for contract_id={row_id!r}: {start_date} > {maturity_date}")
-
-        outstanding = coerce_float(row.notional, field_name="notional", row_id=row_id)
-        fixed_rate = coerce_float(row.fixed_rate, field_name="fixed_rate", row_id=row_id)
-        base = normalize_daycount_base(str(row.daycount_base))
-        sign = side_sign(row.side, row_id=row_id)
-
-        accrual_start = max(start_date, analysis_date)
-        accrual_end = min(maturity_date, horizon_end)
-        if accrual_end <= accrual_start:
-            continue
+        start_date = row.start_date
+        maturity_date = row.maturity_date
+        outstanding = row.notional
+        fixed_rate = row.fixed_rate
+        base = row.daycount_base
+        sign = row.side_sign
+        accrual_start = row.accrual_start
+        accrual_end = row.accrual_end
 
         flow_map = scheduled_flow_map_for_window(
             contract_flows,
@@ -1751,37 +1876,29 @@ def project_variable_scheduled_nii_12m(
     """
     if positions.empty:
         return 0.0
-    ensure_required_columns(positions, VARIABLE_SCHEDULED_REQUIRED_COLUMNS, "variable_scheduled")
     flows_by_contract = prepare_scheduled_principal_flows(principal_flows)
     horizon_end = _horizon_end(analysis_date, horizon_months=horizon_months)
+    prep = _batch_prepare(positions, VARIABLE_SCHEDULED_REQUIRED_COLUMNS, "variable_scheduled", analysis_date, horizon_end)
+    if prep.empty:
+        return 0.0
     total = 0.0
 
-    for row in positions.itertuples(index=False):
-        row_id = getattr(row, "contract_id", "<missing>")
-        for col in VARIABLE_SCHEDULED_REQUIRED_COLUMNS:
-            if is_blank(getattr(row, col, None)):
-                raise ValueError(f"Required value is empty in {col!r} for contract_id={row_id!r}")
-
+    for row in prep.itertuples(index=False):
+        row_id = row.contract_id
         contract_id = str(row.contract_id).strip()
         contract_flows = flows_by_contract.get(contract_id, [])
 
-        start_date = coerce_date(row.start_date, field_name="start_date", row_id=row_id)
-        maturity_date = coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
-        if maturity_date < start_date:
-            raise ValueError(f"maturity_date < start_date for contract_id={row_id!r}: {start_date} > {maturity_date}")
-
-        accrual_start = max(start_date, analysis_date)
-        accrual_end = min(maturity_date, horizon_end)
-        if accrual_end <= accrual_start:
-            continue
-
-        outstanding = coerce_float(row.notional, field_name="notional", row_id=row_id)
-        sign = side_sign(row.side, row_id=row_id)
-        base = normalize_daycount_base(str(row.daycount_base))
+        start_date = row.start_date
+        maturity_date = row.maturity_date
+        outstanding = row.notional
+        sign = row.side_sign
+        base = row.daycount_base
+        accrual_start = row.accrual_start
+        accrual_end = row.accrual_end
 
         index_name = str(row.index_name).strip()
         curve_set.get(index_name)
-        spread = coerce_float(row.spread, field_name="spread", row_id=row_id)
+        spread = row.spread
         floor_rate = getattr(row, "floor_rate", None)
         cap_rate = getattr(row, "cap_rate", None)
         fixed_rate_stub = (
@@ -1791,10 +1908,10 @@ def project_variable_scheduled_nii_12m(
         )
 
         anchor_date = None
-        if "next_reprice_date" in positions.columns and not is_blank(getattr(row, "next_reprice_date", None)):
+        if "next_reprice_date" in prep.columns and not is_blank(getattr(row, "next_reprice_date", None)):
             anchor_date = coerce_date(getattr(row, "next_reprice_date", None), field_name="next_reprice_date", row_id=row_id)
         frequency = None
-        if "repricing_freq" in positions.columns:
+        if "repricing_freq" in prep.columns:
             frequency = parse_frequency_token(getattr(row, "repricing_freq", None), row_id=row_id)
 
         flow_map = scheduled_flow_map_for_window(
