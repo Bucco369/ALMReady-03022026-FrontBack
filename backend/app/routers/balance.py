@@ -48,7 +48,9 @@ def delete_balance(session_id: str) -> dict[str, str]:
     _assert_session_exists(session_id)
     sdir = _session_dir(session_id)
     deleted: list[str] = []
-    for p in [_summary_path(session_id), _positions_path(session_id), _motor_positions_path(session_id)]:
+    motor_parquet = _motor_positions_path(session_id)
+    motor_json_legacy = motor_parquet.with_suffix(".json")
+    for p in [_summary_path(session_id), _positions_path(session_id), motor_parquet, motor_json_legacy]:
         if p.exists():
             p.unlink()
             deleted.append(p.name)
@@ -84,6 +86,8 @@ async def upload_balance(session_id: str, file: UploadFile = File(...)) -> Balan
 
 @router.post("/api/sessions/{session_id}/balance/zip", response_model=BalanceUploadResponse)
 async def upload_balance_zip(session_id: str, file: UploadFile = File(...)) -> BalanceUploadResponse:
+    import asyncio
+
     _assert_session_exists(session_id)
 
     raw_filename = file.filename or "balance.zip"
@@ -96,7 +100,10 @@ async def upload_balance_zip(session_id: str, file: UploadFile = File(...)) -> B
     content = await file.read()
     zip_path.write_bytes(content)
 
-    sheet_summaries, sample_rows, canonical_rows = _parse_zip_balance(session_id, zip_path)
+    # Run in thread so the event loop stays responsive for progress polling
+    sheet_summaries, sample_rows, canonical_rows = await asyncio.to_thread(
+        _parse_zip_balance, session_id, zip_path,
+    )
 
     summary_tree = _build_summary_tree(canonical_rows)
     response = BalanceUploadResponse(

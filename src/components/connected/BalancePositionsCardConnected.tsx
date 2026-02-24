@@ -29,6 +29,7 @@ import {
   type BalanceSummaryResponse,
 } from "@/lib/api";
 import { useProgressETA } from "@/hooks/useProgressETA";
+import { toast } from "sonner";
 import { inferCategoryFromSheetName } from "@/lib/balanceUi";
 import { generateSamplePositionsCSV, parsePositionsCSV } from "@/lib/csvParser";
 import type { Position } from "@/types/financial";
@@ -110,44 +111,61 @@ export function BalancePositionsCardConnected({
         "[BalancePositionsCardConnected] failed to refresh balance summary",
         error
       );
+      toast.error("Failed to load balance data", {
+        description: "Could not refresh balance data from server.",
+      });
     }
   }, [onPositionsChange, sessionId]);
+
+  const refreshSummaryRef = useRef(refreshSummary);
+  useEffect(() => {
+    refreshSummaryRef.current = refreshSummary;
+  }, [refreshSummary]);
 
   useEffect(() => {
     if (positions.length > 0) return;
     if (!hasBalance) return;
-    void refreshSummary();
-  }, [sessionId, hasBalance, positions.length, refreshSummary]);
+    void refreshSummaryRef.current();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, hasBalance, positions.length]);
 
   const handleBalanceUpload = useCallback(
     async (file: File) => {
       if (!sessionId) return;
 
-      // Cancel any leftover poll timer from a previous upload.
-      if (pollTimerRef.current) {
-        clearInterval(pollTimerRef.current);
-        pollTimerRef.current = null;
-      }
+      // Cancel any leftover poll loop from a previous upload.
+      pollTimerRef.current = null;
 
       setIsUploading(true);
       setUploadProgress(0);
       setUploadPhase("Uploading file…");
 
       // Once bytes are sent, start polling the backend for real progress.
+      // Uses a sequential loop (wait for response before next poll) to avoid
+      // flooding Chrome's connection pool when the server is busy parsing.
       const startPolling = () => {
         if (pollTimerRef.current) return; // guard double-fire
-        pollTimerRef.current = setInterval(async () => {
-          try {
-            const p = await getUploadProgress(sessionId);
-            if (p.phase !== "idle") {
-              // Monotonicity: never let progress decrease
-              setUploadProgress(prev => Math.max(prev, p.pct));
-              if (p.phase_label) setUploadPhase(p.phase_label);
+        // Use a sentinel value so the ref is truthy (guards double-fire).
+        pollTimerRef.current = setTimeout(() => {}, 0);
+
+        (async () => {
+          while (pollTimerRef.current !== null) {
+            try {
+              const controller = new AbortController();
+              const timeout = setTimeout(() => controller.abort(), 4000);
+              const p = await getUploadProgress(sessionId);
+              clearTimeout(timeout);
+              if (p.phase !== "idle") {
+                setUploadProgress(prev => Math.max(prev, p.pct));
+                if (p.phase_label) setUploadPhase(p.phase_label);
+              }
+            } catch {
+              // Ignore transient poll errors; upload XHR will report real failures.
             }
-          } catch {
-            // Ignore transient poll errors; upload XHR will report real failures.
+            // Wait before next poll — sequential, never piles up.
+            await new Promise(r => setTimeout(r, 1500));
           }
-        }, 400);
+        })();
       };
 
       try {
@@ -162,11 +180,8 @@ export function BalancePositionsCardConnected({
           await uploadBalanceExcel(sessionId, file, onProgress, startPolling);
         }
 
-        // Server responded → stop polling and complete.
-        if (pollTimerRef.current) {
-          clearInterval(pollTimerRef.current);
-          pollTimerRef.current = null;
-        }
+        // Server responded → stop polling loop and complete.
+        pollTimerRef.current = null;
         setUploadProgress(100);
         setUploadPhase("");
         await refreshSummary();
@@ -175,11 +190,14 @@ export function BalancePositionsCardConnected({
           "[BalancePositionsCardConnected] failed to upload balance",
           error
         );
+        const msg = error instanceof Error ? error.message : String(error);
+        toast.error("Balance upload failed", {
+          description: msg.includes("Network error")
+            ? "Server may be restarting. Please try again in a moment."
+            : msg.length > 120 ? msg.slice(0, 120) + "…" : msg,
+        });
       } finally {
-        if (pollTimerRef.current) {
-          clearInterval(pollTimerRef.current);
-          pollTimerRef.current = null;
-        }
+        pollTimerRef.current = null;
         setIsUploading(false);
         setUploadProgress(0);
         setUploadPhase("");

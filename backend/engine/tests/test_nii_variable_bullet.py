@@ -6,7 +6,7 @@ import unittest
 import pandas as pd
 
 from engine.core.curves import curve_from_long_df
-from engine.core.daycount import normalizar_base_de_calculo, yearfrac
+from engine.core.daycount import normalize_daycount_base, yearfrac
 from engine.services.market import ForwardCurveSet
 from engine.services.nii import run_nii_12m_scenarios
 
@@ -86,7 +86,7 @@ class TestNIIVariableBullet(unittest.TestCase):
             scenario_curve_sets={"parallel-up": up_curve, "parallel-down": down_curve},
         )
 
-        b = normalizar_base_de_calculo("ACT/360")
+        b = normalize_daycount_base("ACT/360")
         yf = yearfrac(date(2026, 1, 1), date(2027, 1, 1), b)
         expected_base = 100.0 * (0.02 + 0.01) * yf
         expected_up = 100.0 * (0.04 + 0.01) * yf
@@ -135,7 +135,7 @@ class TestNIIVariableBullet(unittest.TestCase):
             scenario_curve_sets={},
         )
 
-        b = normalizar_base_de_calculo("ACT/360")
+        b = normalize_daycount_base("ACT/360")
         yf_stub = yearfrac(date(2026, 1, 1), date(2026, 4, 1), b)
         yf_rest = yearfrac(date(2026, 4, 1), date(2027, 1, 1), b)
         expected = 100.0 * 0.06 * yf_stub + 100.0 * (0.02 + 0.01) * yf_rest
@@ -179,7 +179,7 @@ class TestNIIVariableBullet(unittest.TestCase):
             scenario_curve_sets={},
         )
 
-        b = normalizar_base_de_calculo("ACT/360")
+        b = normalize_daycount_base("ACT/360")
         yf = yearfrac(date(2026, 1, 1), date(2027, 1, 1), b)
         expected = 100.0 * 0.05 * yf
         self.assertAlmostEqual(out.base_nii_12m, expected, places=12)

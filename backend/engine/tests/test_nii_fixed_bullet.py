@@ -6,7 +6,7 @@ import unittest
 import pandas as pd
 
 from engine.core.curves import curve_from_long_df
-from engine.core.daycount import normalizar_base_de_calculo, yearfrac
+from engine.core.daycount import normalize_daycount_base, yearfrac
 from engine.services.market import ForwardCurveSet
 from engine.services.nii import run_nii_12m_base, run_nii_12m_scenarios
 
@@ -72,7 +72,7 @@ class TestNIIFixedBullet(unittest.TestCase):
                     "daycount_base": "ACT/360",
                     "source_contract_type": "fixed_bullet",
                 },
-                # Excluida por static_position.
+                # Excluded due to static_position.
                 {
                     "contract_id": "S1",
                     "start_date": date(2025, 1, 1),
@@ -87,17 +87,18 @@ class TestNIIFixedBullet(unittest.TestCase):
             ]
         )
 
-        b = normalizar_base_de_calculo("ACT/360")
+        b = normalize_daycount_base("ACT/360")
         expected = 0.0
         expected += 100.0 * 0.05 * yearfrac(date(2026, 1, 1), date(2027, 1, 1), b)
-        # Balance constante: L1 vence en 2026-07-01 y se renueva para el resto del horizonte.
+        # Constant balance: L1 matures on 2026-07-01 and rolls over for the rest of the horizon.
         expected += -80.0 * 0.03 * yearfrac(date(2026, 1, 1), date(2027, 1, 1), b)
         expected += 50.0 * 0.04 * yearfrac(date(2026, 10, 1), date(2027, 1, 1), b)
 
         out = run_nii_12m_base(positions, curve_set)
         self.assertAlmostEqual(out, expected, places=12)
 
-    def test_run_nii_12m_base_raises_for_unimplemented_source_type(self) -> None:
+    def test_run_nii_12m_base_excludes_non_maturity_types(self) -> None:
+        """fixed_non_maturity is silently excluded (returns 0 NII)."""
         analysis_date = date(2026, 1, 1)
         curve_set = _curve_set_for_analysis_date(analysis_date)
 
@@ -117,8 +118,8 @@ class TestNIIFixedBullet(unittest.TestCase):
             ]
         )
 
-        with self.assertRaises(NotImplementedError):
-            run_nii_12m_base(positions, curve_set)
+        out = run_nii_12m_base(positions, curve_set)
+        self.assertAlmostEqual(out, 0.0, places=12)
 
     def test_run_nii_12m_scenarios_keeps_contract(self) -> None:
         analysis_date = date(2026, 1, 1)

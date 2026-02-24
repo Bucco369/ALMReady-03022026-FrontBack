@@ -57,6 +57,7 @@ import { useWhatIf } from '@/components/whatif/WhatIfContext';
 import { buildScenarioPoints } from '@/lib/curves/scenarios';
 import { getCurveDisplayLabel, getCurveTooltipLabel } from '@/lib/curves/labels';
 import { getTenorCalendarDateLabel } from '@/lib/calendarLabels';
+import { toast } from 'sonner';
 import {
   LineChart,
   Line,
@@ -479,22 +480,33 @@ export function CurvesAndScenariosCard({
         return;
       }
       console.error('[CurvesAndScenariosCard] failed to refresh curves summary', error);
+      toast.error('Failed to load curves', {
+        description: 'Could not refresh curves data from server.',
+      });
     } finally {
       setIsRefreshingSummary(false);
     }
   }, [applyCurvesSummary, onSelectedCurvesChange, sessionId]);
 
+  // Stabilize with a ref so the effect only fires when sessionId or hasCurves
+  // actually change – NOT when the callback chain updates during an upload.
+  const refreshCurvesSummaryRef = useRef(refreshCurvesSummary);
+  useEffect(() => {
+    refreshCurvesSummaryRef.current = refreshCurvesSummary;
+  }, [refreshCurvesSummary]);
+
   useEffect(() => {
     if (!sessionId) return;
 
     if (hasCurves) {
-      void refreshCurvesSummary();
+      void refreshCurvesSummaryRef.current();
     } else {
       setShowUploadDropzone(true);
       setCurvesSummary(null);
       setCurvePointsById({});
     }
-  }, [sessionId, hasCurves, refreshCurvesSummary]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, hasCurves]);
 
   useEffect(() => {
     if (!showDetails) return;
@@ -575,6 +587,12 @@ export function CurvesAndScenariosCard({
         await applyCurvesSummary(summary);
       } catch (error) {
         console.error('[CurvesAndScenariosCard] failed to upload curves file', error);
+        const msg = error instanceof Error ? error.message : String(error);
+        toast.error('Curves upload failed', {
+          description: msg.includes('Network error')
+            ? 'Server may be restarting. Please try again in a moment.'
+            : msg.length > 120 ? msg.slice(0, 120) + '…' : msg,
+        });
       } finally {
         setIsUploading(false);
         setUploadProgress(0);

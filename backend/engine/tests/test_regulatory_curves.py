@@ -78,7 +78,7 @@ class TestRegulatoryCurves(unittest.TestCase):
     def test_apply_regulatory_floor_with_observed_lower_rule(self) -> None:
         p = shock_parameters_for_currency("EUR")
 
-        # Caso con observed lower rate por debajo del floor: se respeta el observado.
+        # Case with observed lower rate below the floor: observed rate is respected.
         shocked_low = apply_regulatory_shock_rate(
             base_rate=-0.02,
             t_years=2.0,
@@ -88,7 +88,7 @@ class TestRegulatoryCurves(unittest.TestCase):
         )
         self.assertAlmostEqual(shocked_low, -0.02, places=12)
 
-        # Caso sin observed lower: aplica floor por plazo.
+        # Case without observed lower: apply floor by tenor.
         shocked_floor = apply_regulatory_shock_rate(
             base_rate=0.0,
             t_years=0.0,
@@ -109,7 +109,7 @@ class TestRegulatoryCurves(unittest.TestCase):
             preserve_basis_for_non_risk_free=True,
         )
 
-        # En los pilares, spread EURIBOR3M - ESTR se preserva.
+        # At the pillars, EURIBOR3M - ESTR spread is preserved.
         for t in (1.0, 5.0):
             spread_base = base.get("EUR_EURIBOR_3M").rate(t) - base.get("EUR_ESTR_OIS").rate(t)
             spread_stressed = (
@@ -117,7 +117,7 @@ class TestRegulatoryCurves(unittest.TestCase):
             )
             self.assertAlmostEqual(spread_stressed, spread_base, places=12)
 
-        # Parallel up en EUR: +200 bps en la risk-free.
+        # Parallel up for EUR: +200 bps on the risk-free.
         self.assertAlmostEqual(stressed.get("EUR_ESTR_OIS").rate(1.0), 0.04, places=12)
 
 

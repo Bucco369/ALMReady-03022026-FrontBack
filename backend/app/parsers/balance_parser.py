@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
+import logging
 import shutil
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
+import numpy as np
+import orjson
 import pandas as pd
 from fastapi import HTTPException
 
@@ -23,6 +26,12 @@ from app.config import (
     _EXCLUDED_CONTRACT_TYPES,
     _bc_classify,
     _bc_get_rules,
+)
+from engine.balance_config.classifier import _APARTADO_SIDE
+from engine.balance_config.schema import (
+    ASSET_DEFAULT,
+    LIABILITY_DEFAULT,
+    SUBCATEGORY_LABELS,
 )
 from app.schemas import (
     BalanceSheetSummary,
@@ -55,6 +64,8 @@ from app.parsers.transforms import (
     _weighted_avg_maturity,
     _weighted_avg_rate,
 )
+
+_log = logging.getLogger(__name__)
 
 
 # ── Canonicalization ────────────────────────────────────────────────────────
@@ -212,6 +223,194 @@ def _canonicalize_motor_row(
         "balance_section": _to_text(record.get("balance_section")),
         "balance_epigrafe": _to_text(record.get("balance_epigrafe")),
     }
+
+
+# ── Vectorised motor canonicalization ─────────────────────────────────────────
+
+def _classify_motor_df(
+    motor_df: pd.DataFrame,
+    client_rules: dict[str, Any],
+) -> pd.DataFrame:
+    """Vectorised balance classification: iterates over *rules* not *rows*."""
+    n = len(motor_df)
+
+    # Resolve side from apartado, fallback to motor side
+    apartado = motor_df["balance_section"].fillna("").str.strip().str.upper() if "balance_section" in motor_df.columns else pd.Series("", index=motor_df.index)
+    motor_side_raw = motor_df["side"].fillna("A").astype(str).str.upper()
+
+    side_from_apart = apartado.map(_APARTADO_SIDE)
+    side_from_motor = motor_side_raw.map({"A": "asset", "L": "liability"}).fillna("asset")
+    side = side_from_apart.where(side_from_apart.notna(), side_from_motor)
+
+    # Prepare producto for keyword matching
+    producto = motor_df["balance_product"].fillna("").astype(str).str.upper() if "balance_product" in motor_df.columns else pd.Series("", index=motor_df.index)
+
+    # Default subcategory_id per side
+    subcategory_id = pd.Series(ASSET_DEFAULT, index=motor_df.index, dtype="object")
+    subcategory_id = subcategory_id.where(side == "asset", LIABILITY_DEFAULT)
+    subcategory_id = subcategory_id.where(side != "derivative", "derivatives")
+
+    # Match rules: iterate over rules (~70), not rows (~1.5M)
+    matched = pd.Series(False, index=motor_df.index)
+
+    asset_rules: Sequence[tuple[str, str]] = client_rules.get("asset_rules", ())
+    liability_rules: Sequence[tuple[str, str]] = client_rules.get("liability_rules", ())
+    derivative_rules: Sequence[tuple[str, str]] = client_rules.get("derivative_rules", ())
+
+    for keyword, sub_id in asset_rules:
+        rule_match = (side == "asset") & ~matched & producto.str.contains(keyword.upper(), na=False, regex=False)
+        subcategory_id = subcategory_id.where(~rule_match, sub_id)
+        matched = matched | rule_match
+
+    for keyword, sub_id in liability_rules:
+        rule_match = (side == "liability") & ~matched & producto.str.contains(keyword.upper(), na=False, regex=False)
+        subcategory_id = subcategory_id.where(~rule_match, sub_id)
+        matched = matched | rule_match
+
+    for keyword, sub_id in derivative_rules:
+        rule_match = (side == "derivative") & ~matched & producto.str.contains(keyword.upper(), na=False, regex=False)
+        subcategory_id = subcategory_id.where(~rule_match, sub_id)
+        matched = matched | rule_match
+
+    subcategory_label = subcategory_id.map(SUBCATEGORY_LABELS).fillna(
+        subcategory_id.str.replace("-", " ").str.title()
+    )
+
+    return pd.DataFrame({
+        "cls_side": side,
+        "cls_subcategory_id": subcategory_id,
+        "cls_subcategory_label": subcategory_label,
+    }, index=motor_df.index)
+
+
+def _canonicalize_motor_df(
+    motor_df: pd.DataFrame,
+    client_rules: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Vectorised version of _canonicalize_motor_row operating on the entire DataFrame."""
+    n = len(motor_df)
+
+    # Classification
+    cls = _classify_motor_df(motor_df, client_rules)
+
+    # Build canonical DataFrame with vectorised ops
+    sct = motor_df["source_contract_type"].fillna("unknown").astype(str) if "source_contract_type" in motor_df.columns else pd.Series("unknown", index=motor_df.index)
+    is_non_maturity = sct.str.contains("non_maturity", na=False, regex=False)
+
+    # Contract ID
+    idx_series = pd.Series(range(1, n + 1), index=motor_df.index, dtype="int64")
+    contract_id = motor_df["contract_id"].fillna("motor-" + idx_series.astype(str)).astype(str) if "contract_id" in motor_df.columns else ("motor-" + idx_series.astype(str))
+
+    # Amounts
+    notional = pd.to_numeric(motor_df["notional"], errors="coerce").fillna(0.0) if "notional" in motor_df.columns else pd.Series(0.0, index=motor_df.index)
+
+    # Rate type
+    rate_type_raw = motor_df["rate_type"].fillna("").astype(str) if "rate_type" in motor_df.columns else pd.Series("", index=motor_df.index)
+    rate_type = rate_type_raw.map({"fixed": "Fixed", "float": "Floating"})
+
+    # Dates → ISO strings
+    now = datetime.now(timezone.utc).date()
+
+    def _col_to_iso(col_name: str) -> pd.Series:
+        if col_name not in motor_df.columns:
+            return pd.Series(None, index=motor_df.index, dtype="object")
+        col = motor_df[col_name]
+        dt = pd.to_datetime(col, errors="coerce")
+        return dt.dt.strftime("%Y-%m-%d").where(dt.notna(), other=None)
+
+    fecha_inicio = _col_to_iso("start_date")
+    fecha_vencimiento = _col_to_iso("maturity_date")
+    fecha_prox_reprecio = _col_to_iso("next_reprice_date")
+
+    # Maturity years (vectorised)
+    if "maturity_date" in motor_df.columns:
+        mat_dt = pd.to_datetime(motor_df["maturity_date"], errors="coerce")
+        mat_years = (mat_dt - pd.Timestamp(now)).dt.days / 365.25
+        mat_years = mat_years.where(mat_years >= 0, other=np.nan)
+        mat_years = mat_years.where(mat_dt.notna(), other=np.nan)
+    else:
+        mat_years = pd.Series(np.nan, index=motor_df.index)
+    mat_years = mat_years.where(~is_non_maturity, 0.0)
+
+    # Maturity bucket (vectorised)
+    maturity_bucket = pd.cut(
+        mat_years,
+        bins=[-np.inf, 1, 5, 10, 20, np.inf],
+        labels=["<1Y", "1-5Y", "5-10Y", "10-20Y", ">20Y"],
+        right=False,
+    ).astype("object")
+    maturity_bucket = maturity_bucket.where(mat_years.notna(), other=None)
+    maturity_bucket = maturity_bucket.where(~is_non_maturity, "<1Y")
+
+    # Float columns
+    def _float_col(name: str) -> pd.Series:
+        if name not in motor_df.columns:
+            return pd.Series(None, index=motor_df.index, dtype="object")
+        return pd.to_numeric(motor_df[name], errors="coerce").where(
+            pd.to_numeric(motor_df[name], errors="coerce").notna(), other=None
+        )
+
+    fixed_rate = _float_col("fixed_rate")
+    spread_val = _float_col("spread")
+    floor_rate = _float_col("floor_rate")
+    cap_rate = _float_col("cap_rate")
+
+    # Text columns
+    def _text_col(name: str) -> pd.Series:
+        if name not in motor_df.columns:
+            return pd.Series(None, index=motor_df.index, dtype="object")
+        s = motor_df[name].astype(str).str.strip()
+        return s.where((motor_df[name].notna()) & s.ne("") & s.ne("nan") & s.ne("None") & s.ne("<NA>"), other=None)
+
+    categoria_ui = cls["cls_side"].map(_BC_SIDE_UI).fillna("Assets")
+
+    canonical_df = pd.DataFrame({
+        "contract_id": contract_id,
+        "sheet": sct,
+        "side": cls["cls_side"],
+        "categoria_ui": categoria_ui,
+        "subcategoria_ui": cls["cls_subcategory_label"],
+        "subcategory_id": cls["cls_subcategory_id"],
+        "group": cls["cls_subcategory_label"],
+        "currency": "EUR",
+        "counterparty": None,
+        "amount": notional,
+        "book_value": None,
+        "rate_type": rate_type,
+        "rate_display": fixed_rate,
+        "tipo_tasa_raw": rate_type_raw,
+        "tasa_fija": fixed_rate,
+        "spread": spread_val,
+        "indice_ref": _text_col("index_name"),
+        "tenor_indice": None,
+        "fecha_inicio": fecha_inicio,
+        "fecha_vencimiento": fecha_vencimiento,
+        "fecha_prox_reprecio": fecha_prox_reprecio,
+        "maturity_years": mat_years.where(mat_years.notna(), other=None),
+        "maturity_bucket": maturity_bucket,
+        "repricing_bucket": None,
+        "include_in_balance_tree": cls["cls_side"].isin({"asset", "liability"}),
+        "source_contract_type": sct,
+        "daycount_base": _text_col("daycount_base"),
+        "notional": notional,
+        "repricing_freq": _text_col("repricing_freq"),
+        "payment_freq": _text_col("payment_freq"),
+        "floor_rate": floor_rate,
+        "cap_rate": cap_rate,
+        "balance_product": _text_col("balance_product"),
+        "balance_section": _text_col("balance_section"),
+        "balance_epigrafe": _text_col("balance_epigrafe"),
+    }, index=motor_df.index)
+
+    # Convert NaN/NaT to None for clean JSON serialization
+    canonical_df = canonical_df.astype(object).where(canonical_df.notna(), other=None)
+
+    return canonical_df.to_dict(orient="records")
+
+
+def _serialize_motor_df_to_parquet(motor_df: pd.DataFrame, path: Path) -> None:
+    """Write motor DataFrame to Parquet (10-50x smaller/faster than JSON)."""
+    motor_df.to_parquet(path, engine="pyarrow", index=False)
 
 
 # ── Schema validation ───────────────────────────────────────────────────────
@@ -414,7 +613,7 @@ def _parse_zip_balance(
         if len(subdirs) == 1:
             extract_dir = subdirs[0]
 
-    # 2. Run motor pipeline
+    # 2. Run motor pipeline (vectorised CSV parsing)
     filtered_specs = [
         {**spec, "required": False}
         for spec in bank_mapping_unicaja.SOURCE_SPECS
@@ -442,42 +641,35 @@ def _parse_zip_balance(
             detail=f"Error parsing CSV positions: {exc}",
         )
 
-    # 3. Persist motor DataFrame
-    motor_records = motor_df.to_dict(orient="records")
-    n_records = len(motor_records)
-    state._upload_progress[session_id] = {"step": 0, "total": n_records, "phase": "persisting"}
-    for i, rec in enumerate(motor_records):
-        for key, val in list(rec.items()):
-            rec[key] = _serialize_value_for_json(val)
-        if i % 200 == 0:
-            state._upload_progress[session_id]["step"] = i
+    n_records = len(motor_df)
+    _log.info("Parsed %d motor positions from ZIP", n_records)
 
-    _motor_positions_path(session_id).write_text(
-        json.dumps(motor_records, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
+    # 3. Persist motor DataFrame as Parquet (10-50x faster than JSON)
+    state._upload_progress[session_id] = {"step": 0, "total": 1, "phase": "persisting"}
+    _serialize_motor_df_to_parquet(motor_df, _motor_positions_path(session_id))
+    state._upload_progress[session_id] = {"step": 1, "total": 1, "phase": "persisting"}
 
-    # 4. Build UI-canonical rows
-    state._upload_progress[session_id] = {"step": 0, "total": n_records, "phase": "canonicalizing"}
-
+    # 4. Build UI-canonical rows (vectorised — iterates ~70 rules, not 1.5M rows)
+    state._upload_progress[session_id] = {"step": 0, "total": 1, "phase": "canonicalizing"}
     client_rules = _bc_get_rules("unicaja")
+    canonical_rows = _canonicalize_motor_df(motor_df, client_rules)
+    state._upload_progress[session_id] = {"step": 1, "total": 1, "phase": "canonicalizing"}
 
-    canonical_rows: list[dict[str, Any]] = []
-    for idx, rec in enumerate(motor_records):
-        canonical_rows.append(_canonicalize_motor_row(rec, idx, client_rules=client_rules))
-        if idx % 200 == 0:
-            state._upload_progress[session_id]["step"] = idx
-
-    # 5. Build sheet summaries
-    contract_types = sorted({
-        str(rec.get("source_contract_type", "unknown")) for rec in motor_records
-    })
+    # 5. Build sheet summaries (vectorised groupby)
+    sct_col = motor_df["source_contract_type"].fillna("unknown").astype(str) if "source_contract_type" in motor_df.columns else pd.Series("unknown", index=motor_df.index)
+    contract_types = sorted(sct_col.unique())
 
     sheet_summaries: list[BalanceSheetSummary] = []
     sample_rows: dict[str, list[dict[str, Any]]] = {}
 
+    # Index canonical_rows by sheet for efficient lookup
+    canonical_by_sheet: dict[str, list[dict[str, Any]]] = {}
+    for row in canonical_rows:
+        ct = str(row.get("sheet", "unknown"))
+        canonical_by_sheet.setdefault(ct, []).append(row)
+
     for ct in contract_types:
-        ct_rows = [r for r in canonical_rows if r.get("sheet") == ct]
+        ct_rows = canonical_by_sheet.get(ct, [])
         sheet_summaries.append(
             BalanceSheetSummary(
                 sheet=ct,
@@ -486,10 +678,7 @@ def _parse_zip_balance(
                 total_saldo_ini=sum(r.get("amount", 0) for r in ct_rows),
             )
         )
-        sample_rows[ct] = [
-            {k: _serialize_value_for_json(v) for k, v in r.items()}
-            for r in ct_rows[:3]
-        ]
+        sample_rows[ct] = ct_rows[:3]
 
     return sheet_summaries, sample_rows, canonical_rows
 
@@ -498,17 +687,25 @@ def _parse_zip_balance(
 
 def _reconstruct_motor_dataframe(session_id: str) -> pd.DataFrame:
     motor_path = _motor_positions_path(session_id)
-    if not motor_path.exists():
+
+    # Backward compatibility: try new Parquet path first, then legacy JSON
+    legacy_json_path = motor_path.with_suffix(".json")
+
+    if motor_path.exists():
+        df = pd.read_parquet(motor_path)
+    elif legacy_json_path.exists():
+        records = json.loads(legacy_json_path.read_text(encoding="utf-8"))
+        if not records:
+            raise HTTPException(status_code=400, detail="Motor positions file is empty")
+        df = pd.DataFrame(records)
+    else:
         raise HTTPException(
             status_code=404,
             detail="No motor positions found. Upload a balance ZIP first.",
         )
 
-    records = json.loads(motor_path.read_text(encoding="utf-8"))
-    if not records:
+    if df.empty:
         raise HTTPException(status_code=400, detail="Motor positions file is empty")
-
-    df = pd.DataFrame(records)
 
     date_cols = ["start_date", "maturity_date", "next_reprice_date"]
     for col in date_cols:
@@ -521,7 +718,6 @@ def _reconstruct_motor_dataframe(session_id: str) -> pd.DataFrame:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    import logging as _logging
     _NON_MATURITY_TYPES = {"fixed_non_maturity", "variable_non_maturity",
                            "static_position", "non-maturity"}
     sct_col = "source_contract_type"
@@ -531,7 +727,7 @@ def _reconstruct_motor_dataframe(session_id: str) -> pd.DataFrame:
         n_bad = int(missing_maturity.sum())
         if n_bad > 0:
             sample_ids = df.loc[missing_maturity, "contract_id"].head(5).tolist() if "contract_id" in df.columns else []
-            _logging.getLogger(__name__).warning(
+            _log.warning(
                 "Dropping %d positions with missing maturity_date (e.g. %s)",
                 n_bad, sample_ids,
             )
@@ -546,8 +742,9 @@ def _persist_balance_payload(session_id: str, response: BalanceUploadResponse, c
     sdir = _session_dir(session_id)
     _summary_path(session_id).write_text(response.model_dump_json(indent=2), encoding="utf-8")
 
-    positions_json = json.dumps(canonical_rows, indent=2, ensure_ascii=False)
-    _positions_path(session_id).write_text(positions_json, encoding="utf-8")
+    _positions_path(session_id).write_bytes(
+        orjson.dumps(canonical_rows, option=orjson.OPT_NON_STR_KEYS)
+    )
 
     contracts_payload = [
         {
@@ -569,9 +766,8 @@ def _persist_balance_payload(session_id: str, response: BalanceUploadResponse, c
         for row in canonical_rows
         if row.get("include_in_balance_tree")
     ]
-    (sdir / "balance_contracts.json").write_text(
-        json.dumps(contracts_payload, indent=2, ensure_ascii=False),
-        encoding="utf-8",
+    (sdir / "balance_contracts.json").write_bytes(
+        orjson.dumps(contracts_payload, option=orjson.OPT_NON_STR_KEYS)
     )
 
 

@@ -6,7 +6,7 @@ import unittest
 import pandas as pd
 
 from engine.core.curves import curve_from_long_df
-from engine.core.daycount import normalizar_base_de_calculo, yearfrac
+from engine.core.daycount import normalize_daycount_base, yearfrac
 from engine.services.market import ForwardCurveSet
 from engine.services.nii import run_nii_12m_scenarios
 
@@ -60,7 +60,7 @@ class TestNIIFixedAnnuity(unittest.TestCase):
             scenario_curve_sets={},
         )
 
-        b = normalizar_base_de_calculo("ACT/360")
+        b = normalize_daycount_base("ACT/360")
         d0 = date(2026, 1, 1)
         d1 = date(2026, 7, 1)
         d2 = date(2027, 1, 1)

@@ -6,7 +6,7 @@ import unittest
 import pandas as pd
 
 from engine.core.curves import curve_from_long_df
-from engine.core.daycount import normalizar_base_de_calculo, yearfrac
+from engine.core.daycount import normalize_daycount_base, yearfrac
 from engine.services.market import ForwardCurveSet
 from engine.services.nii import run_nii_12m_scenarios
 
@@ -92,7 +92,7 @@ class TestNIIVariableScheduled(unittest.TestCase):
             balance_constant=False,
         )
 
-        b = normalizar_base_de_calculo("ACT/360")
+        b = normalize_daycount_base("ACT/360")
         yf1 = yearfrac(date(2026, 1, 1), date(2026, 7, 1), b)
         yf2 = yearfrac(date(2026, 7, 1), date(2027, 1, 1), b)
         expected_base = 100.0 * (0.02 + 0.01) * yf1 + 60.0 * (0.02 + 0.01) * yf2
