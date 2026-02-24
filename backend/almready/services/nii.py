@@ -631,41 +631,41 @@ def _compute_renewal_nii(
         return float(curve_set.rate_on_date(index_name, d))
 
     from almready.services.nii_projectors import (
-        _add_frequency,
-        _coerce_date,
-        _coerce_float,
-        _cycle_maturity,
-        _is_blank,
-        _linear_notional_at,
-        _lookup_margin_for_row,
-        _normalise_annuity_payment_mode,
-        _original_term_days,
-        _parse_frequency_token,
-        _payment_frequency_or_default,
-        _prepare_scheduled_principal_flows,
-        _project_fixed_annuity_cycle,
-        _project_fixed_scheduled_cycle,
-        _project_variable_annuity_cycle,
-        _project_variable_bullet_cycle,
-        _project_variable_linear_cycle,
-        _project_variable_scheduled_cycle,
-        _scheduled_flow_map_from_template,
-        _scheduled_template_from_remaining_flows,
-        _template_term_days,
+        add_frequency,
+        coerce_date,
+        coerce_float,
+        cycle_maturity,
+        is_blank,
+        linear_notional_at,
+        lookup_margin_for_row,
+        normalise_annuity_payment_mode,
+        original_term_days,
+        parse_frequency_token,
+        payment_frequency_or_default,
+        prepare_scheduled_principal_flows,
+        project_fixed_annuity_cycle,
+        project_fixed_scheduled_cycle,
+        project_variable_annuity_cycle,
+        project_variable_bullet_cycle,
+        project_variable_linear_cycle,
+        project_variable_scheduled_cycle,
+        scheduled_flow_map_from_template,
+        scheduled_template_from_remaining_flows,
+        template_term_days,
     )
 
-    start_date = _coerce_date(
+    start_date = coerce_date(
         getattr(pos_row, "start_date"), field_name="start_date", row_id=contract_id
     )
-    maturity_date = _coerce_date(
+    maturity_date = coerce_date(
         getattr(pos_row, "maturity_date"), field_name="maturity_date", row_id=contract_id
     )
-    term_days = _original_term_days(start_date, maturity_date)
+    term_days = original_term_days(start_date, maturity_date)
     total_nii = 0.0
 
     # ── Helper: extract variable-rate fields from row ──
     def _var_fields():
-        spread = _coerce_float(
+        spread = coerce_float(
             getattr(pos_row, "spread"), field_name="spread", row_id=contract_id
         )
         index_name = str(getattr(pos_row, "index_name", "")).strip()
@@ -673,24 +673,24 @@ def _compute_renewal_nii(
         cap_rate = getattr(pos_row, "cap_rate", None)
         freq = None
         if "repricing_freq" in positions_df.columns:
-            freq = _parse_frequency_token(
+            freq = parse_frequency_token(
                 getattr(pos_row, "repricing_freq", None), row_id=contract_id
             )
         return spread, index_name, floor_rate, cap_rate, freq
 
     # ── FIXED BULLET ──
     if sct == "fixed_bullet":
-        fixed_rate = _coerce_float(
+        fixed_rate = coerce_float(
             getattr(pos_row, "fixed_rate"), field_name="fixed_rate", row_id=contract_id
         )
         margin_default = fixed_rate - _rate(risk_free_index, maturity_date)
-        renewal_margin = _lookup_margin_for_row(
+        renewal_margin = lookup_margin_for_row(
             row=pos_row, rate_type="fixed",
             margin_set=margin_set, default_margin=margin_default,
         )
         cycle_start = maturity_date
         while cycle_start < horizon_end:
-            cycle_maturity = _cycle_maturity(cycle_start, term_days)
+            cycle_maturity = cycle_maturity(cycle_start, term_days)
             cycle_end = min(cycle_maturity, horizon_end)
             rf = _rate(risk_free_index, cycle_maturity)
             renew_rate = rf + renewal_margin
@@ -704,22 +704,22 @@ def _compute_renewal_nii(
 
     # ── FIXED ANNUITY ──
     elif sct == "fixed_annuity":
-        fixed_rate = _coerce_float(
+        fixed_rate = coerce_float(
             getattr(pos_row, "fixed_rate"), field_name="fixed_rate", row_id=contract_id
         )
-        payment_frequency = _payment_frequency_or_default(pos_row, row_id=contract_id)
+        payment_frequency = payment_frequency_or_default(pos_row, row_id=contract_id)
         margin_default = fixed_rate - _rate(risk_free_index, maturity_date)
-        renewal_margin = _lookup_margin_for_row(
+        renewal_margin = lookup_margin_for_row(
             row=pos_row, rate_type="fixed",
             margin_set=margin_set, default_margin=margin_default,
         )
         cycle_start = maturity_date
         while cycle_start < horizon_end:
-            cycle_maturity = _cycle_maturity(cycle_start, term_days)
+            cycle_maturity = cycle_maturity(cycle_start, term_days)
             cycle_end = min(cycle_maturity, horizon_end)
             rf = _rate(risk_free_index, cycle_maturity)
             renew_rate = rf + renewal_margin
-            nii = _project_fixed_annuity_cycle(
+            nii = project_fixed_annuity_cycle(
                 cycle_start=cycle_start, cycle_end=cycle_end,
                 cycle_maturity=cycle_maturity, outstanding=notional,
                 sign=sign, base=base, fixed_rate=renew_rate,
@@ -734,26 +734,26 @@ def _compute_renewal_nii(
 
     # ── FIXED LINEAR ──
     elif sct == "fixed_linear":
-        fixed_rate = _coerce_float(
+        fixed_rate = coerce_float(
             getattr(pos_row, "fixed_rate"), field_name="fixed_rate", row_id=contract_id
         )
         margin_default = fixed_rate - _rate(risk_free_index, maturity_date)
-        renewal_margin = _lookup_margin_for_row(
+        renewal_margin = lookup_margin_for_row(
             row=pos_row, rate_type="fixed",
             margin_set=margin_set, default_margin=margin_default,
         )
         cycle_start = maturity_date
         while cycle_start < horizon_end:
-            cycle_maturity = _cycle_maturity(cycle_start, term_days)
+            cycle_maturity = cycle_maturity(cycle_start, term_days)
             cycle_end = min(cycle_maturity, horizon_end)
             rf = _rate(risk_free_index, cycle_maturity)
             renew_rate = rf + renewal_margin
-            n0 = _linear_notional_at(
+            n0 = linear_notional_at(
                 cycle_start, effective_start=cycle_start,
                 maturity_date=cycle_maturity,
                 outstanding_at_effective_start=notional,
             )
-            n1 = _linear_notional_at(
+            n1 = linear_notional_at(
                 cycle_end, effective_start=cycle_start,
                 maturity_date=cycle_maturity,
                 outstanding_at_effective_start=notional,
@@ -770,18 +770,18 @@ def _compute_renewal_nii(
     # ── VARIABLE BULLET ──
     elif sct == "variable_bullet":
         spread, index_name, floor_rate, cap_rate, frequency = _var_fields()
-        renewal_spread = _lookup_margin_for_row(
+        renewal_spread = lookup_margin_for_row(
             row=pos_row, rate_type="float",
             margin_set=margin_set, default_margin=spread,
         )
         cycle_start = maturity_date
         while cycle_start < horizon_end:
-            cycle_maturity = _cycle_maturity(cycle_start, term_days)
+            cycle_maturity = cycle_maturity(cycle_start, term_days)
             cycle_end = min(cycle_maturity, horizon_end)
             renewal_anchor = None
             if frequency is not None:
-                renewal_anchor = _add_frequency(cycle_start, frequency)
-            nii = _project_variable_bullet_cycle(
+                renewal_anchor = add_frequency(cycle_start, frequency)
+            nii = project_variable_bullet_cycle(
                 cycle_start=cycle_start, cycle_end=cycle_end,
                 notional=notional, sign=sign, base=base,
                 index_name=index_name, spread=renewal_spread,
@@ -799,26 +799,26 @@ def _compute_renewal_nii(
     # ── VARIABLE ANNUITY ──
     elif sct == "variable_annuity":
         spread, index_name, floor_rate, cap_rate, frequency = _var_fields()
-        renewal_spread = _lookup_margin_for_row(
+        renewal_spread = lookup_margin_for_row(
             row=pos_row, rate_type="float",
             margin_set=margin_set, default_margin=spread,
         )
-        payment_frequency = _payment_frequency_or_default(pos_row, row_id=contract_id)
+        payment_frequency = payment_frequency_or_default(pos_row, row_id=contract_id)
         annuity_mode = "reprice_on_reset"
-        if "annuity_payment_mode" in positions_df.columns and not _is_blank(
+        if "annuity_payment_mode" in positions_df.columns and not is_blank(
             getattr(pos_row, "annuity_payment_mode", None)
         ):
-            annuity_mode = _normalise_annuity_payment_mode(
+            annuity_mode = normalise_annuity_payment_mode(
                 getattr(pos_row, "annuity_payment_mode", None), row_id=contract_id,
             )
         cycle_start = maturity_date
         while cycle_start < horizon_end:
-            cycle_maturity = _cycle_maturity(cycle_start, term_days)
+            cycle_maturity = cycle_maturity(cycle_start, term_days)
             cycle_end = min(cycle_maturity, horizon_end)
             renewal_anchor = None
             if frequency is not None:
-                renewal_anchor = _add_frequency(cycle_start, frequency)
-            nii = _project_variable_annuity_cycle(
+                renewal_anchor = add_frequency(cycle_start, frequency)
+            nii = project_variable_annuity_cycle(
                 cycle_start=cycle_start, cycle_end=cycle_end,
                 cycle_maturity=cycle_maturity, outstanding=notional,
                 sign=sign, base=base, curve_set=curve_set,
@@ -840,18 +840,18 @@ def _compute_renewal_nii(
     # ── VARIABLE LINEAR ──
     elif sct == "variable_linear":
         spread, index_name, floor_rate, cap_rate, frequency = _var_fields()
-        renewal_spread = _lookup_margin_for_row(
+        renewal_spread = lookup_margin_for_row(
             row=pos_row, rate_type="float",
             margin_set=margin_set, default_margin=spread,
         )
         cycle_start = maturity_date
         while cycle_start < horizon_end:
-            cycle_maturity = _cycle_maturity(cycle_start, term_days)
+            cycle_maturity = cycle_maturity(cycle_start, term_days)
             cycle_end = min(cycle_maturity, horizon_end)
             renewal_anchor = None
             if frequency is not None:
-                renewal_anchor = _add_frequency(cycle_start, frequency)
-            nii = _project_variable_linear_cycle(
+                renewal_anchor = add_frequency(cycle_start, frequency)
+            nii = project_variable_linear_cycle(
                 cycle_start=cycle_start, cycle_end=cycle_end,
                 cycle_maturity=cycle_maturity, outstanding=notional,
                 sign=sign, base=base, index_name=index_name,
@@ -869,34 +869,34 @@ def _compute_renewal_nii(
 
     # ── FIXED SCHEDULED ──
     elif sct == "fixed_scheduled":
-        fixed_rate = _coerce_float(
+        fixed_rate = coerce_float(
             getattr(pos_row, "fixed_rate"), field_name="fixed_rate", row_id=contract_id
         )
         margin_default = fixed_rate - _rate(risk_free_index, maturity_date)
-        renewal_margin = _lookup_margin_for_row(
+        renewal_margin = lookup_margin_for_row(
             row=pos_row, rate_type="fixed",
             margin_set=margin_set, default_margin=margin_default,
         )
         accrual_start = max(start_date, analysis_date)
-        flows_by_contract = _prepare_scheduled_principal_flows(scheduled_principal_flows)
+        flows_by_contract = prepare_scheduled_principal_flows(scheduled_principal_flows)
         contract_flows = flows_by_contract.get(contract_id, [])
-        template = _scheduled_template_from_remaining_flows(
+        template = scheduled_template_from_remaining_flows(
             contract_flows,
             accrual_start=accrual_start,
             maturity_date=maturity_date,
             outstanding=notional,
         )
-        sched_term_days = _template_term_days(template)
+        sched_term_days = template_term_days(template)
         cycle_start = maturity_date
         while cycle_start < horizon_end:
-            cycle_maturity = _cycle_maturity(cycle_start, sched_term_days)
+            cycle_maturity = cycle_maturity(cycle_start, sched_term_days)
             cycle_end = min(cycle_maturity, horizon_end)
             rf = _rate(risk_free_index, cycle_maturity)
             renew_rate = rf + renewal_margin
-            flow_map = _scheduled_flow_map_from_template(
+            flow_map = scheduled_flow_map_from_template(
                 cycle_start=cycle_start, cycle_end=cycle_end, template=template,
             )
-            nii = _project_fixed_scheduled_cycle(
+            nii = project_fixed_scheduled_cycle(
                 cycle_start=cycle_start, cycle_end=cycle_end,
                 outstanding=notional, sign=sign, base=base,
                 fixed_rate=renew_rate, principal_flow_map=flow_map,
@@ -911,31 +911,31 @@ def _compute_renewal_nii(
     # ── VARIABLE SCHEDULED ──
     elif sct == "variable_scheduled":
         spread, index_name, floor_rate, cap_rate, frequency = _var_fields()
-        renewal_spread = _lookup_margin_for_row(
+        renewal_spread = lookup_margin_for_row(
             row=pos_row, rate_type="float",
             margin_set=margin_set, default_margin=spread,
         )
         accrual_start = max(start_date, analysis_date)
-        flows_by_contract = _prepare_scheduled_principal_flows(scheduled_principal_flows)
+        flows_by_contract = prepare_scheduled_principal_flows(scheduled_principal_flows)
         contract_flows = flows_by_contract.get(contract_id, [])
-        template = _scheduled_template_from_remaining_flows(
+        template = scheduled_template_from_remaining_flows(
             contract_flows,
             accrual_start=accrual_start,
             maturity_date=maturity_date,
             outstanding=notional,
         )
-        sched_term_days = _template_term_days(template)
+        sched_term_days = template_term_days(template)
         cycle_start = maturity_date
         while cycle_start < horizon_end:
-            cycle_maturity = _cycle_maturity(cycle_start, sched_term_days)
+            cycle_maturity = cycle_maturity(cycle_start, sched_term_days)
             cycle_end = min(cycle_maturity, horizon_end)
             renewal_anchor = None
             if frequency is not None:
-                renewal_anchor = _add_frequency(cycle_start, frequency)
-            flow_map = _scheduled_flow_map_from_template(
+                renewal_anchor = add_frequency(cycle_start, frequency)
+            flow_map = scheduled_flow_map_from_template(
                 cycle_start=cycle_start, cycle_end=cycle_end, template=template,
             )
-            nii = _project_variable_scheduled_cycle(
+            nii = project_variable_scheduled_cycle(
                 cycle_start=cycle_start, cycle_end=cycle_end,
                 outstanding=notional, sign=sign, base=base,
                 curve_set=curve_set, index_name=index_name,
@@ -974,12 +974,12 @@ def compute_nii_from_cashflows(
     of each coupon's interest across calendar months.
     """
     from almready.services.nii_projectors import (
-        _coerce_date,
-        _coerce_float,
-        _is_blank,
-        _parse_frequency_token,
-        _project_variable_bullet_cycle,
-        _side_sign,
+        coerce_date,
+        coerce_float,
+        is_blank,
+        parse_frequency_token,
+        project_variable_bullet_cycle,
+        side_sign,
     )
 
     horizon_end = analysis_date + relativedelta(months=horizon_months)
@@ -1034,7 +1034,7 @@ def compute_nii_from_cashflows(
                 side_is_asset_map[_cid] = (
                     str(getattr(_pos, "side", "A")).strip().upper() == "A"
                 )
-                _sd = _coerce_date(
+                _sd = coerce_date(
                     getattr(_pos, "start_date"),
                     field_name="start_date", row_id=_cid,
                 )
@@ -1127,20 +1127,20 @@ def compute_nii_from_cashflows(
                 is_asset = side == "A"
                 sct = str(getattr(pos, "source_contract_type", "")).strip().lower()
 
-                maturity_date = _coerce_date(
+                maturity_date = coerce_date(
                     getattr(pos, "maturity_date"),
                     field_name="maturity_date", row_id=cid,
                 )
-                start_date = _coerce_date(
+                start_date = coerce_date(
                     getattr(pos, "start_date"),
                     field_name="start_date", row_id=cid,
                 )
-                notional = abs(_coerce_float(
+                notional = abs(coerce_float(
                     getattr(pos, "notional"),
                     field_name="notional", row_id=cid,
                 ))
                 base = normalizar_base_de_calculo(str(getattr(pos, "daycount_base")))
-                sign = _side_sign(getattr(pos, "side"), row_id=cid)
+                sign = side_sign(getattr(pos, "side"), row_id=cid)
 
                 accrual_start = accrual_start_map.get(
                     cid, max(start_date, analysis_date)
@@ -1157,7 +1157,7 @@ def compute_nii_from_cashflows(
                             is_variable = sct.startswith("variable_")
                             if is_variable:
                                 # Use variable bullet cycle for correct reset handling
-                                spread = _coerce_float(
+                                spread = coerce_float(
                                     getattr(pos, "spread"),
                                     field_name="spread", row_id=cid,
                                 )
@@ -1165,26 +1165,26 @@ def compute_nii_from_cashflows(
                                 floor_rate = getattr(pos, "floor_rate", None)
                                 cap_rate = getattr(pos, "cap_rate", None)
                                 fixed_rate_stub = None
-                                if not _is_blank(getattr(pos, "fixed_rate", None)):
-                                    fixed_rate_stub = _coerce_float(
+                                if not is_blank(getattr(pos, "fixed_rate", None)):
+                                    fixed_rate_stub = coerce_float(
                                         getattr(pos, "fixed_rate"),
                                         field_name="fixed_rate", row_id=cid,
                                     )
                                 anchor_date = None
-                                if "next_reprice_date" in nii_positions.columns and not _is_blank(
+                                if "next_reprice_date" in nii_positions.columns and not is_blank(
                                     getattr(pos, "next_reprice_date", None)
                                 ):
-                                    anchor_date = _coerce_date(
+                                    anchor_date = coerce_date(
                                         getattr(pos, "next_reprice_date"),
                                         field_name="next_reprice_date", row_id=cid,
                                     )
                                 frequency = None
                                 if "repricing_freq" in nii_positions.columns:
-                                    frequency = _parse_frequency_token(
+                                    frequency = parse_frequency_token(
                                         getattr(pos, "repricing_freq", None),
                                         row_id=cid,
                                     )
-                                stub_nii = _project_variable_bullet_cycle(
+                                stub_nii = project_variable_bullet_cycle(
                                     cycle_start=stub_start,
                                     cycle_end=horizon_end,
                                     notional=balance, sign=sign, base=base,
@@ -1196,7 +1196,7 @@ def compute_nii_from_cashflows(
                                     fixed_rate_for_stub=fixed_rate_stub,
                                 )
                             else:
-                                fixed_rate = _coerce_float(
+                                fixed_rate = coerce_float(
                                     getattr(pos, "fixed_rate"),
                                     field_name="fixed_rate", row_id=cid,
                                 )
@@ -1234,14 +1234,14 @@ def compute_nii_from_cashflows(
         for cid, pos in pos_lookup.items():
             if cid in processed_contracts:
                 continue
-            maturity_date = _coerce_date(
+            maturity_date = coerce_date(
                 getattr(pos, "maturity_date"),
                 field_name="maturity_date", row_id=cid,
             )
             if maturity_date <= analysis_date or maturity_date >= horizon_end:
                 continue
             # Pre-maturity interest for very short-lived positions
-            start_date = _coerce_date(
+            start_date = coerce_date(
                 getattr(pos, "start_date"),
                 field_name="start_date", row_id=cid,
             )
@@ -1249,11 +1249,11 @@ def compute_nii_from_cashflows(
             accrual_end = min(maturity_date, horizon_end)
             if accrual_end > accrual_start:
                 sct = str(getattr(pos, "source_contract_type", "")).strip().lower()
-                notional = abs(_coerce_float(
+                notional = abs(coerce_float(
                     getattr(pos, "notional"), field_name="notional", row_id=cid,
                 ))
                 base = normalizar_base_de_calculo(str(getattr(pos, "daycount_base")))
-                sign = _side_sign(getattr(pos, "side"), row_id=cid)
+                sign = side_sign(getattr(pos, "side"), row_id=cid)
                 side = str(getattr(pos, "side", "A")).strip().upper()
                 is_asset = side == "A"
 
@@ -1261,32 +1261,32 @@ def compute_nii_from_cashflows(
                 # meaning it likely matures before the first coupon date)
                 is_variable = sct.startswith("variable_")
                 if is_variable:
-                    spread = _coerce_float(
+                    spread = coerce_float(
                         getattr(pos, "spread"), field_name="spread", row_id=cid,
                     )
                     index_name = str(getattr(pos, "index_name", "")).strip()
                     floor_rate = getattr(pos, "floor_rate", None)
                     cap_rate = getattr(pos, "cap_rate", None)
                     fixed_rate_stub = None
-                    if not _is_blank(getattr(pos, "fixed_rate", None)):
-                        fixed_rate_stub = _coerce_float(
+                    if not is_blank(getattr(pos, "fixed_rate", None)):
+                        fixed_rate_stub = coerce_float(
                             getattr(pos, "fixed_rate"),
                             field_name="fixed_rate", row_id=cid,
                         )
                     anchor_date = None
-                    if "next_reprice_date" in nii_positions.columns and not _is_blank(
+                    if "next_reprice_date" in nii_positions.columns and not is_blank(
                         getattr(pos, "next_reprice_date", None)
                     ):
-                        anchor_date = _coerce_date(
+                        anchor_date = coerce_date(
                             getattr(pos, "next_reprice_date"),
                             field_name="next_reprice_date", row_id=cid,
                         )
                     frequency = None
                     if "repricing_freq" in nii_positions.columns:
-                        frequency = _parse_frequency_token(
+                        frequency = parse_frequency_token(
                             getattr(pos, "repricing_freq", None), row_id=cid,
                         )
-                    pre_nii = _project_variable_bullet_cycle(
+                    pre_nii = project_variable_bullet_cycle(
                         cycle_start=accrual_start, cycle_end=accrual_end,
                         notional=notional, sign=sign, base=base,
                         index_name=index_name, spread=spread,
@@ -1295,7 +1295,7 @@ def compute_nii_from_cashflows(
                         frequency=frequency, fixed_rate_for_stub=fixed_rate_stub,
                     )
                 else:
-                    fixed_rate = _coerce_float(
+                    fixed_rate = coerce_float(
                         getattr(pos, "fixed_rate"), field_name="fixed_rate", row_id=cid,
                     )
                     pre_nii = sign * notional * fixed_rate * yearfrac(

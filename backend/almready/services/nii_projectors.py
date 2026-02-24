@@ -13,7 +13,7 @@ from almready.services.margin_engine import CalibratedMarginSet
 from almready.services.market import ForwardCurveSet
 
 
-_FIXED_BULLET_REQUIRED_COLUMNS = (
+FIXED_BULLET_REQUIRED_COLUMNS = (
     "contract_id",
     "start_date",
     "maturity_date",
@@ -23,9 +23,9 @@ _FIXED_BULLET_REQUIRED_COLUMNS = (
     "daycount_base",
 )
 
-_FIXED_LINEAR_REQUIRED_COLUMNS = _FIXED_BULLET_REQUIRED_COLUMNS
+FIXED_LINEAR_REQUIRED_COLUMNS = FIXED_BULLET_REQUIRED_COLUMNS
 
-_FIXED_ANNUITY_REQUIRED_COLUMNS = (
+FIXED_ANNUITY_REQUIRED_COLUMNS = (
     "contract_id",
     "start_date",
     "maturity_date",
@@ -35,9 +35,9 @@ _FIXED_ANNUITY_REQUIRED_COLUMNS = (
     "daycount_base",
 )
 
-_FIXED_SCHEDULED_REQUIRED_COLUMNS = _FIXED_ANNUITY_REQUIRED_COLUMNS
+FIXED_SCHEDULED_REQUIRED_COLUMNS = FIXED_ANNUITY_REQUIRED_COLUMNS
 
-_VARIABLE_BULLET_REQUIRED_COLUMNS = (
+VARIABLE_BULLET_REQUIRED_COLUMNS = (
     "contract_id",
     "start_date",
     "maturity_date",
@@ -48,11 +48,11 @@ _VARIABLE_BULLET_REQUIRED_COLUMNS = (
     "spread",
 )
 
-_VARIABLE_LINEAR_REQUIRED_COLUMNS = _VARIABLE_BULLET_REQUIRED_COLUMNS
+VARIABLE_LINEAR_REQUIRED_COLUMNS = VARIABLE_BULLET_REQUIRED_COLUMNS
 
-_VARIABLE_ANNUITY_REQUIRED_COLUMNS = _VARIABLE_BULLET_REQUIRED_COLUMNS
+VARIABLE_ANNUITY_REQUIRED_COLUMNS = VARIABLE_BULLET_REQUIRED_COLUMNS
 
-_VARIABLE_SCHEDULED_REQUIRED_COLUMNS = _VARIABLE_BULLET_REQUIRED_COLUMNS
+VARIABLE_SCHEDULED_REQUIRED_COLUMNS = VARIABLE_BULLET_REQUIRED_COLUMNS
 
 _ANNUITY_PAYMENT_MODE_REPRICE_ON_RESET = "reprice_on_reset"
 _ANNUITY_PAYMENT_MODE_FIXED_PAYMENT = "fixed_payment"
@@ -62,7 +62,7 @@ _SUPPORTED_ANNUITY_PAYMENT_MODES = {
 }
 
 
-def _is_blank(value: object) -> bool:
+def is_blank(value: object) -> bool:
     if pd.isna(value):
         return True
     if isinstance(value, str) and value.strip() == "":
@@ -71,19 +71,19 @@ def _is_blank(value: object) -> bool:
 
 
 def _norm_token(value: Any) -> str | None:
-    if _is_blank(value):
+    if is_blank(value):
         return None
     s = str(value).strip()
     return s if s else None
 
 
-def _normalise_annuity_payment_mode(
+def normalise_annuity_payment_mode(
     value: object,
     *,
     row_id: object,
     field_name: str = "annuity_payment_mode",
 ) -> str:
-    if _is_blank(value):
+    if is_blank(value):
         return _ANNUITY_PAYMENT_MODE_REPRICE_ON_RESET
 
     token = str(value).strip().lower()
@@ -105,7 +105,7 @@ def _normalise_annuity_payment_mode(
     return out
 
 
-def _coerce_date(value: object, *, field_name: str, row_id: object) -> date:
+def coerce_date(value: object, *, field_name: str, row_id: object) -> date:
     if isinstance(value, date):
         return value
     dt = pd.to_datetime(value, errors="coerce")
@@ -114,7 +114,7 @@ def _coerce_date(value: object, *, field_name: str, row_id: object) -> date:
     return dt.date()
 
 
-def _coerce_float(value: object, *, field_name: str, row_id: object) -> float:
+def coerce_float(value: object, *, field_name: str, row_id: object) -> float:
     try:
         out = float(value)
     except (TypeError, ValueError) as exc:
@@ -124,7 +124,7 @@ def _coerce_float(value: object, *, field_name: str, row_id: object) -> float:
     return out
 
 
-def _side_sign(side: object, *, row_id: object) -> float:
+def side_sign(side: object, *, row_id: object) -> float:
     token = str(side).strip().upper()
     if token == "A":
         return 1.0
@@ -133,7 +133,7 @@ def _side_sign(side: object, *, row_id: object) -> float:
     raise ValueError(f"side invalido para contract_id={row_id!r}: {side!r} (esperado 'A' o 'L')")
 
 
-def _ensure_required_columns(df: pd.DataFrame, required: tuple[str, ...], label: str) -> None:
+def ensure_required_columns(df: pd.DataFrame, required: tuple[str, ...], label: str) -> None:
     missing = [c for c in required if c not in df.columns]
     if missing:
         raise ValueError(f"Faltan columnas requeridas para {label} NII: {missing}")
@@ -146,30 +146,30 @@ def _horizon_end(analysis_date: date, *, horizon_months: int = 12) -> date:
     return analysis_date + relativedelta(months=months)
 
 
-def _original_term_days(start_date: date, maturity_date: date) -> int:
+def original_term_days(start_date: date, maturity_date: date) -> int:
     return max(1, int((maturity_date - start_date).days))
 
 
-def _cycle_maturity(cycle_start: date, term_days: int) -> date:
+def cycle_maturity(cycle_start: date, term_days: int) -> date:
     return cycle_start + timedelta(days=max(1, int(term_days)))
 
 
-def _parse_frequency_token(
+def parse_frequency_token(
     value: object,
     *,
     row_id: object,
     field_name: str = "repricing_freq",
 ) -> tuple[int, str] | None:
-    from almready.core._frequency import parse_frequency_token
-    return parse_frequency_token(value, strict=True, row_id=row_id, field_name=field_name)
+    from almready.core._frequency import parse_frequency_token as _core_pft
+    return _core_pft(value, strict=True, row_id=row_id, field_name=field_name)
 
 
-def _add_frequency(d: date, frequency: tuple[int, str]) -> date:
-    from almready.core._frequency import add_frequency
-    return add_frequency(d, frequency)
+def add_frequency(d: date, frequency: tuple[int, str]) -> date:
+    from almready.core._frequency import add_frequency as _core_af
+    return _core_af(d, frequency)
 
 
-def _build_reset_dates(
+def build_reset_dates(
     *,
     accrual_start: date,
     accrual_end: date,
@@ -187,7 +187,7 @@ def _build_reset_dates(
     d = anchor_date
     guard = 0
     while d <= accrual_start:
-        d_next = _add_frequency(d, frequency)
+        d_next = add_frequency(d, frequency)
         if d_next <= d:
             break
         d = d_next
@@ -198,7 +198,7 @@ def _build_reset_dates(
     out: list[date] = []
     while d < accrual_end:
         out.append(d)
-        d_next = _add_frequency(d, frequency)
+        d_next = add_frequency(d, frequency)
         if d_next <= d:
             break
         d = d_next
@@ -208,7 +208,7 @@ def _build_reset_dates(
     return out
 
 
-def _first_reset_after_accrual_start(
+def first_reset_after_accrual_start(
     *,
     accrual_start: date,
     anchor_date: date | None,
@@ -220,7 +220,7 @@ def _first_reset_after_accrual_start(
     d = anchor_date
     guard = 0
     while d <= accrual_start:
-        d_next = _add_frequency(d, frequency)
+        d_next = add_frequency(d, frequency)
         if d_next <= d:
             break
         d = d_next
@@ -230,7 +230,7 @@ def _first_reset_after_accrual_start(
     return d
 
 
-def _reset_occurs_on_accrual_start(
+def reset_occurs_on_accrual_start(
     *,
     accrual_start: date,
     anchor_date: date | None,
@@ -242,7 +242,7 @@ def _reset_occurs_on_accrual_start(
     d = anchor_date
     guard = 0
     while d < accrual_start:
-        d_next = _add_frequency(d, frequency)
+        d_next = add_frequency(d, frequency)
         if d_next <= d:
             break
         d = d_next
@@ -252,7 +252,7 @@ def _reset_occurs_on_accrual_start(
     return d == accrual_start
 
 
-def _apply_floor_cap(rate: float, floor_rate: object, cap_rate: object) -> float:
+def apply_floor_cap(rate: float, floor_rate: object, cap_rate: object) -> float:
     """Aplica floor/cap al tipo all-in (index + spread).
 
     Esta convencion refleja el comportamiento contractual de productos bancarios
@@ -264,18 +264,18 @@ def _apply_floor_cap(rate: float, floor_rate: object, cap_rate: object) -> float
     posicion (floor_cap_on_index) y aplicar floor/cap antes de sumar el spread.
     """
     out = float(rate)
-    if not _is_blank(floor_rate):
+    if not is_blank(floor_rate):
         f = float(floor_rate)
         if isfinite(f):
             out = max(out, f)
-    if not _is_blank(cap_rate):
+    if not is_blank(cap_rate):
         c = float(cap_rate)
         if isfinite(c):
             out = min(out, c)
     return out
 
 
-def _linear_notional_at(
+def linear_notional_at(
     d: date,
     *,
     effective_start: date,
@@ -294,14 +294,14 @@ def _linear_notional_at(
     return float(outstanding_at_effective_start) * (float(rem_days) / float(total_days))
 
 
-def _payment_frequency_or_default(row, *, row_id: object) -> tuple[int, str]:
-    freq = _parse_frequency_token(getattr(row, "payment_freq", None), row_id=row_id, field_name="payment_freq")
+def payment_frequency_or_default(row, *, row_id: object) -> tuple[int, str]:
+    freq = parse_frequency_token(getattr(row, "payment_freq", None), row_id=row_id, field_name="payment_freq")
     if freq is None:
         return (1, "M")
     return freq
 
 
-def _build_payment_dates(
+def build_payment_dates(
     *,
     cycle_start: date,
     cycle_maturity: date,
@@ -311,11 +311,11 @@ def _build_payment_dates(
         return []
 
     dates: list[date] = []
-    d = _add_frequency(cycle_start, payment_frequency)
+    d = add_frequency(cycle_start, payment_frequency)
     guard = 0
     while d < cycle_maturity:
         dates.append(d)
-        d_next = _add_frequency(d, payment_frequency)
+        d_next = add_frequency(d, payment_frequency)
         if d_next <= d:
             break
         d = d_next
@@ -326,7 +326,7 @@ def _build_payment_dates(
     return dates
 
 
-def _annuity_payment_amount(
+def annuity_payment_amount(
     *,
     outstanding: float,
     rate: float,
@@ -366,7 +366,7 @@ def _annuity_payment_amount(
     return float(outstanding) / denom
 
 
-def _project_fixed_annuity_cycle(
+def project_fixed_annuity_cycle(
     *,
     cycle_start: date,
     cycle_end: date,
@@ -380,12 +380,12 @@ def _project_fixed_annuity_cycle(
     if cycle_end <= cycle_start or outstanding <= 0.0:
         return 0.0
 
-    payment_dates = _build_payment_dates(
+    payment_dates = build_payment_dates(
         cycle_start=cycle_start,
         cycle_maturity=cycle_maturity,
         payment_frequency=payment_frequency,
     )
-    payment = _annuity_payment_amount(
+    payment = annuity_payment_amount(
         outstanding=outstanding,
         rate=fixed_rate,
         period_start=cycle_start,
@@ -426,7 +426,7 @@ def _project_fixed_annuity_cycle(
     return float(out)
 
 
-def _project_variable_annuity_cycle(
+def project_variable_annuity_cycle(
     *,
     cycle_start: date,
     cycle_end: date,
@@ -448,7 +448,7 @@ def _project_variable_annuity_cycle(
     if cycle_end <= cycle_start or outstanding <= 0.0:
         return 0.0
 
-    payment_dates = _build_payment_dates(
+    payment_dates = build_payment_dates(
         cycle_start=cycle_start,
         cycle_maturity=cycle_maturity,
         payment_frequency=payment_frequency,
@@ -456,18 +456,18 @@ def _project_variable_annuity_cycle(
     if not payment_dates:
         return 0.0
 
-    reset_dates = _build_reset_dates(
+    reset_dates = build_reset_dates(
         accrual_start=cycle_start,
         accrual_end=cycle_end,
         anchor_date=anchor_date,
         frequency=repricing_frequency,
     )
-    first_reset_after = _first_reset_after_accrual_start(
+    first_reset_after = first_reset_after_accrual_start(
         accrual_start=cycle_start,
         anchor_date=anchor_date,
         frequency=repricing_frequency,
     )
-    reset_at_start = _reset_occurs_on_accrual_start(
+    reset_at_start = reset_occurs_on_accrual_start(
         accrual_start=cycle_start,
         anchor_date=anchor_date,
         frequency=repricing_frequency,
@@ -484,7 +484,7 @@ def _project_variable_annuity_cycle(
             raw_rate = float(fixed_rate_for_stub)
         else:
             raw_rate = float(curve_set.rate_on_date(index_name, d)) + float(spread)
-        return _apply_floor_cap(raw_rate, floor_rate=floor_rate, cap_rate=cap_rate)
+        return apply_floor_cap(raw_rate, floor_rate=floor_rate, cap_rate=cap_rate)
 
     # Modo legacy: se recalcula cuota en cada reset (comportamiento historico del motor).
     if annuity_payment_mode == _ANNUITY_PAYMENT_MODE_REPRICE_ON_RESET:
@@ -506,7 +506,7 @@ def _project_variable_annuity_cycle(
             remaining_payment_dates = [d for d in payment_dates if d > regime_start]
             if not remaining_payment_dates:
                 break
-            payment = _annuity_payment_amount(
+            payment = annuity_payment_amount(
                 outstanding=balance,
                 rate=regime_rate,
                 period_start=regime_start,
@@ -547,7 +547,7 @@ def _project_variable_annuity_cycle(
     # Modo configurable: cuota fija desde cycle_start.
     if annuity_payment_mode == _ANNUITY_PAYMENT_MODE_FIXED_PAYMENT:
         fixed_payment_rate = _rate_at(cycle_start)
-        fixed_payment_amount = _annuity_payment_amount(
+        fixed_payment_amount = annuity_payment_amount(
             outstanding=float(outstanding),
             rate=fixed_payment_rate,
             period_start=cycle_start,
@@ -604,7 +604,7 @@ def _project_variable_annuity_cycle(
     )
 
 
-def _lookup_margin_for_row(
+def lookup_margin_for_row(
     *,
     row,
     rate_type: str,
@@ -626,7 +626,7 @@ def _lookup_margin_for_row(
     )
 
 
-def _project_variable_bullet_cycle(
+def project_variable_bullet_cycle(
     *,
     cycle_start: date,
     cycle_end: date,
@@ -645,18 +645,18 @@ def _project_variable_bullet_cycle(
     if cycle_end <= cycle_start:
         return 0.0
 
-    reset_dates = _build_reset_dates(
+    reset_dates = build_reset_dates(
         accrual_start=cycle_start,
         accrual_end=cycle_end,
         anchor_date=anchor_date,
         frequency=frequency,
     )
-    first_reset_after = _first_reset_after_accrual_start(
+    first_reset_after = first_reset_after_accrual_start(
         accrual_start=cycle_start,
         anchor_date=anchor_date,
         frequency=frequency,
     )
-    reset_at_start = _reset_occurs_on_accrual_start(
+    reset_at_start = reset_occurs_on_accrual_start(
         accrual_start=cycle_start,
         anchor_date=anchor_date,
         frequency=frequency,
@@ -681,13 +681,13 @@ def _project_variable_bullet_cycle(
         else:
             seg_rate = float(curve_set.rate_on_date(index_name, seg_start)) + float(spread)
 
-        seg_rate = _apply_floor_cap(seg_rate, floor_rate=floor_rate, cap_rate=cap_rate)
+        seg_rate = apply_floor_cap(seg_rate, floor_rate=floor_rate, cap_rate=cap_rate)
         accrual_factor = yearfrac(seg_start, seg_end, base)
         out += sign * notional * seg_rate * accrual_factor
     return float(out)
 
 
-def _project_variable_linear_cycle(
+def project_variable_linear_cycle(
     *,
     cycle_start: date,
     cycle_end: date,
@@ -707,18 +707,18 @@ def _project_variable_linear_cycle(
     if cycle_end <= cycle_start:
         return 0.0
 
-    reset_dates = _build_reset_dates(
+    reset_dates = build_reset_dates(
         accrual_start=cycle_start,
         accrual_end=cycle_end,
         anchor_date=anchor_date,
         frequency=frequency,
     )
-    first_reset_after = _first_reset_after_accrual_start(
+    first_reset_after = first_reset_after_accrual_start(
         accrual_start=cycle_start,
         anchor_date=anchor_date,
         frequency=frequency,
     )
-    reset_at_start = _reset_occurs_on_accrual_start(
+    reset_at_start = reset_occurs_on_accrual_start(
         accrual_start=cycle_start,
         anchor_date=anchor_date,
         frequency=frequency,
@@ -742,15 +742,15 @@ def _project_variable_linear_cycle(
             seg_rate = float(fixed_rate_for_stub)
         else:
             seg_rate = float(curve_set.rate_on_date(index_name, seg_start)) + float(spread)
-        seg_rate = _apply_floor_cap(seg_rate, floor_rate=floor_rate, cap_rate=cap_rate)
+        seg_rate = apply_floor_cap(seg_rate, floor_rate=floor_rate, cap_rate=cap_rate)
 
-        notional_start = _linear_notional_at(
+        notional_start = linear_notional_at(
             seg_start,
             effective_start=cycle_start,
             maturity_date=cycle_maturity,
             outstanding_at_effective_start=outstanding,
         )
-        notional_end = _linear_notional_at(
+        notional_end = linear_notional_at(
             seg_end,
             effective_start=cycle_start,
             maturity_date=cycle_maturity,
@@ -782,25 +782,25 @@ def project_fixed_bullet_nii_12m(
     """
     if positions.empty:
         return 0.0
-    _ensure_required_columns(positions, _FIXED_BULLET_REQUIRED_COLUMNS, "fixed_bullet")
+    ensure_required_columns(positions, FIXED_BULLET_REQUIRED_COLUMNS, "fixed_bullet")
     horizon_end = _horizon_end(analysis_date, horizon_months=horizon_months)
 
     total = 0.0
     for row in positions.itertuples(index=False):
         row_id = getattr(row, "contract_id", "<missing>")
-        for col in _FIXED_BULLET_REQUIRED_COLUMNS:
-            if _is_blank(getattr(row, col, None)):
+        for col in FIXED_BULLET_REQUIRED_COLUMNS:
+            if is_blank(getattr(row, col, None)):
                 raise ValueError(f"Valor requerido vacio en {col!r} para contract_id={row_id!r}")
 
-        start_date = _coerce_date(row.start_date, field_name="start_date", row_id=row_id)
-        maturity_date = _coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
+        start_date = coerce_date(row.start_date, field_name="start_date", row_id=row_id)
+        maturity_date = coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
         if maturity_date < start_date:
             raise ValueError(f"maturity_date < start_date para contract_id={row_id!r}: {start_date} > {maturity_date}")
 
-        notional = _coerce_float(row.notional, field_name="notional", row_id=row_id)
-        fixed_rate = _coerce_float(row.fixed_rate, field_name="fixed_rate", row_id=row_id)
+        notional = coerce_float(row.notional, field_name="notional", row_id=row_id)
+        fixed_rate = coerce_float(row.fixed_rate, field_name="fixed_rate", row_id=row_id)
         base = normalizar_base_de_calculo(str(row.daycount_base))
-        sign = _side_sign(row.side, row_id=row_id)
+        sign = side_sign(row.side, row_id=row_id)
 
         accrual_start = max(start_date, analysis_date)
         accrual_end = min(maturity_date, horizon_end)
@@ -814,10 +814,10 @@ def project_fixed_bullet_nii_12m(
         if curve_set is None:
             raise ValueError("curve_set requerido para balance_constant en fixed_bullet")
 
-        term_days = _original_term_days(start_date, maturity_date)
+        term_days = original_term_days(start_date, maturity_date)
         benchmark_orig = maturity_date
         margin_default = fixed_rate - float(curve_set.rate_on_date(risk_free_index, benchmark_orig))
-        renewal_margin = _lookup_margin_for_row(
+        renewal_margin = lookup_margin_for_row(
             row=row,
             rate_type="fixed",
             margin_set=margin_set,
@@ -826,7 +826,7 @@ def project_fixed_bullet_nii_12m(
 
         cycle_start = maturity_date
         while cycle_start < horizon_end:
-            cycle_maturity = _cycle_maturity(cycle_start, term_days)
+            cycle_maturity = cycle_maturity(cycle_start, term_days)
             cycle_end = min(cycle_maturity, horizon_end)
             rf = float(curve_set.rate_on_date(risk_free_index, cycle_maturity))
             renew_rate = rf + renewal_margin
@@ -851,38 +851,38 @@ def project_fixed_linear_nii_12m(
     """
     if positions.empty:
         return 0.0
-    _ensure_required_columns(positions, _FIXED_LINEAR_REQUIRED_COLUMNS, "fixed_linear")
+    ensure_required_columns(positions, FIXED_LINEAR_REQUIRED_COLUMNS, "fixed_linear")
     horizon_end = _horizon_end(analysis_date, horizon_months=horizon_months)
 
     total = 0.0
     for row in positions.itertuples(index=False):
         row_id = getattr(row, "contract_id", "<missing>")
-        for col in _FIXED_LINEAR_REQUIRED_COLUMNS:
-            if _is_blank(getattr(row, col, None)):
+        for col in FIXED_LINEAR_REQUIRED_COLUMNS:
+            if is_blank(getattr(row, col, None)):
                 raise ValueError(f"Valor requerido vacio en {col!r} para contract_id={row_id!r}")
 
-        start_date = _coerce_date(row.start_date, field_name="start_date", row_id=row_id)
-        maturity_date = _coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
+        start_date = coerce_date(row.start_date, field_name="start_date", row_id=row_id)
+        maturity_date = coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
         if maturity_date < start_date:
             raise ValueError(f"maturity_date < start_date para contract_id={row_id!r}: {start_date} > {maturity_date}")
 
-        outstanding = _coerce_float(row.notional, field_name="notional", row_id=row_id)
-        fixed_rate = _coerce_float(row.fixed_rate, field_name="fixed_rate", row_id=row_id)
+        outstanding = coerce_float(row.notional, field_name="notional", row_id=row_id)
+        fixed_rate = coerce_float(row.fixed_rate, field_name="fixed_rate", row_id=row_id)
         base = normalizar_base_de_calculo(str(row.daycount_base))
-        sign = _side_sign(row.side, row_id=row_id)
+        sign = side_sign(row.side, row_id=row_id)
 
         accrual_start = max(start_date, analysis_date)
         accrual_end = min(maturity_date, horizon_end)
         if accrual_end <= accrual_start:
             continue
 
-        n0 = _linear_notional_at(
+        n0 = linear_notional_at(
             accrual_start,
             effective_start=accrual_start,
             maturity_date=maturity_date,
             outstanding_at_effective_start=outstanding,
         )
-        n1 = _linear_notional_at(
+        n1 = linear_notional_at(
             accrual_end,
             effective_start=accrual_start,
             maturity_date=maturity_date,
@@ -896,10 +896,10 @@ def project_fixed_linear_nii_12m(
         if curve_set is None:
             raise ValueError("curve_set requerido para balance_constant en fixed_linear")
 
-        term_days = _original_term_days(start_date, maturity_date)
+        term_days = original_term_days(start_date, maturity_date)
         benchmark_orig = maturity_date
         margin_default = fixed_rate - float(curve_set.rate_on_date(risk_free_index, benchmark_orig))
-        renewal_margin = _lookup_margin_for_row(
+        renewal_margin = lookup_margin_for_row(
             row=row,
             rate_type="fixed",
             margin_set=margin_set,
@@ -908,18 +908,18 @@ def project_fixed_linear_nii_12m(
 
         cycle_start = maturity_date
         while cycle_start < horizon_end:
-            cycle_maturity = _cycle_maturity(cycle_start, term_days)
+            cycle_maturity = cycle_maturity(cycle_start, term_days)
             cycle_end = min(cycle_maturity, horizon_end)
             rf = float(curve_set.rate_on_date(risk_free_index, cycle_maturity))
             renew_rate = rf + renewal_margin
 
-            n0 = _linear_notional_at(
+            n0 = linear_notional_at(
                 cycle_start,
                 effective_start=cycle_start,
                 maturity_date=cycle_maturity,
                 outstanding_at_effective_start=outstanding,
             )
-            n1 = _linear_notional_at(
+            n1 = linear_notional_at(
                 cycle_end,
                 effective_start=cycle_start,
                 maturity_date=cycle_maturity,
@@ -946,18 +946,18 @@ def project_variable_bullet_nii_12m(
     """
     if positions.empty:
         return 0.0
-    _ensure_required_columns(positions, _VARIABLE_BULLET_REQUIRED_COLUMNS, "variable_bullet")
+    ensure_required_columns(positions, VARIABLE_BULLET_REQUIRED_COLUMNS, "variable_bullet")
     horizon_end = _horizon_end(analysis_date, horizon_months=horizon_months)
     total = 0.0
 
     for row in positions.itertuples(index=False):
         row_id = getattr(row, "contract_id", "<missing>")
-        for col in _VARIABLE_BULLET_REQUIRED_COLUMNS:
-            if _is_blank(getattr(row, col, None)):
+        for col in VARIABLE_BULLET_REQUIRED_COLUMNS:
+            if is_blank(getattr(row, col, None)):
                 raise ValueError(f"Valor requerido vacio en {col!r} para contract_id={row_id!r}")
 
-        start_date = _coerce_date(row.start_date, field_name="start_date", row_id=row_id)
-        maturity_date = _coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
+        start_date = coerce_date(row.start_date, field_name="start_date", row_id=row_id)
+        maturity_date = coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
         if maturity_date < start_date:
             raise ValueError(f"maturity_date < start_date para contract_id={row_id!r}: {start_date} > {maturity_date}")
 
@@ -966,25 +966,25 @@ def project_variable_bullet_nii_12m(
         if accrual_end <= accrual_start:
             continue
 
-        notional = _coerce_float(row.notional, field_name="notional", row_id=row_id)
-        sign = _side_sign(row.side, row_id=row_id)
+        notional = coerce_float(row.notional, field_name="notional", row_id=row_id)
+        sign = side_sign(row.side, row_id=row_id)
         base = normalizar_base_de_calculo(str(row.daycount_base))
 
         index_name = str(row.index_name).strip()
         curve_set.get(index_name)
-        spread = _coerce_float(row.spread, field_name="spread", row_id=row_id)
+        spread = coerce_float(row.spread, field_name="spread", row_id=row_id)
         floor_rate = getattr(row, "floor_rate", None)
         cap_rate = getattr(row, "cap_rate", None)
-        fixed_rate_stub = None if _is_blank(getattr(row, "fixed_rate", None)) else _coerce_float(getattr(row, "fixed_rate", None), field_name="fixed_rate", row_id=row_id)
+        fixed_rate_stub = None if is_blank(getattr(row, "fixed_rate", None)) else coerce_float(getattr(row, "fixed_rate", None), field_name="fixed_rate", row_id=row_id)
 
         anchor_date = None
-        if "next_reprice_date" in positions.columns and not _is_blank(getattr(row, "next_reprice_date", None)):
-            anchor_date = _coerce_date(getattr(row, "next_reprice_date", None), field_name="next_reprice_date", row_id=row_id)
+        if "next_reprice_date" in positions.columns and not is_blank(getattr(row, "next_reprice_date", None)):
+            anchor_date = coerce_date(getattr(row, "next_reprice_date", None), field_name="next_reprice_date", row_id=row_id)
         frequency = None
         if "repricing_freq" in positions.columns:
-            frequency = _parse_frequency_token(getattr(row, "repricing_freq", None), row_id=row_id)
+            frequency = parse_frequency_token(getattr(row, "repricing_freq", None), row_id=row_id)
 
-        total += _project_variable_bullet_cycle(
+        total += project_variable_bullet_cycle(
             cycle_start=accrual_start,
             cycle_end=accrual_end,
             notional=notional,
@@ -1003,23 +1003,23 @@ def project_variable_bullet_nii_12m(
         if not balance_constant or maturity_date >= horizon_end:
             continue
 
-        renewal_spread = _lookup_margin_for_row(
+        renewal_spread = lookup_margin_for_row(
             row=row,
             rate_type="float",
             margin_set=margin_set,
             default_margin=spread,
         )
-        term_days = _original_term_days(start_date, maturity_date)
+        term_days = original_term_days(start_date, maturity_date)
         cycle_start = maturity_date
         while cycle_start < horizon_end:
-            cycle_maturity = _cycle_maturity(cycle_start, term_days)
+            cycle_maturity = cycle_maturity(cycle_start, term_days)
             cycle_end = min(cycle_maturity, horizon_end)
 
             renewal_anchor = None
             if frequency is not None:
-                renewal_anchor = _add_frequency(cycle_start, frequency)
+                renewal_anchor = add_frequency(cycle_start, frequency)
 
-            total += _project_variable_bullet_cycle(
+            total += project_variable_bullet_cycle(
                 cycle_start=cycle_start,
                 cycle_end=cycle_end,
                 notional=notional,
@@ -1053,18 +1053,18 @@ def project_variable_linear_nii_12m(
     """
     if positions.empty:
         return 0.0
-    _ensure_required_columns(positions, _VARIABLE_LINEAR_REQUIRED_COLUMNS, "variable_linear")
+    ensure_required_columns(positions, VARIABLE_LINEAR_REQUIRED_COLUMNS, "variable_linear")
     horizon_end = _horizon_end(analysis_date, horizon_months=horizon_months)
     total = 0.0
 
     for row in positions.itertuples(index=False):
         row_id = getattr(row, "contract_id", "<missing>")
-        for col in _VARIABLE_LINEAR_REQUIRED_COLUMNS:
-            if _is_blank(getattr(row, col, None)):
+        for col in VARIABLE_LINEAR_REQUIRED_COLUMNS:
+            if is_blank(getattr(row, col, None)):
                 raise ValueError(f"Valor requerido vacio en {col!r} para contract_id={row_id!r}")
 
-        start_date = _coerce_date(row.start_date, field_name="start_date", row_id=row_id)
-        maturity_date = _coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
+        start_date = coerce_date(row.start_date, field_name="start_date", row_id=row_id)
+        maturity_date = coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
         if maturity_date < start_date:
             raise ValueError(f"maturity_date < start_date para contract_id={row_id!r}: {start_date} > {maturity_date}")
 
@@ -1073,25 +1073,25 @@ def project_variable_linear_nii_12m(
         if accrual_end <= accrual_start:
             continue
 
-        outstanding = _coerce_float(row.notional, field_name="notional", row_id=row_id)
-        sign = _side_sign(row.side, row_id=row_id)
+        outstanding = coerce_float(row.notional, field_name="notional", row_id=row_id)
+        sign = side_sign(row.side, row_id=row_id)
         base = normalizar_base_de_calculo(str(row.daycount_base))
 
         index_name = str(row.index_name).strip()
         curve_set.get(index_name)
-        spread = _coerce_float(row.spread, field_name="spread", row_id=row_id)
+        spread = coerce_float(row.spread, field_name="spread", row_id=row_id)
         floor_rate = getattr(row, "floor_rate", None)
         cap_rate = getattr(row, "cap_rate", None)
-        fixed_rate_stub = None if _is_blank(getattr(row, "fixed_rate", None)) else _coerce_float(getattr(row, "fixed_rate", None), field_name="fixed_rate", row_id=row_id)
+        fixed_rate_stub = None if is_blank(getattr(row, "fixed_rate", None)) else coerce_float(getattr(row, "fixed_rate", None), field_name="fixed_rate", row_id=row_id)
 
         anchor_date = None
-        if "next_reprice_date" in positions.columns and not _is_blank(getattr(row, "next_reprice_date", None)):
-            anchor_date = _coerce_date(getattr(row, "next_reprice_date", None), field_name="next_reprice_date", row_id=row_id)
+        if "next_reprice_date" in positions.columns and not is_blank(getattr(row, "next_reprice_date", None)):
+            anchor_date = coerce_date(getattr(row, "next_reprice_date", None), field_name="next_reprice_date", row_id=row_id)
         frequency = None
         if "repricing_freq" in positions.columns:
-            frequency = _parse_frequency_token(getattr(row, "repricing_freq", None), row_id=row_id)
+            frequency = parse_frequency_token(getattr(row, "repricing_freq", None), row_id=row_id)
 
-        total += _project_variable_linear_cycle(
+        total += project_variable_linear_cycle(
             cycle_start=accrual_start,
             cycle_end=accrual_end,
             cycle_maturity=maturity_date,
@@ -1111,22 +1111,22 @@ def project_variable_linear_nii_12m(
         if not balance_constant or maturity_date >= horizon_end:
             continue
 
-        renewal_spread = _lookup_margin_for_row(
+        renewal_spread = lookup_margin_for_row(
             row=row,
             rate_type="float",
             margin_set=margin_set,
             default_margin=spread,
         )
-        term_days = _original_term_days(start_date, maturity_date)
+        term_days = original_term_days(start_date, maturity_date)
         cycle_start = maturity_date
         while cycle_start < horizon_end:
-            cycle_maturity = _cycle_maturity(cycle_start, term_days)
+            cycle_maturity = cycle_maturity(cycle_start, term_days)
             cycle_end = min(cycle_maturity, horizon_end)
             renewal_anchor = None
             if frequency is not None:
-                renewal_anchor = _add_frequency(cycle_start, frequency)
+                renewal_anchor = add_frequency(cycle_start, frequency)
 
-            total += _project_variable_linear_cycle(
+            total += project_variable_linear_cycle(
                 cycle_start=cycle_start,
                 cycle_end=cycle_end,
                 cycle_maturity=cycle_maturity,
@@ -1162,33 +1162,33 @@ def project_fixed_annuity_nii_12m(
     """
     if positions.empty:
         return 0.0
-    _ensure_required_columns(positions, _FIXED_ANNUITY_REQUIRED_COLUMNS, "fixed_annuity")
+    ensure_required_columns(positions, FIXED_ANNUITY_REQUIRED_COLUMNS, "fixed_annuity")
     horizon_end = _horizon_end(analysis_date, horizon_months=horizon_months)
 
     total = 0.0
     for row in positions.itertuples(index=False):
         row_id = getattr(row, "contract_id", "<missing>")
-        for col in _FIXED_ANNUITY_REQUIRED_COLUMNS:
-            if _is_blank(getattr(row, col, None)):
+        for col in FIXED_ANNUITY_REQUIRED_COLUMNS:
+            if is_blank(getattr(row, col, None)):
                 raise ValueError(f"Valor requerido vacio en {col!r} para contract_id={row_id!r}")
 
-        start_date = _coerce_date(row.start_date, field_name="start_date", row_id=row_id)
-        maturity_date = _coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
+        start_date = coerce_date(row.start_date, field_name="start_date", row_id=row_id)
+        maturity_date = coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
         if maturity_date < start_date:
             raise ValueError(f"maturity_date < start_date para contract_id={row_id!r}: {start_date} > {maturity_date}")
 
-        outstanding = _coerce_float(row.notional, field_name="notional", row_id=row_id)
-        fixed_rate = _coerce_float(row.fixed_rate, field_name="fixed_rate", row_id=row_id)
+        outstanding = coerce_float(row.notional, field_name="notional", row_id=row_id)
+        fixed_rate = coerce_float(row.fixed_rate, field_name="fixed_rate", row_id=row_id)
         base = normalizar_base_de_calculo(str(row.daycount_base))
-        sign = _side_sign(row.side, row_id=row_id)
-        payment_frequency = _payment_frequency_or_default(row, row_id=row_id)
+        sign = side_sign(row.side, row_id=row_id)
+        payment_frequency = payment_frequency_or_default(row, row_id=row_id)
 
         accrual_start = max(start_date, analysis_date)
         accrual_end = min(maturity_date, horizon_end)
         if accrual_end <= accrual_start:
             continue
 
-        total += _project_fixed_annuity_cycle(
+        total += project_fixed_annuity_cycle(
             cycle_start=accrual_start,
             cycle_end=accrual_end,
             cycle_maturity=maturity_date,
@@ -1204,10 +1204,10 @@ def project_fixed_annuity_nii_12m(
         if curve_set is None:
             raise ValueError("curve_set requerido para balance_constant en fixed_annuity")
 
-        term_days = _original_term_days(start_date, maturity_date)
+        term_days = original_term_days(start_date, maturity_date)
         benchmark_orig = maturity_date
         margin_default = fixed_rate - float(curve_set.rate_on_date(risk_free_index, benchmark_orig))
-        renewal_margin = _lookup_margin_for_row(
+        renewal_margin = lookup_margin_for_row(
             row=row,
             rate_type="fixed",
             margin_set=margin_set,
@@ -1216,11 +1216,11 @@ def project_fixed_annuity_nii_12m(
 
         cycle_start = maturity_date
         while cycle_start < horizon_end:
-            cycle_maturity = _cycle_maturity(cycle_start, term_days)
+            cycle_maturity = cycle_maturity(cycle_start, term_days)
             cycle_end = min(cycle_maturity, horizon_end)
             rf = float(curve_set.rate_on_date(risk_free_index, cycle_maturity))
             renew_rate = rf + renewal_margin
-            total += _project_fixed_annuity_cycle(
+            total += project_fixed_annuity_cycle(
                 cycle_start=cycle_start,
                 cycle_end=cycle_end,
                 cycle_maturity=cycle_maturity,
@@ -1257,11 +1257,11 @@ def project_variable_annuity_nii_12m(
     """
     if positions.empty:
         return 0.0
-    _ensure_required_columns(positions, _VARIABLE_ANNUITY_REQUIRED_COLUMNS, "variable_annuity")
+    ensure_required_columns(positions, VARIABLE_ANNUITY_REQUIRED_COLUMNS, "variable_annuity")
     horizon_end = _horizon_end(analysis_date, horizon_months=horizon_months)
     # Compatibilidad hacia atras: si no se configura nada, mantenemos
     # exactamente el comportamiento historico (reprice_on_reset).
-    global_annuity_payment_mode = _normalise_annuity_payment_mode(
+    global_annuity_payment_mode = normalise_annuity_payment_mode(
         annuity_payment_mode,
         row_id="<global>",
         field_name="annuity_payment_mode",
@@ -1270,12 +1270,12 @@ def project_variable_annuity_nii_12m(
 
     for row in positions.itertuples(index=False):
         row_id = getattr(row, "contract_id", "<missing>")
-        for col in _VARIABLE_ANNUITY_REQUIRED_COLUMNS:
-            if _is_blank(getattr(row, col, None)):
+        for col in VARIABLE_ANNUITY_REQUIRED_COLUMNS:
+            if is_blank(getattr(row, col, None)):
                 raise ValueError(f"Valor requerido vacio en {col!r} para contract_id={row_id!r}")
 
-        start_date = _coerce_date(row.start_date, field_name="start_date", row_id=row_id)
-        maturity_date = _coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
+        start_date = coerce_date(row.start_date, field_name="start_date", row_id=row_id)
+        maturity_date = coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
         if maturity_date < start_date:
             raise ValueError(f"maturity_date < start_date para contract_id={row_id!r}: {start_date} > {maturity_date}")
 
@@ -1284,38 +1284,38 @@ def project_variable_annuity_nii_12m(
         if accrual_end <= accrual_start:
             continue
 
-        outstanding = _coerce_float(row.notional, field_name="notional", row_id=row_id)
-        sign = _side_sign(row.side, row_id=row_id)
+        outstanding = coerce_float(row.notional, field_name="notional", row_id=row_id)
+        sign = side_sign(row.side, row_id=row_id)
         base = normalizar_base_de_calculo(str(row.daycount_base))
-        payment_frequency = _payment_frequency_or_default(row, row_id=row_id)
+        payment_frequency = payment_frequency_or_default(row, row_id=row_id)
 
         index_name = str(row.index_name).strip()
         curve_set.get(index_name)
-        spread = _coerce_float(row.spread, field_name="spread", row_id=row_id)
+        spread = coerce_float(row.spread, field_name="spread", row_id=row_id)
         floor_rate = getattr(row, "floor_rate", None)
         cap_rate = getattr(row, "cap_rate", None)
         fixed_rate_stub = (
             None
-            if _is_blank(getattr(row, "fixed_rate", None))
-            else _coerce_float(getattr(row, "fixed_rate", None), field_name="fixed_rate", row_id=row_id)
+            if is_blank(getattr(row, "fixed_rate", None))
+            else coerce_float(getattr(row, "fixed_rate", None), field_name="fixed_rate", row_id=row_id)
         )
 
         anchor_date = None
-        if "next_reprice_date" in positions.columns and not _is_blank(getattr(row, "next_reprice_date", None)):
-            anchor_date = _coerce_date(getattr(row, "next_reprice_date", None), field_name="next_reprice_date", row_id=row_id)
+        if "next_reprice_date" in positions.columns and not is_blank(getattr(row, "next_reprice_date", None)):
+            anchor_date = coerce_date(getattr(row, "next_reprice_date", None), field_name="next_reprice_date", row_id=row_id)
         frequency = None
         if "repricing_freq" in positions.columns:
-            frequency = _parse_frequency_token(getattr(row, "repricing_freq", None), row_id=row_id)
+            frequency = parse_frequency_token(getattr(row, "repricing_freq", None), row_id=row_id)
 
         row_annuity_payment_mode = global_annuity_payment_mode
-        if "annuity_payment_mode" in positions.columns and not _is_blank(getattr(row, "annuity_payment_mode", None)):
+        if "annuity_payment_mode" in positions.columns and not is_blank(getattr(row, "annuity_payment_mode", None)):
             # Override por contrato para bancos/productos con mezcla de reglas.
-            row_annuity_payment_mode = _normalise_annuity_payment_mode(
+            row_annuity_payment_mode = normalise_annuity_payment_mode(
                 getattr(row, "annuity_payment_mode", None),
                 row_id=row_id,
             )
 
-        total += _project_variable_annuity_cycle(
+        total += project_variable_annuity_cycle(
             cycle_start=accrual_start,
             cycle_end=accrual_end,
             cycle_maturity=maturity_date,
@@ -1337,22 +1337,22 @@ def project_variable_annuity_nii_12m(
         if not balance_constant or maturity_date >= horizon_end:
             continue
 
-        renewal_spread = _lookup_margin_for_row(
+        renewal_spread = lookup_margin_for_row(
             row=row,
             rate_type="float",
             margin_set=margin_set,
             default_margin=spread,
         )
-        term_days = _original_term_days(start_date, maturity_date)
+        term_days = original_term_days(start_date, maturity_date)
         cycle_start = maturity_date
         while cycle_start < horizon_end:
-            cycle_maturity = _cycle_maturity(cycle_start, term_days)
+            cycle_maturity = cycle_maturity(cycle_start, term_days)
             cycle_end = min(cycle_maturity, horizon_end)
             renewal_anchor = None
             if frequency is not None:
-                renewal_anchor = _add_frequency(cycle_start, frequency)
+                renewal_anchor = add_frequency(cycle_start, frequency)
 
-            total += _project_variable_annuity_cycle(
+            total += project_variable_annuity_cycle(
                 cycle_start=cycle_start,
                 cycle_end=cycle_end,
                 cycle_maturity=cycle_maturity,
@@ -1375,7 +1375,7 @@ def project_variable_annuity_nii_12m(
     return float(total)
 
 
-def _prepare_scheduled_principal_flows(
+def prepare_scheduled_principal_flows(
     principal_flows: pd.DataFrame | None,
 ) -> dict[str, list[tuple[date, float]]]:
     if principal_flows is None:
@@ -1426,7 +1426,7 @@ def _prepare_scheduled_principal_flows(
     return out
 
 
-def _scheduled_flow_map_for_window(
+def scheduled_flow_map_for_window(
     contract_flows: list[tuple[date, float]],
     *,
     cycle_start: date,
@@ -1449,14 +1449,14 @@ def _scheduled_flow_map_for_window(
     return out
 
 
-def _apply_principal_flow(balance: float, principal_amount: float) -> float:
+def apply_principal_flow(balance: float, principal_amount: float) -> float:
     out = float(balance) - float(principal_amount)
     if out < 0.0:
         return 0.0
     return out
 
 
-def _scheduled_template_from_remaining_flows(
+def scheduled_template_from_remaining_flows(
     contract_flows: list[tuple[date, float]],
     *,
     accrual_start: date,
@@ -1485,13 +1485,13 @@ def _scheduled_template_from_remaining_flows(
     return [(d, float(a) * scale) for d, a in template]
 
 
-def _template_term_days(template: list[tuple[int, float]]) -> int:
+def template_term_days(template: list[tuple[int, float]]) -> int:
     if not template:
         return 1
     return max(1, max(int(d) for d, _ in template))
 
 
-def _scheduled_flow_map_from_template(
+def scheduled_flow_map_from_template(
     *,
     cycle_start: date,
     cycle_end: date,
@@ -1506,7 +1506,7 @@ def _scheduled_flow_map_from_template(
     return out
 
 
-def _project_fixed_scheduled_cycle(
+def project_fixed_scheduled_cycle(
     *,
     cycle_start: date,
     cycle_end: date,
@@ -1520,7 +1520,7 @@ def _project_fixed_scheduled_cycle(
         return 0.0
 
     # Flujos de principal en (cycle_start, cycle_end] — convencion semiabierta
-    # coherente con _scheduled_flow_map_for_window.
+    # coherente con scheduled_flow_map_for_window.
     boundaries = {cycle_start, cycle_end}
     for d in principal_flow_map.keys():
         if cycle_start < d <= cycle_end:
@@ -1540,14 +1540,14 @@ def _project_fixed_scheduled_cycle(
         out += sign * balance * float(fixed_rate) * yearfrac(seg_start, seg_end, base)
         principal_at_end = float(principal_flow_map.get(seg_end, 0.0))
         if principal_at_end != 0.0:
-            balance = _apply_principal_flow(balance, principal_at_end)
+            balance = apply_principal_flow(balance, principal_at_end)
         if balance <= 1e-10:
             break
 
     return float(out)
 
 
-def _project_variable_scheduled_cycle(
+def project_variable_scheduled_cycle(
     *,
     cycle_start: date,
     cycle_end: date,
@@ -1567,25 +1567,25 @@ def _project_variable_scheduled_cycle(
     if cycle_end <= cycle_start or outstanding <= 0.0:
         return 0.0
 
-    reset_dates = _build_reset_dates(
+    reset_dates = build_reset_dates(
         accrual_start=cycle_start,
         accrual_end=cycle_end,
         anchor_date=anchor_date,
         frequency=frequency,
     )
-    first_reset_after = _first_reset_after_accrual_start(
+    first_reset_after = first_reset_after_accrual_start(
         accrual_start=cycle_start,
         anchor_date=anchor_date,
         frequency=frequency,
     )
-    reset_at_start = _reset_occurs_on_accrual_start(
+    reset_at_start = reset_occurs_on_accrual_start(
         accrual_start=cycle_start,
         anchor_date=anchor_date,
         frequency=frequency,
     )
 
     # Flujos de principal en (cycle_start, cycle_end] — convencion semiabierta
-    # coherente con _scheduled_flow_map_for_window.
+    # coherente con scheduled_flow_map_for_window.
     boundaries = {cycle_start, cycle_end}
     for d in reset_dates:
         if cycle_start < d < cycle_end:
@@ -1613,7 +1613,7 @@ def _project_variable_scheduled_cycle(
             seg_rate = float(fixed_rate_for_stub)
         else:
             seg_rate = float(curve_set.rate_on_date(index_name, seg_start)) + float(spread)
-        seg_rate = _apply_floor_cap(seg_rate, floor_rate=floor_rate, cap_rate=cap_rate)
+        seg_rate = apply_floor_cap(seg_rate, floor_rate=floor_rate, cap_rate=cap_rate)
 
         # Interes devengado sobre el balance vivo durante el segmento.
         # El principal se aplica al final del segmento, tras acumular interes.
@@ -1621,7 +1621,7 @@ def _project_variable_scheduled_cycle(
 
         principal_at_end = float(principal_flow_map.get(seg_end, 0.0))
         if principal_at_end != 0.0:
-            balance = _apply_principal_flow(balance, principal_at_end)
+            balance = apply_principal_flow(balance, principal_at_end)
         if balance <= 1e-10:
             break
 
@@ -1644,41 +1644,41 @@ def project_fixed_scheduled_nii_12m(
     """
     if positions.empty:
         return 0.0
-    _ensure_required_columns(positions, _FIXED_SCHEDULED_REQUIRED_COLUMNS, "fixed_scheduled")
-    flows_by_contract = _prepare_scheduled_principal_flows(principal_flows)
+    ensure_required_columns(positions, FIXED_SCHEDULED_REQUIRED_COLUMNS, "fixed_scheduled")
+    flows_by_contract = prepare_scheduled_principal_flows(principal_flows)
     horizon_end = _horizon_end(analysis_date, horizon_months=horizon_months)
 
     total = 0.0
     for row in positions.itertuples(index=False):
         row_id = getattr(row, "contract_id", "<missing>")
-        for col in _FIXED_SCHEDULED_REQUIRED_COLUMNS:
-            if _is_blank(getattr(row, col, None)):
+        for col in FIXED_SCHEDULED_REQUIRED_COLUMNS:
+            if is_blank(getattr(row, col, None)):
                 raise ValueError(f"Valor requerido vacio en {col!r} para contract_id={row_id!r}")
 
         contract_id = str(row.contract_id).strip()
         contract_flows = flows_by_contract.get(contract_id, [])
 
-        start_date = _coerce_date(row.start_date, field_name="start_date", row_id=row_id)
-        maturity_date = _coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
+        start_date = coerce_date(row.start_date, field_name="start_date", row_id=row_id)
+        maturity_date = coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
         if maturity_date < start_date:
             raise ValueError(f"maturity_date < start_date para contract_id={row_id!r}: {start_date} > {maturity_date}")
 
-        outstanding = _coerce_float(row.notional, field_name="notional", row_id=row_id)
-        fixed_rate = _coerce_float(row.fixed_rate, field_name="fixed_rate", row_id=row_id)
+        outstanding = coerce_float(row.notional, field_name="notional", row_id=row_id)
+        fixed_rate = coerce_float(row.fixed_rate, field_name="fixed_rate", row_id=row_id)
         base = normalizar_base_de_calculo(str(row.daycount_base))
-        sign = _side_sign(row.side, row_id=row_id)
+        sign = side_sign(row.side, row_id=row_id)
 
         accrual_start = max(start_date, analysis_date)
         accrual_end = min(maturity_date, horizon_end)
         if accrual_end <= accrual_start:
             continue
 
-        flow_map = _scheduled_flow_map_for_window(
+        flow_map = scheduled_flow_map_for_window(
             contract_flows,
             cycle_start=accrual_start,
             cycle_end=accrual_end,
         )
-        total += _project_fixed_scheduled_cycle(
+        total += project_fixed_scheduled_cycle(
             cycle_start=accrual_start,
             cycle_end=accrual_end,
             outstanding=outstanding,
@@ -1695,34 +1695,34 @@ def project_fixed_scheduled_nii_12m(
 
         benchmark_orig = maturity_date
         margin_default = fixed_rate - float(curve_set.rate_on_date(risk_free_index, benchmark_orig))
-        renewal_margin = _lookup_margin_for_row(
+        renewal_margin = lookup_margin_for_row(
             row=row,
             rate_type="fixed",
             margin_set=margin_set,
             default_margin=margin_default,
         )
 
-        template = _scheduled_template_from_remaining_flows(
+        template = scheduled_template_from_remaining_flows(
             contract_flows,
             accrual_start=accrual_start,
             maturity_date=maturity_date,
             outstanding=outstanding,
         )
-        term_days = _template_term_days(template)
+        term_days = template_term_days(template)
 
         cycle_start = maturity_date
         while cycle_start < horizon_end:
-            cycle_maturity = _cycle_maturity(cycle_start, term_days)
+            cycle_maturity = cycle_maturity(cycle_start, term_days)
             cycle_end = min(cycle_maturity, horizon_end)
             rf = float(curve_set.rate_on_date(risk_free_index, cycle_maturity))
             renew_rate = rf + renewal_margin
 
-            flow_map = _scheduled_flow_map_from_template(
+            flow_map = scheduled_flow_map_from_template(
                 cycle_start=cycle_start,
                 cycle_end=cycle_end,
                 template=template,
             )
-            total += _project_fixed_scheduled_cycle(
+            total += project_fixed_scheduled_cycle(
                 cycle_start=cycle_start,
                 cycle_end=cycle_end,
                 outstanding=outstanding,
@@ -1751,22 +1751,22 @@ def project_variable_scheduled_nii_12m(
     """
     if positions.empty:
         return 0.0
-    _ensure_required_columns(positions, _VARIABLE_SCHEDULED_REQUIRED_COLUMNS, "variable_scheduled")
-    flows_by_contract = _prepare_scheduled_principal_flows(principal_flows)
+    ensure_required_columns(positions, VARIABLE_SCHEDULED_REQUIRED_COLUMNS, "variable_scheduled")
+    flows_by_contract = prepare_scheduled_principal_flows(principal_flows)
     horizon_end = _horizon_end(analysis_date, horizon_months=horizon_months)
     total = 0.0
 
     for row in positions.itertuples(index=False):
         row_id = getattr(row, "contract_id", "<missing>")
-        for col in _VARIABLE_SCHEDULED_REQUIRED_COLUMNS:
-            if _is_blank(getattr(row, col, None)):
+        for col in VARIABLE_SCHEDULED_REQUIRED_COLUMNS:
+            if is_blank(getattr(row, col, None)):
                 raise ValueError(f"Valor requerido vacio en {col!r} para contract_id={row_id!r}")
 
         contract_id = str(row.contract_id).strip()
         contract_flows = flows_by_contract.get(contract_id, [])
 
-        start_date = _coerce_date(row.start_date, field_name="start_date", row_id=row_id)
-        maturity_date = _coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
+        start_date = coerce_date(row.start_date, field_name="start_date", row_id=row_id)
+        maturity_date = coerce_date(row.maturity_date, field_name="maturity_date", row_id=row_id)
         if maturity_date < start_date:
             raise ValueError(f"maturity_date < start_date para contract_id={row_id!r}: {start_date} > {maturity_date}")
 
@@ -1775,34 +1775,34 @@ def project_variable_scheduled_nii_12m(
         if accrual_end <= accrual_start:
             continue
 
-        outstanding = _coerce_float(row.notional, field_name="notional", row_id=row_id)
-        sign = _side_sign(row.side, row_id=row_id)
+        outstanding = coerce_float(row.notional, field_name="notional", row_id=row_id)
+        sign = side_sign(row.side, row_id=row_id)
         base = normalizar_base_de_calculo(str(row.daycount_base))
 
         index_name = str(row.index_name).strip()
         curve_set.get(index_name)
-        spread = _coerce_float(row.spread, field_name="spread", row_id=row_id)
+        spread = coerce_float(row.spread, field_name="spread", row_id=row_id)
         floor_rate = getattr(row, "floor_rate", None)
         cap_rate = getattr(row, "cap_rate", None)
         fixed_rate_stub = (
             None
-            if _is_blank(getattr(row, "fixed_rate", None))
-            else _coerce_float(getattr(row, "fixed_rate", None), field_name="fixed_rate", row_id=row_id)
+            if is_blank(getattr(row, "fixed_rate", None))
+            else coerce_float(getattr(row, "fixed_rate", None), field_name="fixed_rate", row_id=row_id)
         )
 
         anchor_date = None
-        if "next_reprice_date" in positions.columns and not _is_blank(getattr(row, "next_reprice_date", None)):
-            anchor_date = _coerce_date(getattr(row, "next_reprice_date", None), field_name="next_reprice_date", row_id=row_id)
+        if "next_reprice_date" in positions.columns and not is_blank(getattr(row, "next_reprice_date", None)):
+            anchor_date = coerce_date(getattr(row, "next_reprice_date", None), field_name="next_reprice_date", row_id=row_id)
         frequency = None
         if "repricing_freq" in positions.columns:
-            frequency = _parse_frequency_token(getattr(row, "repricing_freq", None), row_id=row_id)
+            frequency = parse_frequency_token(getattr(row, "repricing_freq", None), row_id=row_id)
 
-        flow_map = _scheduled_flow_map_for_window(
+        flow_map = scheduled_flow_map_for_window(
             contract_flows,
             cycle_start=accrual_start,
             cycle_end=accrual_end,
         )
-        total += _project_variable_scheduled_cycle(
+        total += project_variable_scheduled_cycle(
             cycle_start=accrual_start,
             cycle_end=accrual_end,
             outstanding=outstanding,
@@ -1822,34 +1822,34 @@ def project_variable_scheduled_nii_12m(
         if not balance_constant or maturity_date >= horizon_end:
             continue
 
-        renewal_spread = _lookup_margin_for_row(
+        renewal_spread = lookup_margin_for_row(
             row=row,
             rate_type="float",
             margin_set=margin_set,
             default_margin=spread,
         )
-        template = _scheduled_template_from_remaining_flows(
+        template = scheduled_template_from_remaining_flows(
             contract_flows,
             accrual_start=accrual_start,
             maturity_date=maturity_date,
             outstanding=outstanding,
         )
-        term_days = _template_term_days(template)
+        term_days = template_term_days(template)
 
         cycle_start = maturity_date
         while cycle_start < horizon_end:
-            cycle_maturity = _cycle_maturity(cycle_start, term_days)
+            cycle_maturity = cycle_maturity(cycle_start, term_days)
             cycle_end = min(cycle_maturity, horizon_end)
             renewal_anchor = None
             if frequency is not None:
-                renewal_anchor = _add_frequency(cycle_start, frequency)
+                renewal_anchor = add_frequency(cycle_start, frequency)
 
-            flow_map = _scheduled_flow_map_from_template(
+            flow_map = scheduled_flow_map_from_template(
                 cycle_start=cycle_start,
                 cycle_end=cycle_end,
                 template=template,
             )
-            total += _project_variable_scheduled_cycle(
+            total += project_variable_scheduled_cycle(
                 cycle_start=cycle_start,
                 cycle_end=cycle_end,
                 outstanding=outstanding,
