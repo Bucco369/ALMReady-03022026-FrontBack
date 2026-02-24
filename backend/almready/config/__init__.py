@@ -12,3 +12,7 @@ from .bank_mapping_template import (
     UNMAPPED_PREFIX,
     SOURCE_SPECS,
 )
+
+# NII calculation hyperparameters.
+# EBA GL/2022/14 prescribes 12 months; configurable for internal analysis.
+NII_HORIZON_MONTHS: int = 12

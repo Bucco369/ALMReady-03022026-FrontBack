@@ -173,20 +173,6 @@ def _normalize_rate_type(tipo_tasa: str | None) -> str | None:
     return None
 
 
-def _rate_display(tipo_tasa: str | None, tasa_fija: float | None) -> float | None:
-    raw = (tipo_tasa or "").strip().lower()
-
-    if raw in {"fijo", "fixed"}:
-        return tasa_fija
-
-    if raw in {"nonrate", "non-rate", "no-rate"}:
-        return tasa_fija
-
-    if raw in {"variable", "floating", "float"}:
-        return tasa_fija
-
-    return tasa_fija
-
 
 def _maturity_years(fecha_vencimiento: str | None, fallback_years: float | None) -> float | None:
     if fecha_vencimiento:

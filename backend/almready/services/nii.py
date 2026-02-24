@@ -7,7 +7,7 @@ from typing import Any
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 
-from almready.config.nii_config import NII_HORIZON_MONTHS
+from almready.config import NII_HORIZON_MONTHS
 from almready.core.daycount import normalizar_base_de_calculo, yearfrac
 from almready.services.margin_engine import CalibratedMarginSet, calibrate_margin_set
 from almready.services.market import ForwardCurveSet

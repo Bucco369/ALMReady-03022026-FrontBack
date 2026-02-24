@@ -148,7 +148,7 @@ def calculate_eve_nii(session_id: str, req: CalculateRequest) -> CalculationResu
         raise HTTPException(status_code=503, detail="Process pool not ready. Server may still be starting.")
 
     import almready.workers as _workers
-    from almready.config.nii_config import NII_HORIZON_MONTHS
+    from almready.config import NII_HORIZON_MONTHS
 
     _unified_tag: dict = {}
 
@@ -474,7 +474,7 @@ def calculate_whatif(session_id: str, req: WhatIfCalculateRequest) -> WhatIfResu
     from almready.services.eve import build_eve_cashflows
     from almready.services.eve_analytics import compute_eve_full
     from almready.services.nii import compute_nii_from_cashflows, compute_nii_margin_set
-    from almready.config.nii_config import NII_HORIZON_MONTHS
+    from almready.config import NII_HORIZON_MONTHS
 
     _assert_session_exists(session_id)
 

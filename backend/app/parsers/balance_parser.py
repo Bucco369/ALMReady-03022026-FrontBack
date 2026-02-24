@@ -45,7 +45,6 @@ from app.parsers.transforms import (
     _normalize_categoria_ui,
     _normalize_rate_type,
     _normalize_side,
-    _rate_display,
     _safe_sheet_summary,
     _serialize_value_for_json,
     _slugify,
@@ -85,7 +84,7 @@ def _canonicalize_position_row(sheet_name: str, record: dict[str, Any], idx: int
 
     tipo_tasa = _to_text(get("tipo_tasa"))
     rate_type = _normalize_rate_type(tipo_tasa)
-    rate_display_val = _rate_display(tipo_tasa, tasa_fija)
+    rate_display_val = tasa_fija
 
     fecha_inicio = _to_iso_date(get("fecha_inicio"))
     fecha_vencimiento = _to_iso_date(get("fecha_vencimiento"))

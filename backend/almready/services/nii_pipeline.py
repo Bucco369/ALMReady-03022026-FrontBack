@@ -21,7 +21,7 @@ import pandas as pd
 
 from almready.services.eve_pipeline import load_positions_and_scheduled_flows
 from almready.services.market import load_forward_curve_set
-from almready.config.nii_config import NII_HORIZON_MONTHS
+from almready.config import NII_HORIZON_MONTHS
 from almready.services.nii import (
     NIIMonthlyProfileResult,
     run_nii_12m_scenarios_with_monthly_profile,
