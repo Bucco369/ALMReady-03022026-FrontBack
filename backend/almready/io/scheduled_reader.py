@@ -7,48 +7,17 @@ from typing import Any
 
 import pandas as pd
 
+from almready.io._utils import (
+    mapping_attr as _mapping_attr,
+    mapping_attr_optional as _mapping_attr_optional,
+    norm_header as _norm_header,
+    norm_token as _norm_token,
+    parse_date as _parse_date,
+    parse_number as _parse_number,
+    resolve_glob_matches as _resolve_glob_matches,
+    to_sequence as _to_sequence,
+)
 from almready.io.positions_reader import read_positions_dataframe, read_tabular_raw
-
-
-def _mapping_attr(mapping_module: Any, attr_name: str) -> Any:
-    if isinstance(mapping_module, Mapping):
-        if attr_name not in mapping_module:
-            raise ValueError(f"mapping_module sin clave requerida: {attr_name}")
-        return mapping_module[attr_name]
-
-    if not hasattr(mapping_module, attr_name):
-        raise ValueError(f"mapping_module sin atributo requerido: {attr_name}")
-    return getattr(mapping_module, attr_name)
-
-
-def _mapping_attr_optional(mapping_module: Any, attr_name: str, default: Any) -> Any:
-    if isinstance(mapping_module, Mapping):
-        return mapping_module.get(attr_name, default)
-    return getattr(mapping_module, attr_name, default)
-
-
-def _to_sequence(value: Any) -> list[Any]:
-    if isinstance(value, (list, tuple)):
-        return list(value)
-    return [value]
-
-
-def _resolve_glob_matches(root_path: Path, pattern: str) -> list[Path]:
-    return sorted(p for p in root_path.glob(pattern) if p.is_file())
-
-
-def _norm_header(value: Any) -> str:
-    s = str(value).strip().upper()
-    return s.replace(" ", "").replace("_", "").replace("-", "")
-
-
-def _norm_token(value: Any) -> str | None:
-    if pd.isna(value):
-        return None
-    s = str(value).strip()
-    if s == "":
-        return None
-    return s
 
 
 def _resolve_column_name(df: pd.DataFrame, col: str | int, *, field_name: str) -> str:
@@ -59,37 +28,6 @@ def _resolve_column_name(df: pd.DataFrame, col: str | int, *, field_name: str) -
     if col not in df.columns:
         raise ValueError(f"{field_name} no existe en datos: {col!r}")
     return str(col)
-
-
-def _parse_number(value: Any) -> float | None:
-    if pd.isna(value):
-        return None
-
-    s = str(value).strip()
-    if s == "":
-        return None
-
-    if "," in s and "." in s:
-        if s.rfind(",") > s.rfind("."):
-            s = s.replace(".", "").replace(",", ".")
-        else:
-            s = s.replace(",", "")
-    elif "," in s:
-        s = s.replace(",", ".")
-
-    try:
-        return float(s)
-    except ValueError:
-        return None
-
-
-def _parse_date(value: Any, *, dayfirst: bool) -> Any:
-    if pd.isna(value):
-        return None
-    dt = pd.to_datetime(value, errors="coerce", dayfirst=dayfirst)
-    if pd.isna(dt):
-        return None
-    return dt.date()
 
 
 def _normalise_token_set(values: Iterable[str]) -> set[str]:

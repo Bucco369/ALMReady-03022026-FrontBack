@@ -5,7 +5,10 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from almready.core.curves import ForwardCurve, curve_from_long_df
+from almready.scenarios._curve_utils import (
+    rebuild_curves as _rebuild_curves,
+    validate_curve_points_columns as _validate_curve_points_columns,
+)
 from almready.scenarios.regulatory import (
     DEFAULT_FLOOR_PARAMETERS,
     PostShockFloorParameters,
@@ -20,24 +23,6 @@ from almready.services.market import ForwardCurveSet
 class RegulatoryScenarioSpec:
     scenario_id: str
     name: str
-
-
-def _validate_curve_points_columns(df_points: pd.DataFrame) -> None:
-    required = ["IndexName", "Tenor", "FwdRate", "TenorDate", "YearFrac"]
-    missing = [c for c in required if c not in df_points.columns]
-    if missing:
-        raise ValueError(
-            "ForwardCurveSet.points no contiene columnas requeridas: "
-            f"{missing}"
-        )
-
-
-def _rebuild_curves(df_points: pd.DataFrame) -> dict[str, ForwardCurve]:
-    indexes = sorted(df_points["IndexName"].astype(str).unique().tolist())
-    curves: dict[str, ForwardCurve] = {}
-    for index_name in indexes:
-        curves[index_name] = curve_from_long_df(df_points, index_name=index_name)
-    return curves
 
 
 def _normalise_specs(

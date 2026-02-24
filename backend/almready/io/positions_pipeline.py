@@ -6,28 +6,12 @@ from typing import Any, Callable
 
 import pandas as pd
 
+from almready.io._utils import (
+    mapping_attr as _mapping_attr,
+    resolve_glob_matches as _resolve_glob_matches,
+    to_sequence as _to_sequence,
+)
 from almready.io.positions_reader import read_positions_tabular
-
-
-def _mapping_attr(mapping_module: Any, attr_name: str) -> Any:
-    if isinstance(mapping_module, Mapping):
-        if attr_name not in mapping_module:
-            raise ValueError(f"mapping_module sin clave requerida: {attr_name}")
-        return mapping_module[attr_name]
-
-    if not hasattr(mapping_module, attr_name):
-        raise ValueError(f"mapping_module sin atributo requerido: {attr_name}")
-    return getattr(mapping_module, attr_name)
-
-
-def _to_sequence(value: Any) -> list[Any]:
-    if isinstance(value, (list, tuple)):
-        return list(value)
-    return [value]
-
-
-def _resolve_glob_matches(root_path: Path, pattern: str) -> list[Path]:
-    return sorted(p for p in root_path.glob(pattern) if p.is_file())
 
 
 def load_positions_from_specs(

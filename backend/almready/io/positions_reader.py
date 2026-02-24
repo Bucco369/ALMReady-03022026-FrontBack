@@ -8,6 +8,13 @@ from typing import Any
 import pandas as pd
 
 from almready.core.daycount import normalizar_base_de_calculo
+from almready.io._utils import (
+    mapping_attr as _mapping_attr,
+    mapping_attr_optional as _mapping_attr_optional,
+    norm_header as _norm_header,
+    parse_date as _parse_date,
+    parse_number as _parse_number,
+)
 
 
 _PERCENT_COLUMNS = {"spread", "fixed_rate", "floor_rate", "cap_rate"}
@@ -19,35 +26,14 @@ _DEFAULT_CSV_DELIMITERS = (",", ";", "\t", "|")
 
 
 def _norm_token(value: Any) -> str:
+    """Upper-case token normaliser (always returns str, never None)."""
     return str(value).strip().upper()
-
-
-def _norm_header(value: Any) -> str:
-    s = str(value).strip().upper()
-    return s.replace(" ", "").replace("_", "").replace("-", "")
 
 
 def _slugify_column_name(value: Any) -> str:
     s = str(value).strip().lower()
     s = re.sub(r"[^0-9a-zA-Z]+", "_", s).strip("_")
     return s or "column"
-
-
-def _mapping_attr(mapping_module: Any, attr_name: str) -> Any:
-    if isinstance(mapping_module, Mapping):
-        if attr_name not in mapping_module:
-            raise ValueError(f"mapping_module sin clave requerida: {attr_name}")
-        return mapping_module[attr_name]
-
-    if not hasattr(mapping_module, attr_name):
-        raise ValueError(f"mapping_module sin atributo requerido: {attr_name}")
-    return getattr(mapping_module, attr_name)
-
-
-def _mapping_attr_optional(mapping_module: Any, attr_name: str, default: Any) -> Any:
-    if isinstance(mapping_module, Mapping):
-        return mapping_module.get(attr_name, default)
-    return getattr(mapping_module, attr_name, default)
 
 
 def _apply_text_aliases(
@@ -84,49 +70,6 @@ def _apply_text_aliases(
 
     return pd.Series(out, index=series.index, dtype="object")
 
-
-def _parse_number(value: Any, *, allow_percent: bool) -> float | None:
-    if pd.isna(value):
-        return None
-
-    s = str(value).strip()
-    if s == "":
-        return None
-
-    has_percent = "%" in s
-    s = s.replace("%", "").replace(" ", "")
-
-    # Handle common decimal/thousand separators:
-    # - "1,234.56" -> 1234.56
-    # - "1.234,56" -> 1234.56
-    # - "3,25"     -> 3.25
-    if "," in s and "." in s:
-        if s.rfind(",") > s.rfind("."):
-            s = s.replace(".", "").replace(",", ".")
-        else:
-            s = s.replace(",", "")
-    elif "," in s:
-        s = s.replace(",", ".")
-
-    try:
-        v = float(s)
-    except ValueError:
-        return None
-
-    if allow_percent and has_percent:
-        v = v / 100.0
-
-    return v
-
-
-def _parse_date(value: Any, *, dayfirst: bool) -> Any:
-    if pd.isna(value):
-        return None
-
-    dt = pd.to_datetime(value, errors="coerce", dayfirst=dayfirst)
-    if pd.isna(dt):
-        return None
-    return dt.date()
 
 
 def _normalise_categorical_column(

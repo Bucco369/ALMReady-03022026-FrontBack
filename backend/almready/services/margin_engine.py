@@ -4,24 +4,19 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import Any
-import re
 
 import pandas as pd
 from dateutil.relativedelta import relativedelta
 
+from almready.core._frequency import (
+    add_frequency as _add_frequency_core,
+    parse_frequency_token as _parse_frequency_token_core,
+)
+from almready.io._utils import norm_token as _norm_token
 from almready.services.market import ForwardCurveSet
 
 
 _DIMENSIONS = ("source_contract_type", "side", "repricing_freq", "index_name")
-
-
-def _norm_token(value: Any) -> str | None:
-    if value is None or pd.isna(value):
-        return None
-    s = str(value).strip()
-    if s == "":
-        return None
-    return s
 
 
 def _norm_rate_type(value: Any) -> str | None:
@@ -35,37 +30,14 @@ def _norm_rate_type(value: Any) -> str | None:
 
 
 def _parse_frequency_token(value: Any) -> tuple[int, str] | None:
-    token = _norm_token(value)
-    if token is None:
-        return None
-    t = token.upper().replace(" ", "")
-    if t in {"0D", "0W", "0M", "0Y"}:
-        return None
-    if t in {"ON", "O/N"}:
-        return (1, "D")
-    m = re.match(r"^(\d+)([DWMY])$", t)
-    if not m:
-        return None
-    n = int(m.group(1))
-    unit = m.group(2)
-    if n <= 0:
-        return None
-    return (n, unit)
+    return _parse_frequency_token_core(value, strict=False)
 
 
 def _add_frequency(d: date, frequency: tuple[int, str] | None) -> date:
+    """Add frequency to date; None → 1Y fallback."""
     if frequency is None:
         return d + relativedelta(years=1)
-    n, unit = frequency
-    if unit == "D":
-        return d + relativedelta(days=n)
-    if unit == "W":
-        return d + relativedelta(weeks=n)
-    if unit == "M":
-        return d + relativedelta(months=n)
-    if unit == "Y":
-        return d + relativedelta(years=n)
-    return d + relativedelta(years=1)
+    return _add_frequency_core(d, frequency)
 
 
 def _weighted_average(values: pd.Series, weights: pd.Series) -> float:

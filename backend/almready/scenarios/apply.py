@@ -4,19 +4,12 @@ from collections.abc import Iterable
 
 import pandas as pd
 
-from almready.core.curves import ForwardCurve, curve_from_long_df
+from almready.scenarios._curve_utils import (
+    rebuild_curves as _rebuild_curves,
+    validate_curve_points_columns as _validate_curve_points_columns,
+)
 from almready.scenarios.shocks import ParallelShock
 from almready.services.market import ForwardCurveSet
-
-
-def _validate_curve_points_columns(df_points: pd.DataFrame) -> None:
-    required = ["IndexName", "Tenor", "FwdRate", "TenorDate", "YearFrac"]
-    missing = [c for c in required if c not in df_points.columns]
-    if missing:
-        raise ValueError(
-            "ForwardCurveSet.points no contiene columnas requeridas para escenarios: "
-            f"{missing}"
-        )
 
 
 def _normalise_apply_to(
@@ -36,14 +29,6 @@ def _normalise_apply_to(
         raise ValueError(f"Indices no encontrados en base_set: {unknown}. Disponibles: {available}")
 
     return selected
-
-
-def _rebuild_curves(df_points: pd.DataFrame) -> dict[str, ForwardCurve]:
-    indexes = sorted(df_points["IndexName"].astype(str).unique().tolist())
-    curves: dict[str, ForwardCurve] = {}
-    for index_name in indexes:
-        curves[index_name] = curve_from_long_df(df_points, index_name=index_name)
-    return curves
 
 
 def apply_parallel_shock(

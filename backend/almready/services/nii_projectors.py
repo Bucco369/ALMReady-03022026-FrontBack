@@ -160,39 +160,13 @@ def _parse_frequency_token(
     row_id: object,
     field_name: str = "repricing_freq",
 ) -> tuple[int, str] | None:
-    if _is_blank(value):
-        return None
-
-    token = str(value).strip().upper().replace(" ", "")
-    if token in {"0D", "0W", "0M", "0Y"}:
-        return None
-    if token in {"ON", "O/N"}:
-        return (1, "D")
-
-    m = re.match(r"^(\d+)([DWMY])$", token)
-    if not m:
-        raise ValueError(
-            f"Frecuencia invalida en {field_name!r} para contract_id={row_id!r}: {value!r}"
-        )
-
-    n = int(m.group(1))
-    unit = m.group(2)
-    if n <= 0:
-        return None
-    return (n, unit)
+    from almready.core._frequency import parse_frequency_token
+    return parse_frequency_token(value, strict=True, row_id=row_id, field_name=field_name)
 
 
 def _add_frequency(d: date, frequency: tuple[int, str]) -> date:
-    n, unit = frequency
-    if unit == "D":
-        return d + relativedelta(days=n)
-    if unit == "W":
-        return d + relativedelta(weeks=n)
-    if unit == "M":
-        return d + relativedelta(months=n)
-    if unit == "Y":
-        return d + relativedelta(years=n)
-    raise ValueError(f"Unidad de frecuencia no soportada: {unit!r}")
+    from almready.core._frequency import add_frequency
+    return add_frequency(d, frequency)
 
 
 def _build_reset_dates(

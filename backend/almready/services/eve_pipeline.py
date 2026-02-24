@@ -22,6 +22,7 @@ from typing import Any
 
 import pandas as pd
 
+from almready.io._utils import mapping_attr as _mapping_attr
 from almready.io.positions_pipeline import load_positions_from_specs
 from almready.io.scheduled_reader import load_scheduled_from_specs
 from almready.services.eve_analytics import (
@@ -68,17 +69,6 @@ _SUPPORTED_SOURCE_CONTRACT_TYPES = {
     "variable_scheduled",
 }
 _EXCLUDED_SOURCE_CONTRACT_TYPES = {"static_position"}
-
-
-def _mapping_attr(mapping_module: Any, attr_name: str) -> Any:
-    if isinstance(mapping_module, Mapping):
-        if attr_name not in mapping_module:
-            raise ValueError(f"mapping_module sin clave requerida: {attr_name}")
-        return mapping_module[attr_name]
-
-    if not hasattr(mapping_module, attr_name):
-        raise ValueError(f"mapping_module sin atributo requerido: {attr_name}")
-    return getattr(mapping_module, attr_name)
 
 
 def _scheduled_specs_from_source_specs(

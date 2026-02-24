@@ -17,6 +17,7 @@ import pandas as pd
 
 from almready.config.eve_buckets import EVE_VIS_BUCKETS_OPTIMAL
 from almready.core.daycount import normalizar_base_de_calculo, yearfrac
+from almready.services._eve_utils import normalise_buckets as _normalise_buckets_shared
 from almready.services.eve import EVEBucket, build_eve_cashflows
 from almready.services.market import ForwardCurveSet
 
@@ -34,30 +35,7 @@ class EVEScenarioPoint:
 def _normalise_buckets(
     buckets: Sequence[EVEBucket | Mapping[str, Any]] | None,
 ) -> list[EVEBucket]:
-    raw = list(EVE_VIS_BUCKETS_OPTIMAL if buckets is None else buckets)
-    if not raw:
-        raise ValueError("Se requiere al menos un bucket.")
-
-    out: list[EVEBucket] = []
-    for i, b in enumerate(raw, start=1):
-        if isinstance(b, EVEBucket):
-            candidate = b
-        else:
-            if not isinstance(b, Mapping):
-                raise ValueError(f"Bucket invalido en posicion {i}: {type(b)}")
-            candidate = EVEBucket(
-                name=str(b.get("name", f"bucket_{i}")),
-                start_years=float(b.get("start_years", 0.0)),
-                end_years=None if b.get("end_years", None) is None else float(b.get("end_years")),
-            )
-        if candidate.end_years is not None and float(candidate.end_years) <= float(candidate.start_years):
-            raise ValueError(
-                f"Bucket con end_years <= start_years: {candidate.name!r} "
-                f"({candidate.start_years}, {candidate.end_years})"
-            )
-        out.append(candidate)
-    out = sorted(out, key=lambda x: float(x.start_years))
-    return out
+    return _normalise_buckets_shared(buckets, default=EVE_VIS_BUCKETS_OPTIMAL)
 
 
 def build_eve_scenario_summary(
@@ -211,7 +189,7 @@ def compute_eve_full(
     work["pv_principal"] = work["principal_amount"].astype(float) * work["discount_factor"]
 
     grouped = (
-        work.groupby(["bucket_name", "side_group"], as_index=False)
+        work.groupby(["bucket_name", "side_group"], as_index=False, observed=True)
         .agg(
             pv_interest=("pv_interest", "sum"),
             pv_principal=("pv_principal", "sum"),
