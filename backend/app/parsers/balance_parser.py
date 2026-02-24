@@ -388,8 +388,8 @@ def _parse_zip_balance(
     session_id: str,
     zip_path: Path,
 ) -> tuple[list[BalanceSheetSummary], dict[str, list[dict[str, Any]]], list[dict[str, Any]]]:
-    from almready.config import bank_mapping_unicaja
-    from almready.io.positions_pipeline import load_positions_from_specs
+    from engine.config import bank_mapping_unicaja
+    from engine.io.positions_pipeline import load_positions_from_specs
 
     sdir = _session_dir(session_id)
 

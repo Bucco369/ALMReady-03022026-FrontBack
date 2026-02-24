@@ -27,7 +27,7 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)-5s %(message)s",
     datefmt="%H:%M:%S",
 )
-_log = logging.getLogger("almready")
+_log = logging.getLogger("engine")
 
 
 def _cleanup_old_sessions(max_age_days: int = 7) -> None:
@@ -58,7 +58,7 @@ def _cleanup_old_sessions(max_age_days: int = 7) -> None:
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     """Startup: purge stale sessions, pre-warm process pool."""
-    import almready.workers as _workers
+    import engine.workers as _workers
 
     _cleanup_old_sessions()
 

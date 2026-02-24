@@ -75,7 +75,7 @@ def get_calc_progress(session_id: str):
 
 @router.post("/api/sessions/{session_id}/calculate", response_model=CalculationResultsResponse)
 def calculate_eve_nii(session_id: str, req: CalculateRequest) -> CalculationResultsResponse:
-    from almready.services.regulatory_curves import build_regulatory_curve_sets
+    from engine.services.regulatory_curves import build_regulatory_curve_sets
 
     _assert_session_exists(session_id)
 
@@ -134,7 +134,7 @@ def calculate_eve_nii(session_id: str, req: CalculateRequest) -> CalculationResu
 
     # 5+6. Run EVE and NII scenarios in parallel
     try:
-        from almready.services.nii import compute_nii_margin_set
+        from engine.services.nii import compute_nii_margin_set
         effective_margin_set = compute_nii_margin_set(
             motor_df,
             curve_set=base_curve_set,
@@ -147,8 +147,8 @@ def calculate_eve_nii(session_id: str, req: CalculateRequest) -> CalculationResu
     if state._executor is None:
         raise HTTPException(status_code=503, detail="Process pool not ready. Server may still be starting.")
 
-    import almready.workers as _workers
-    from almready.config import NII_HORIZON_MONTHS
+    import engine.workers as _workers
+    from engine.config import NII_HORIZON_MONTHS
 
     _unified_tag: dict = {}
 
@@ -470,11 +470,11 @@ def _build_whatif_delta_dataframe(
 
 @router.post("/api/sessions/{session_id}/calculate/whatif", response_model=WhatIfResultsResponse)
 def calculate_whatif(session_id: str, req: WhatIfCalculateRequest) -> WhatIfResultsResponse:
-    from almready.services.regulatory_curves import build_regulatory_curve_sets
-    from almready.services.eve import build_eve_cashflows
-    from almready.services.eve_analytics import compute_eve_full
-    from almready.services.nii import compute_nii_from_cashflows, compute_nii_margin_set
-    from almready.config import NII_HORIZON_MONTHS
+    from engine.services.regulatory_curves import build_regulatory_curve_sets
+    from engine.services.eve import build_eve_cashflows
+    from engine.services.eve_analytics import compute_eve_full
+    from engine.services.nii import compute_nii_from_cashflows, compute_nii_margin_set
+    from engine.config import NII_HORIZON_MONTHS
 
     _assert_session_exists(session_id)
 

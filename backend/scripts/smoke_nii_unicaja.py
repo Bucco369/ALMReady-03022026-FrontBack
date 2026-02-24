@@ -11,8 +11,8 @@ _DATA_ROOT = _REPO_ROOT.parent / "data"               # ../data/ (sibling of rep
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-from almready.config import bank_mapping_unicaja as unicaja_mapping
-from almready.services.nii_pipeline import run_nii_from_specs
+from engine.config import bank_mapping_unicaja as unicaja_mapping
+from engine.services.nii_pipeline import run_nii_from_specs
 
 
 def _parse_date(value: str) -> date:

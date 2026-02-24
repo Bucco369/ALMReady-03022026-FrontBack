@@ -8,7 +8,7 @@ Asset-Liability Management (ALM) risk tool for banking institutions. Computes **
 |-------|-------|----------|
 | Frontend | React + TypeScript, Vite, shadcn-ui, Tailwind | `src/` |
 | API | FastAPI (Python) | `backend/app/` |
-| Calculation Engine | pandas, numpy | `backend/almready/` |
+| Calculation Engine | pandas, numpy | `backend/engine/` |
 
 ## Prerequisites
 

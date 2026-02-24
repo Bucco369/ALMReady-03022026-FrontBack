@@ -213,9 +213,9 @@ def _build_forward_curve_set(
     analysis_date: date,
     curve_base: str = "ACT/365",
 ) -> Any:
-    from almready.core.curves import curve_from_long_df
-    from almready.core.tenors import add_tenor
-    from almready.services.market import ForwardCurveSet as MotorForwardCurveSet
+    from engine.core.curves import curve_from_long_df
+    from engine.core.tenors import add_tenor
+    from engine.services.market import ForwardCurveSet as MotorForwardCurveSet
 
     points_by_curve = _load_or_rebuild_curve_points(session_id)
     if not points_by_curve:

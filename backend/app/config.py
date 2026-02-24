@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from almready.balance_config.schema import (
+from engine.balance_config.schema import (
     ASSET_SUBCATEGORY_ORDER,
     LIABILITY_SUBCATEGORY_ORDER,
     SUBCATEGORY_LABELS as _BC_LABELS,
     SIDE_CATEGORIA_UI as _BC_SIDE_UI,
 )
-from almready.balance_config.classifier import classify_position as _bc_classify
-from almready.balance_config.clients import get_client_rules as _bc_get_rules
+from engine.balance_config.classifier import classify_position as _bc_classify
+from engine.balance_config.clients import get_client_rules as _bc_get_rules
 
 # Excel sheets that are metadata/schema – skip during parsing.
 META_SHEETS = {

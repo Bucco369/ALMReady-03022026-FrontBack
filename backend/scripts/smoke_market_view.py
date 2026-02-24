@@ -9,7 +9,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[1]   # backend/
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-from almready.services.market import load_forward_curve_set
+from engine.services.market import load_forward_curve_set
 
 
 def _parse_sheet(value: str):
