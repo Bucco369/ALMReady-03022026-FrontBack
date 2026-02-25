@@ -104,6 +104,7 @@ def _read_one_task(
             sheet_name=sheet,
             delimiter=raw_spec.get("delimiter"),
             encoding=raw_spec.get("encoding"),
+            decimal=raw_spec.get("decimal", "."),
             header_row=raw_spec.get("header_row", 0),
             header_token=raw_spec.get("header_token"),
             row_kind_column=raw_spec.get("row_kind_column"),

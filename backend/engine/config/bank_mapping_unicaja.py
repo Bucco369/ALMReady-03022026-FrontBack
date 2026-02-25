@@ -114,12 +114,22 @@ PRESERVE_UNMAPPED_COLUMNS = False
 UNMAPPED_PREFIX = "extra_"
 
 
+# ── Bank-specific CSV settings ────────────────────────────────────────────────
+# Unicaja exports use European number format:  66.563,33  (dot=thousands, comma=decimal).
+# Setting "decimal" tells pd.read_csv to parse comma-decimals at the C level,
+# which avoids the expensive post-hoc _parse_numeric_column string conversion.
+#
+# To adapt for another bank:
+#   - If the bank uses dot decimals (US/UK), omit "decimal" (pandas default is '.').
+#   - If the bank uses comma decimals (Europe), set "decimal": ",".
+#   - If numbers contain thousand separators, _parse_numeric_column still handles them.
 _CSV_COMMON = {
     "file_type": "csv",
     "delimiter": ";",
     "encoding": "cp1252",
     "header_token": "Identifier",
     "source_bank": "unicaja",
+    "decimal": ",",
 }
 
 

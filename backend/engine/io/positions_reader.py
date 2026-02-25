@@ -312,6 +312,7 @@ def _load_csv_table(
     encoding: str | None,
     header_row: int | None,
     header_token: str | None,
+    decimal: str = ".",
     on_rows_read: Callable[[int], None] | None = None,
 ) -> tuple[pd.DataFrame, int]:
     if header_row is None and not header_token:
@@ -361,6 +362,7 @@ def _load_csv_table(
                     sep=resolved_delimiter,
                     header=resolved_header_row,
                     encoding=enc,
+                    decimal=decimal,
                     chunksize=200_000,
                 )
                 chunks: list[pd.DataFrame] = []
@@ -376,6 +378,7 @@ def _load_csv_table(
                     sep=resolved_delimiter,
                     header=resolved_header_row,
                     encoding=enc,
+                    decimal=decimal,
                     low_memory=False,
                 )
         except Exception as exc:
@@ -633,6 +636,7 @@ def read_positions_tabular(
     sheet_name: str | int = 0,
     delimiter: str | None = None,
     encoding: str | None = None,
+    decimal: str = ".",
     header_row: int | None = 0,
     header_token: str | None = None,
     row_kind_column: str | int | None = None,
@@ -657,6 +661,7 @@ def read_positions_tabular(
         sheet_name=sheet_name,
         delimiter=delimiter,
         encoding=encoding,
+        decimal=decimal,
         header_row=header_row,
         header_token=header_token,
         on_rows_read=on_rows_read,
@@ -692,6 +697,7 @@ def read_tabular_raw(
     sheet_name: str | int = 0,
     delimiter: str | None = None,
     encoding: str | None = None,
+    decimal: str = ".",
     header_row: int | None = 0,
     header_token: str | None = None,
     on_rows_read: Callable[[int], None] | None = None,
@@ -729,6 +735,7 @@ def read_tabular_raw(
             input_path,
             delimiter=delimiter,
             encoding=encoding,
+            decimal=decimal,
             header_row=header_row,
             header_token=header_token,
             on_rows_read=on_rows_read,
