@@ -386,7 +386,7 @@ export async function uploadBalanceZip(
 }
 
 export type UploadProgressResponse = {
-  phase: "idle" | "parsing" | "persisting" | "canonicalizing";
+  phase: "idle" | "parsing" | "persisting" | "canonicalizing" | "building_tree" | "saving";
   step: number;
   total: number;
   pct: number;

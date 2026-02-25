@@ -65,9 +65,6 @@ _CONTRACT_TYPE_LABELS = {
     "variable_scheduled": "Variable Scheduled",
 }
 
-# Contract types excluded from ZIP processing.
-_EXCLUDED_CONTRACT_TYPES = {"fixed_scheduled", "variable_scheduled"}
-
 # ── What-If maps ────────────────────────────────────────────────────────────
 
 _PRODUCT_TEMPLATE_TO_MOTOR = {

@@ -25,7 +25,6 @@ interface BalancePositionsCardProps {
   isUploading?: boolean;
   uploadProgress?: number;
   uploadPhase?: string;
-  uploadEta?: string;
 }
 
 type WhatIfDelta = {
@@ -319,7 +318,6 @@ export function BalancePositionsCard({
   isUploading = false,
   uploadProgress = 0,
   uploadPhase = '',
-  uploadEta = '',
 }: BalancePositionsCardProps) {
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -500,17 +498,16 @@ export function BalancePositionsCard({
                   <div className="flex items-center gap-2">
                     <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-primary rounded-full transition-all duration-300"
-                        style={{ width: `${Math.round(uploadProgress)}%` }}
+                        className="h-full bg-primary rounded-full"
+                        style={{ width: `${uploadProgress}%` }}
                       />
                     </div>
                     <span className="text-[10px] font-medium text-muted-foreground tabular-nums w-7 text-right">
-                      {Math.round(uploadProgress)}%
+                      {uploadProgress}%
                     </span>
                   </div>
                   <p className="text-[9px] text-muted-foreground mt-1">
                     {uploadPhase || 'Processing…'}
-                    {uploadEta ? ` — ${uploadEta}` : ''}
                   </p>
                 </div>
               )}

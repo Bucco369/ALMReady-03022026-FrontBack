@@ -24,7 +24,7 @@ def _session_meta_path(session_id: str) -> Path:
 
 
 def _positions_path(session_id: str) -> Path:
-    return _session_dir(session_id) / "balance_positions.json"
+    return _session_dir(session_id) / "balance_positions.parquet"
 
 
 def _summary_path(session_id: str) -> Path:
@@ -55,48 +55,32 @@ def _chart_data_path(session_id: str) -> Path:
     return _session_dir(session_id) / "chart_data.json"
 
 
-def _latest_balance_file(session_id: str) -> Path:
+def _latest_uploaded_file(session_id: str, prefix: str, error_detail: str) -> Path:
     sdir = _session_dir(session_id)
-    preferred = sorted(
-        [
-            p
-            for p in sdir.iterdir()
-            if p.is_file() and p.suffix.lower() in {".xlsx", ".xls"} and p.name.startswith("balance__")
-        ],
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
-    if preferred:
-        return preferred[0]
-
     candidates = sorted(
         [
             p
             for p in sdir.iterdir()
-            if p.is_file() and p.suffix.lower() in {".xlsx", ".xls"} and not p.name.startswith("curves__")
+            if p.is_file() and p.suffix.lower() in {".xlsx", ".xls"} and p.name.startswith(prefix)
         ],
         key=lambda p: p.stat().st_mtime,
         reverse=True,
     )
     if not candidates:
-        raise HTTPException(status_code=404, detail="No balance uploaded for this session yet")
+        raise HTTPException(status_code=404, detail=error_detail)
     return candidates[0]
+
+
+def _latest_balance_file(session_id: str) -> Path:
+    return _latest_uploaded_file(
+        session_id, "balance__", "No balance uploaded for this session yet",
+    )
 
 
 def _latest_curves_file(session_id: str) -> Path:
-    sdir = _session_dir(session_id)
-    candidates = sorted(
-        [
-            p
-            for p in sdir.iterdir()
-            if p.is_file() and p.suffix.lower() in {".xlsx", ".xls"} and p.name.startswith("curves__")
-        ],
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
+    return _latest_uploaded_file(
+        session_id, "curves__", "No curves uploaded for this session yet",
     )
-    if not candidates:
-        raise HTTPException(status_code=404, detail="No curves uploaded for this session yet")
-    return candidates[0]
 
 
 # ── Session persistence ─────────────────────────────────────────────────────
@@ -114,7 +98,7 @@ def _load_session_from_disk(session_id: str) -> SessionMeta | None:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
         meta = SessionMeta(**payload)
-    except Exception as exc:
+    except (json.JSONDecodeError, KeyError, TypeError) as exc:
         raise HTTPException(status_code=500, detail=f"Corrupted session metadata for {session_id}: {exc}")
 
     state._SESSIONS[session_id] = meta

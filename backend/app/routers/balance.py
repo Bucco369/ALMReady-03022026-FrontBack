@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, Response, UploadFile
 
 import app.state as state
 from app.schemas import (
@@ -25,12 +24,10 @@ from app.session import (
     _summary_path,
 )
 from app.parsers.balance_parser import (
-    _build_summary_tree,
     _load_or_rebuild_positions,
     _load_or_rebuild_summary,
     _parse_and_store_balance,
     _parse_zip_balance,
-    _persist_balance_payload,
 )
 from app.parsers.transforms import _to_float, _to_text
 from app.filters import (
@@ -48,9 +45,15 @@ def delete_balance(session_id: str) -> dict[str, str]:
     _assert_session_exists(session_id)
     sdir = _session_dir(session_id)
     deleted: list[str] = []
+    positions_parquet = _positions_path(session_id)
+    positions_json_legacy = positions_parquet.with_suffix(".json")
     motor_parquet = _motor_positions_path(session_id)
     motor_json_legacy = motor_parquet.with_suffix(".json")
-    for p in [_summary_path(session_id), _positions_path(session_id), motor_parquet, motor_json_legacy]:
+    contracts_json_orphan = sdir / "balance_contracts.json"
+    for p in [
+        _summary_path(session_id), positions_parquet, positions_json_legacy,
+        motor_parquet, motor_json_legacy, contracts_json_orphan,
+    ]:
         if p.exists():
             p.unlink()
             deleted.append(p.name)
@@ -85,10 +88,21 @@ async def upload_balance(session_id: str, file: UploadFile = File(...)) -> Balan
 
 
 @router.post("/api/sessions/{session_id}/balance/zip", response_model=BalanceUploadResponse)
-async def upload_balance_zip(session_id: str, file: UploadFile = File(...)) -> BalanceUploadResponse:
+async def upload_balance_zip(
+    session_id: str,
+    file: UploadFile = File(...),
+    bank_id: str = "unicaja",
+) -> BalanceUploadResponse:
     import asyncio
 
+    from app.bank_adapters import resolve_adapter
+
     _assert_session_exists(session_id)
+
+    try:
+        adapter = resolve_adapter(bank_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
     raw_filename = file.filename or "balance.zip"
     if not raw_filename.lower().endswith(".zip"):
@@ -100,28 +114,19 @@ async def upload_balance_zip(session_id: str, file: UploadFile = File(...)) -> B
     content = await file.read()
     zip_path.write_bytes(content)
 
-    # Run in thread so the event loop stays responsive for progress polling
-    sheet_summaries, sample_rows, canonical_rows = await asyncio.to_thread(
-        _parse_zip_balance, session_id, zip_path,
+    # Run in thread so the event loop stays responsive for progress polling.
+    # Tree building + persistence happen inside the thread to eliminate race
+    # conditions (files are written before the HTTP response is sent).
+    response = await asyncio.to_thread(
+        _parse_zip_balance, session_id, zip_path, safe_filename, adapter=adapter,
     )
-
-    summary_tree = _build_summary_tree(canonical_rows)
-    response = BalanceUploadResponse(
-        session_id=session_id,
-        filename=safe_filename,
-        uploaded_at=datetime.now(timezone.utc).isoformat(),
-        sheets=sheet_summaries,
-        sample_rows=sample_rows,
-        summary_tree=summary_tree,
-    )
-
-    _persist_balance_payload(session_id, response, canonical_rows)
     state._upload_progress.pop(session_id, None)
     return response
 
 
 @router.get("/api/sessions/{session_id}/upload-progress")
-def get_upload_progress(session_id: str):
+def get_upload_progress(session_id: str, response: Response):
+    response.headers["Cache-Control"] = "no-store"
     progress = state._upload_progress.get(session_id)
     if progress is None:
         return {"phase": "idle", "step": 0, "total": 0, "pct": 0, "phase_label": ""}
@@ -129,25 +134,23 @@ def get_upload_progress(session_id: str):
     total = progress.get("total", 0)
     phase = progress.get("phase", "parsing")
 
-    _PHASE_LABELS = {
-        "parsing": "Parsing positions…",
-        "persisting": "Saving data…",
-        "canonicalizing": "Building aggregates…",
-    }
-    phase_label = _PHASE_LABELS.get(phase, "Processing…")
+    # (phase_name, label, pct_start, pct_span)
+    _PHASE_CONFIG = [
+        ("parsing",        "Parsing positions…",      5,  60),
+        ("persisting",     "Saving motor data…",      65,  7),
+        ("canonicalizing", "Building aggregates…",    72, 10),
+        ("building_tree",  "Building summary tree…",  82,  8),
+        ("saving",         "Saving positions…",       90,  8),
+    ]
 
-    if phase == "parsing" and total > 0:
-        pct = 5 + round((step / total) * 65)
-    elif phase == "persisting" and total > 0:
-        pct = 70 + round((step / total) * 10)
-    elif phase == "persisting":
-        pct = 75
-    elif phase == "canonicalizing" and total > 0:
-        pct = 80 + round((step / total) * 15)
-    elif phase == "canonicalizing":
-        pct = 88
-    else:
-        pct = 5
+    pct = 5
+    phase_label = "Processing…"
+    for name, label, pct_start, pct_span in _PHASE_CONFIG:
+        if phase == name:
+            phase_label = label
+            progress_frac = (step / total) if total > 0 else 0.5
+            pct = pct_start + round(progress_frac * pct_span)
+            break
 
     return {"phase": phase, "step": step, "total": total, "pct": pct, "phase_label": phase_label}
 
@@ -211,7 +214,6 @@ def get_balance_details(
 def get_balance_contracts(
     session_id: str,
     query: str | None = None,
-    q: str | None = None,
     categoria_ui: str | None = None,
     subcategoria_ui: str | None = None,
     subcategory_id: str | None = None,
@@ -246,7 +248,6 @@ def get_balance_contracts(
 
     rows = _load_or_rebuild_positions(session_id)
 
-    query_text = query if query is not None else q
     filtered = _apply_filters(
         rows,
         categoria_ui=categoria_ui,
@@ -257,7 +258,7 @@ def get_balance_contracts(
         rate_type=rate_type,
         counterparty=counterparty,
         maturity=maturity,
-        query_text=query_text,
+        query_text=query,
     )
 
     total = len(filtered)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -306,6 +306,7 @@ def _load_csv_table(
     encoding: str | None,
     header_row: int | None,
     header_token: str | None,
+    on_rows_read: Callable[[int], None] | None = None,
 ) -> tuple[pd.DataFrame, int]:
     if header_row is None and not header_token:
         raise ValueError("For CSV you must specify header_row or header_token.")
@@ -348,13 +349,29 @@ def _load_csv_table(
 
         resolved_delimiter = delimiter or _detect_delimiter_from_line(head_lines[resolved_header_row])
         try:
-            df = pd.read_csv(
-                path,
-                sep=resolved_delimiter,
-                header=resolved_header_row,
-                encoding=enc,
-                low_memory=False,
-            )
+            if on_rows_read is not None:
+                reader = pd.read_csv(
+                    path,
+                    sep=resolved_delimiter,
+                    header=resolved_header_row,
+                    encoding=enc,
+                    chunksize=50_000,
+                )
+                chunks: list[pd.DataFrame] = []
+                cumulative = 0
+                for chunk in reader:
+                    chunks.append(chunk)
+                    cumulative += len(chunk)
+                    on_rows_read(cumulative)
+                df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+            else:
+                df = pd.read_csv(
+                    path,
+                    sep=resolved_delimiter,
+                    header=resolved_header_row,
+                    encoding=enc,
+                    low_memory=False,
+                )
         except Exception as exc:
             last_error = exc
             continue
@@ -607,6 +624,7 @@ def read_positions_tabular(
     canonical_defaults_override: Mapping[str, Any] | None = None,
     source_row_column: str | None = None,
     reset_index: bool = True,
+    on_rows_read: Callable[[int], None] | None = None,
 ) -> pd.DataFrame:
     """
     Reads a tabular file (CSV/Excel), optionally filters row kinds, and maps it.
@@ -624,6 +642,7 @@ def read_positions_tabular(
         encoding=encoding,
         header_row=header_row,
         header_token=header_token,
+        on_rows_read=on_rows_read,
     )
     df_raw = _apply_row_kind_filter(
         df_raw,
@@ -658,6 +677,7 @@ def read_tabular_raw(
     encoding: str | None = None,
     header_row: int | None = 0,
     header_token: str | None = None,
+    on_rows_read: Callable[[int], None] | None = None,
 ) -> tuple[pd.DataFrame, int]:
     """
     Reads a CSV/Excel file in raw form (without mapping), returning:
@@ -694,6 +714,7 @@ def read_tabular_raw(
             encoding=encoding,
             header_row=header_row,
             header_token=header_token,
+            on_rows_read=on_rows_read,
         )
     else:
         raise ValueError(f"Unsupported file_type: {file_type}")

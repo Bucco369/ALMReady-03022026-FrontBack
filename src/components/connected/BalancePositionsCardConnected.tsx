@@ -28,7 +28,8 @@ import {
   uploadBalanceZip,
   type BalanceSummaryResponse,
 } from "@/lib/api";
-import { useProgressETA } from "@/hooks/useProgressETA";
+
+import { useSmoothProgress } from "@/hooks/useSmoothProgress";
 import { toast } from "sonner";
 import { inferCategoryFromSheetName } from "@/lib/balanceUi";
 import { generateSamplePositionsCSV, parsePositionsCSV } from "@/lib/csvParser";
@@ -93,8 +94,7 @@ export function BalancePositionsCardConnected({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadPhase, setUploadPhase] = useState("");
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const etaText = useProgressETA(uploadProgress, isUploading);
+  const smoothProgress = useSmoothProgress(uploadProgress, isUploading);
 
   const refreshSummary = useCallback(async () => {
     if (!sessionId) return;
@@ -180,11 +180,13 @@ export function BalancePositionsCardConnected({
           await uploadBalanceExcel(sessionId, file, onProgress, startPolling);
         }
 
-        // Server responded → stop polling loop and complete.
+        // Server responded → stop polling, load data, then mark complete.
         pollTimerRef.current = null;
+        setUploadProgress(98);
+        setUploadPhase("Loading results…");
+        await refreshSummary();
         setUploadProgress(100);
         setUploadPhase("");
-        await refreshSummary();
       } catch (error) {
         console.error(
           "[BalancePositionsCardConnected] failed to upload balance",
@@ -278,9 +280,8 @@ export function BalancePositionsCardConnected({
         sessionId={sessionId}
         summaryTree={balanceSummary?.summary_tree ?? null}
         isUploading={isUploading}
-        uploadProgress={uploadProgress}
+        uploadProgress={smoothProgress}
         uploadPhase={uploadPhase}
-        uploadEta={etaText}
       />
     </div>
   );

@@ -33,7 +33,6 @@ from app.session import (
     _calc_params_path,
     _chart_data_path,
     _motor_positions_path,
-    _positions_path,
     _results_path,
 )
 from app.parsers.balance_parser import _reconstruct_motor_dataframe
@@ -506,10 +505,9 @@ def calculate_whatif(session_id: str, req: WhatIfCalculateRequest) -> WhatIfResu
     else:
         motor_df = pd.DataFrame()
 
-    pos_path = _positions_path(session_id)
-    balance_rows: list[dict[str, Any]] = []
-    if pos_path.exists():
-        balance_rows = json.loads(pos_path.read_text(encoding="utf-8"))
+    # Load canonical positions (Parquet-first, JSON-legacy fallback)
+    from app.parsers.balance_parser import _read_positions_file
+    balance_rows: list[dict[str, Any]] = _read_positions_file(session_id) or []
 
     # 3. Build delta DataFrames
     add_df, remove_df = _build_whatif_delta_dataframe(

@@ -182,7 +182,7 @@ def _maturity_years(fecha_vencimiento: str | None, fallback_years: float | None)
             years = (venc - now).days / 365.25
             if years >= 0:
                 return years
-        except Exception:
+        except (ValueError, TypeError):
             pass
 
     if fallback_years is not None and fallback_years >= 0:
@@ -205,40 +205,32 @@ def _bucket_from_years(years: float | None) -> str | None:
     return ">20Y"
 
 
-def _weighted_avg_rate(rows: list[dict[str, Any]]) -> float | None:
+def _weighted_average(
+    rows: list[dict[str, Any]], value_key: str, weight_key: str = "amount",
+) -> float | None:
     weighted_sum = 0.0
     weight = 0.0
 
     for row in rows:
-        amount = _to_float(row.get("amount")) or 0.0
-        rate = _to_float(row.get("rate_display"))
-        if rate is None or amount == 0:
+        w_raw = _to_float(row.get(weight_key)) or 0.0
+        value = _to_float(row.get(value_key))
+        if value is None or w_raw == 0:
             continue
-        w = abs(amount)
-        weighted_sum += rate * w
+        w = abs(w_raw)
+        weighted_sum += value * w
         weight += w
 
     if weight == 0:
         return None
     return weighted_sum / weight
+
+
+def _weighted_avg_rate(rows: list[dict[str, Any]]) -> float | None:
+    return _weighted_average(rows, "rate_display")
 
 
 def _weighted_avg_maturity(rows: list[dict[str, Any]]) -> float | None:
-    weighted_sum = 0.0
-    weight = 0.0
-
-    for row in rows:
-        amount = _to_float(row.get("amount")) or 0.0
-        maturity = _to_float(row.get("maturity_years"))
-        if maturity is None or amount == 0:
-            continue
-        w = abs(amount)
-        weighted_sum += maturity * w
-        weight += w
-
-    if weight == 0:
-        return None
-    return weighted_sum / weight
+    return _weighted_average(rows, "maturity_years")
 
 
 def _safe_sheet_summary(sheet_name: str, df: pd.DataFrame) -> BalanceSheetSummary:

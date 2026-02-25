@@ -62,6 +62,7 @@ class BalanceUploadResponse(BaseModel):
     sheets: list[BalanceSheetSummary]
     sample_rows: dict[str, list[dict[str, Any]]]
     summary_tree: BalanceSummaryTree
+    bank_id: str | None = None
 
 
 # ── Balance Contracts & Details ─────────────────────────────────────────────
