@@ -284,28 +284,29 @@ def _canonicalize_motor_df(
     rate_type_raw = motor_df["rate_type"].fillna("").astype(str) if "rate_type" in motor_df.columns else pd.Series("", index=motor_df.index)
     rate_type = rate_type_raw.map({"fixed": "Fixed", "float": "Floating"})
 
-    # Dates → ISO strings
+    # Dates: parse once, reuse for ISO conversion and maturity calculation
     now = datetime.now(timezone.utc).date()
 
+    _date_cache: dict[str, pd.Series] = {}
+    for _dcol in ("start_date", "maturity_date", "next_reprice_date"):
+        if _dcol in motor_df.columns:
+            _date_cache[_dcol] = pd.to_datetime(motor_df[_dcol], errors="coerce")
+        else:
+            _date_cache[_dcol] = pd.Series(pd.NaT, index=motor_df.index)
+
     def _col_to_iso(col_name: str) -> pd.Series:
-        if col_name not in motor_df.columns:
-            return pd.Series(None, index=motor_df.index, dtype="object")
-        col = motor_df[col_name]
-        dt = pd.to_datetime(col, errors="coerce")
+        dt = _date_cache[col_name]
         return dt.dt.strftime("%Y-%m-%d").where(dt.notna(), other=None)
 
     fecha_inicio = _col_to_iso("start_date")
     fecha_vencimiento = _col_to_iso("maturity_date")
     fecha_prox_reprecio = _col_to_iso("next_reprice_date")
 
-    # Maturity years (vectorised)
-    if "maturity_date" in motor_df.columns:
-        mat_dt = pd.to_datetime(motor_df["maturity_date"], errors="coerce")
-        mat_years = (mat_dt - pd.Timestamp(now)).dt.days / 365.25
-        mat_years = mat_years.where(mat_years >= 0, other=np.nan)
-        mat_years = mat_years.where(mat_dt.notna(), other=np.nan)
-    else:
-        mat_years = pd.Series(np.nan, index=motor_df.index)
+    # Maturity years (vectorised) — reuses cached date parse
+    mat_dt = _date_cache["maturity_date"]
+    mat_years = (mat_dt - pd.Timestamp(now)).dt.days / 365.25
+    mat_years = mat_years.where(mat_years >= 0, other=np.nan)
+    mat_years = mat_years.where(mat_dt.notna(), other=np.nan)
     mat_years = mat_years.where(~is_non_maturity, 0.0)
 
     # Maturity bucket (vectorised)
@@ -322,9 +323,8 @@ def _canonicalize_motor_df(
     def _float_col(name: str) -> pd.Series:
         if name not in motor_df.columns:
             return pd.Series(None, index=motor_df.index, dtype="object")
-        return pd.to_numeric(motor_df[name], errors="coerce").where(
-            pd.to_numeric(motor_df[name], errors="coerce").notna(), other=None
-        )
+        parsed = pd.to_numeric(motor_df[name], errors="coerce")
+        return parsed.where(parsed.notna(), other=None)
 
     fixed_rate = _float_col("fixed_rate")
     spread_val = _float_col("spread")
@@ -378,9 +378,8 @@ def _canonicalize_motor_df(
         "balance_epigrafe": _text_col("balance_epigrafe"),
     }, index=motor_df.index)
 
-    # Convert NaN/NaT to None for clean Parquet/JSON serialization
-    canonical_df = canonical_df.astype(object).where(canonical_df.notna(), other=None)
-
+    # NaN/NaT → null is handled natively by Parquet on write;
+    # _read_positions_file() applies .where(notna(), None) on read for JSON.
     return canonical_df
 
 

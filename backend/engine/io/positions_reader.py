@@ -261,20 +261,12 @@ def _build_unmapped_rename(
 
 
 def _iter_csv_encodings(preferred_encoding: str | None) -> list[str]:
-    ordered: list[str] = []
+    # When the spec explicitly declares an encoding, trust it and skip fallbacks.
+    # This avoids 2-3 failed decode attempts per file (e.g., trying utf-8 before cp1252).
     if preferred_encoding:
-        ordered.append(preferred_encoding)
-    ordered.extend(_DEFAULT_CSV_ENCODINGS)
+        return [preferred_encoding]
 
-    dedup: list[str] = []
-    seen: set[str] = set()
-    for enc in ordered:
-        key = enc.lower()
-        if key in seen:
-            continue
-        seen.add(key)
-        dedup.append(enc)
-    return dedup
+    return list(_DEFAULT_CSV_ENCODINGS)
 
 
 def _detect_delimiter_from_line(line: str) -> str:
@@ -355,7 +347,7 @@ def _load_csv_table(
                     sep=resolved_delimiter,
                     header=resolved_header_row,
                     encoding=enc,
-                    chunksize=50_000,
+                    chunksize=200_000,
                 )
                 chunks: list[pd.DataFrame] = []
                 cumulative = 0
