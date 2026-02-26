@@ -69,12 +69,8 @@ def _canonicalize_position_row(sheet_name: str, record: dict[str, Any], idx: int
 
     core_avg_maturity = _to_float(get("core_avg_maturity_y"))
     maturity_years_val = _maturity_years(fecha_vencimiento, core_avg_maturity)
-    if subcategory_id == "deposits":
-        maturity_years_val = 0.0
 
     maturity_bucket = _to_text(get("bucket_vencimiento")) or _bucket_from_years(maturity_years_val)
-    if subcategory_id == "deposits":
-        maturity_bucket = "<1Y"
     repricing_bucket = _to_text(get("bucket_reprecio"))
 
     return {
@@ -296,12 +292,14 @@ def _canonicalize_motor_df(
     # Classification (uses deduplicated product matching)
     cls = _classify_motor_df(motor_df, client_rules)
 
-    # ── Source contract type & non-maturity mask ────────────────────────
+    # ── Source contract type ──────────────────────────────────────────────
     sct = motor_df.get("source_contract_type")
     if sct is None:
         sct = pd.Series("unknown", index=motor_df.index)
     else:
         sct = sct.fillna("unknown")
+
+    # ── Non-maturity mask ────────────────────────────────────────────────
     is_non_maturity = sct.str.contains("non_maturity", na=False, regex=False)
 
     # ── Contract ID (already string[python] from engine reader) ─────────

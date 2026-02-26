@@ -37,16 +37,41 @@ BASE_REQUIRED_COLS = {
 }
 
 # Legacy alias map — used by the Excel upload path.
+# Maps human-readable labels (lowercased) to canonical subcategory IDs.
 SUBCATEGORY_ID_ALIASES = {
+    # Current canonical IDs (identity mapping)
+    "interbank": "interbank",
     "mortgages": "mortgages",
-    "loans": "loans",
+    "personal-loans": "personal-loans",
+    "public-sector": "public-sector",
+    "credit-cards": "credit-cards",
+    "credit-lines": "credit-lines",
     "securities": "securities",
+    "other-assets": "other-assets",
+    "savings": "savings",
+    "sight-deposits": "sight-deposits",
+    "term-deposits": "term-deposits",
+    "wholesale-funding": "wholesale-funding",
+    "repo-funding": "repo-funding",
+    "other-liabilities": "other-liabilities",
+    # Legacy aliases (old schema → new schema)
+    "loans": "personal-loans",
+    "leasing": "personal-loans",
+    "commercial-paper": "securities",
+    "securities-ac": "securities",
+    "securities-fvoci": "securities",
+    "overdrafts": "credit-lines",
+    "non-performing": "other-assets",
     "interbank / central bank": "interbank",
     "other assets": "other-assets",
-    "deposits": "deposits",
+    "deposits": "sight-deposits",
     "term deposits": "term-deposits",
+    "covered-bonds": "wholesale-funding",
+    "senior-debt": "wholesale-funding",
+    "subordinated-debt": "wholesale-funding",
+    "ecb-funding": "wholesale-funding",
     "wholesale funding": "wholesale-funding",
-    "debt issued": "debt-issued",
+    "debt issued": "wholesale-funding",
     "other liabilities": "other-liabilities",
     "equity": "equity",
 }

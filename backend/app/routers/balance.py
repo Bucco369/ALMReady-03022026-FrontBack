@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
+import pandas as pd
 from fastapi import APIRouter, File, HTTPException, Response, UploadFile
 
 import app.state as state
@@ -24,17 +24,18 @@ from app.session import (
     _summary_path,
 )
 from app.parsers.balance_parser import (
-    _load_or_rebuild_positions,
+    _load_or_rebuild_positions_df,
     _load_or_rebuild_summary,
     _parse_and_store_balance,
     _parse_zip_balance,
 )
+from app.parsers._persistence import _invalidate_positions_cache
 from app.parsers.transforms import _to_float, _to_text
 from app.filters import (
-    _aggregate_groups,
-    _aggregate_totals,
-    _apply_filters,
-    _build_facets,
+    _aggregate_groups_df,
+    _aggregate_totals_df,
+    _apply_filters_df,
+    _build_facets_df,
 )
 
 router = APIRouter()
@@ -43,6 +44,7 @@ router = APIRouter()
 @router.delete("/api/sessions/{session_id}/balance")
 def delete_balance(session_id: str) -> dict[str, str]:
     _assert_session_exists(session_id)
+    _invalidate_positions_cache(session_id)
     sdir = _session_dir(session_id)
     deleted: list[str] = []
     positions_parquet = _positions_path(session_id)
@@ -71,6 +73,7 @@ def delete_balance(session_id: str) -> dict[str, str]:
 @router.post("/api/sessions/{session_id}/balance", response_model=BalanceUploadResponse)
 async def upload_balance(session_id: str, file: UploadFile = File(...)) -> BalanceUploadResponse:
     _assert_session_exists(session_id)
+    _invalidate_positions_cache(session_id)
 
     raw_filename = file.filename or "balance.xlsx"
     if not raw_filename.lower().endswith((".xlsx", ".xls")):
@@ -98,6 +101,7 @@ async def upload_balance_zip(
     from app.bank_adapters import resolve_adapter
 
     _assert_session_exists(session_id)
+    _invalidate_positions_cache(session_id)
 
     try:
         adapter = resolve_adapter(bank_id)
@@ -136,15 +140,15 @@ def get_upload_progress(session_id: str, response: Response):
 
     # (phase_name, label, pct_start, pct_span)
     _PHASE_CONFIG = [
-        ("parsing",        "Parsing positions…",      5,  60),
-        ("persisting",     "Saving motor data…",      65,  7),
-        ("canonicalizing", "Building aggregates…",    72, 10),
-        ("building_tree",  "Building summary tree…",  82,  8),
-        ("saving",         "Saving positions…",       90,  8),
+        ("parsing",        "Parsing positions\u2026",      5,  60),
+        ("persisting",     "Saving motor data\u2026",      65,  7),
+        ("canonicalizing", "Building aggregates\u2026",    72, 10),
+        ("building_tree",  "Building summary tree\u2026",  82,  8),
+        ("saving",         "Saving positions\u2026",       90,  8),
     ]
 
     pct = 5
-    phase_label = "Processing…"
+    phase_label = "Processing\u2026"
     for name, label, pct_start, pct_span in _PHASE_CONFIG:
         if phase == name:
             phase_label = label
@@ -174,31 +178,35 @@ def get_balance_details(
 ) -> BalanceDetailsResponse:
     _assert_session_exists(session_id)
 
-    rows = _load_or_rebuild_positions(session_id)
+    df = _load_or_rebuild_positions_df(session_id)
 
-    context_rows = _apply_filters(
-        rows,
+    context_df = _apply_filters_df(
+        df,
         categoria_ui=categoria_ui,
         subcategoria_ui=subcategoria_ui,
         subcategory_id=subcategory_id,
     )
 
-    filtered_rows = _apply_filters(
-        context_rows,
+    filtered_df = _apply_filters_df(
+        context_df,
         currency=currency,
         rate_type=rate_type,
         counterparty=counterparty,
         maturity=maturity,
     )
 
-    groups = _aggregate_groups(filtered_rows)
-    totals = _aggregate_totals(filtered_rows)
-    facets = _build_facets(context_rows)
+    groups = _aggregate_groups_df(filtered_df)
+    totals = _aggregate_totals_df(filtered_df)
+    facets = _build_facets_df(context_df)
 
     pretty_subcategory = subcategoria_ui
     if pretty_subcategory is None and subcategory_id:
-        first = next((r for r in context_rows if str(r.get("subcategory_id")) == subcategory_id), None)
-        pretty_subcategory = _to_text(first.get("subcategoria_ui")) if first else subcategory_id
+        match = context_df.loc[
+            context_df["subcategory_id"].fillna("").str.lower() == subcategory_id.lower()
+        ]
+        if not match.empty:
+            val = match["subcategoria_ui"].iloc[0]
+            pretty_subcategory = str(val) if pd.notna(val) else subcategory_id
 
     return BalanceDetailsResponse(
         session_id=session_id,
@@ -246,10 +254,10 @@ def get_balance_contracts(
     if effective_page_size <= 0 or effective_page_size > 2000:
         raise HTTPException(status_code=400, detail="page_size must be between 1 and 2000")
 
-    rows = _load_or_rebuild_positions(session_id)
+    df = _load_or_rebuild_positions_df(session_id)
 
-    filtered = _apply_filters(
-        rows,
+    filtered = _apply_filters_df(
+        df,
         categoria_ui=categoria_ui,
         subcategoria_ui=subcategoria_ui,
         subcategory_id=subcategory_id,
@@ -265,7 +273,9 @@ def get_balance_contracts(
     start = (effective_page - 1) * effective_page_size
     end = start + effective_page_size
 
-    sliced_rows = filtered[start:end]
+    # Only convert the paginated slice to dicts (100-200 rows, not 1.5M)
+    sliced = filtered.iloc[start:end]
+    sliced_records = sliced.where(sliced.notna(), other=None).to_dict("records")
     contracts = [
         BalanceContract(
             contract_id=str(row.get("contract_id") or ""),
@@ -283,7 +293,7 @@ def get_balance_contracts(
             amount=_to_float(row.get("amount")),
             rate=_to_float(row.get("rate_display")),
         )
-        for row in sliced_rows
+        for row in sliced_records
     ]
 
     return BalanceContractsResponse(

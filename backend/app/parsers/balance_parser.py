@@ -31,6 +31,8 @@ from app.parsers._canonicalization import (
 )
 from app.parsers._tree_builder import _build_summary_tree, _build_summary_tree_df
 from app.parsers._persistence import (
+    _invalidate_positions_cache,
+    _load_positions_df,
     _persist_balance_payload,
     _read_positions_file,
 )
@@ -350,5 +352,20 @@ def _load_or_rebuild_positions(session_id: str) -> list[dict[str, Any]]:
     rows = _read_positions_file(session_id)
     if rows is not None:
         return rows
+
+    raise HTTPException(status_code=404, detail="No balance uploaded for this session yet")
+
+
+def _load_or_rebuild_positions_df(session_id: str) -> pd.DataFrame:
+    """Load positions as a cached DataFrame (for details/contracts endpoints)."""
+    df = _load_positions_df(session_id)
+    if df is not None:
+        return df
+
+    # Fallback: rebuild from Excel, which writes Parquet + primes cache
+    _load_or_rebuild_summary(session_id)
+    df = _load_positions_df(session_id)
+    if df is not None:
+        return df
 
     raise HTTPException(status_code=404, detail="No balance uploaded for this session yet")

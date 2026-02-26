@@ -29,19 +29,23 @@ export interface CategoryDef {
 // ═════════════════════════════════════════════════════════════════════════════
 
 export const ASSET_SUBCATEGORIES: SubcategoryDef[] = [
-  { id: "mortgages",    label: "Mortgages" },
-  { id: "loans",        label: "Loans" },
-  { id: "securities",   label: "Securities" },
-  { id: "interbank",    label: "Interbank / Central Bank" },
-  { id: "other-assets", label: "Other assets" },
+  { id: "interbank",      label: "Interbank / Central Bank" },
+  { id: "mortgages",      label: "Mortgages" },
+  { id: "personal-loans", label: "Personal Loans" },
+  { id: "public-sector",  label: "Public Sector Lending" },
+  { id: "credit-cards",   label: "Credit Cards" },
+  { id: "credit-lines",   label: "Credit Lines & Revolving" },
+  { id: "securities",     label: "Securities" },
+  { id: "other-assets",   label: "Other Assets" },
 ];
 
 export const LIABILITY_SUBCATEGORIES: SubcategoryDef[] = [
-  { id: "deposits",          label: "Deposits" },
-  { id: "term-deposits",     label: "Term deposits" },
-  { id: "wholesale-funding", label: "Wholesale funding" },
-  { id: "debt-issued",       label: "Debt issued" },
-  { id: "other-liabilities", label: "Other liabilities" },
+  { id: "savings",           label: "Savings Accounts" },
+  { id: "sight-deposits",    label: "Sight Deposits" },
+  { id: "term-deposits",     label: "Term Deposits" },
+  { id: "wholesale-funding", label: "Wholesale Funding" },
+  { id: "repo-funding",      label: "Repo & Simultaneous" },
+  { id: "other-liabilities", label: "Other Liabilities" },
 ];
 
 // ═════════════════════════════════════════════════════════════════════════════

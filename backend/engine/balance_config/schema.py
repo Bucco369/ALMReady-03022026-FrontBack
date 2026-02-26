@@ -35,19 +35,23 @@ class CategoryDef:
 # ═════════════════════════════════════════════════════════════════════════════
 
 ASSET_SUBCATEGORIES = (
-    SubcategoryDef("mortgages",    "Mortgages"),
-    SubcategoryDef("loans",        "Loans"),
-    SubcategoryDef("securities",   "Securities"),
-    SubcategoryDef("interbank",    "Interbank / Central Bank"),
-    SubcategoryDef("other-assets", "Other assets"),
+    SubcategoryDef("interbank",        "Interbank / Central Bank"),
+    SubcategoryDef("mortgages",        "Mortgages"),
+    SubcategoryDef("personal-loans",   "Personal Loans"),
+    SubcategoryDef("public-sector",    "Public Sector Lending"),
+    SubcategoryDef("credit-cards",     "Credit Cards"),
+    SubcategoryDef("credit-lines",     "Credit Lines & Revolving"),
+    SubcategoryDef("securities",       "Securities"),
+    SubcategoryDef("other-assets",     "Other Assets"),
 )
 
 LIABILITY_SUBCATEGORIES = (
-    SubcategoryDef("deposits",          "Deposits"),
-    SubcategoryDef("term-deposits",     "Term deposits"),
-    SubcategoryDef("wholesale-funding", "Wholesale funding"),
-    SubcategoryDef("debt-issued",       "Debt issued"),
-    SubcategoryDef("other-liabilities", "Other liabilities"),
+    SubcategoryDef("savings",           "Savings Accounts"),
+    SubcategoryDef("sight-deposits",    "Sight Deposits"),
+    SubcategoryDef("term-deposits",     "Term Deposits"),
+    SubcategoryDef("wholesale-funding", "Wholesale Funding"),
+    SubcategoryDef("repo-funding",      "Repo & Simultaneous"),
+    SubcategoryDef("other-liabilities", "Other Liabilities"),
 )
 
 # ═════════════════════════════════════════════════════════════════════════════

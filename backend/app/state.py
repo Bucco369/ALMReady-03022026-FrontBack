@@ -22,6 +22,11 @@ _SESSIONS: dict = {}
 _upload_progress: dict[str, dict[str, Any]] = {}
 _calc_progress: dict[str, dict[str, Any]] = {}
 
+# Cached positions DataFrames for fast detail/contract queries.
+# Populated lazily on first request; invalidated on upload/delete.
+import pandas as pd
+_positions_df_cache: dict[str, pd.DataFrame] = {}
+
 # Disk paths
 BASE_DIR = Path(__file__).resolve().parent.parent  # /backend/
 SESSIONS_DIR = BASE_DIR / "data" / "sessions"
