@@ -22,7 +22,16 @@
  *   For retrieving cached results on page refresh.
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+// In a packaged Tauri app, the Rust shell injects window.__BACKEND_PORT__ via
+// initialization_script() before this module loads, so the IIFE always finds
+// the value set.  In dev (npm run dev + uvicorn) the variable is undefined and
+// we fall back to VITE_API_BASE_URL or the default uvicorn port.
+const API_BASE: string = (() => {
+  if (typeof window !== "undefined" && window.__BACKEND_PORT__) {
+    return `http://127.0.0.1:${window.__BACKEND_PORT__}`;
+  }
+  return import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+})();
 
 /** Generic HTTP helper. All API calls flow through here. */
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
@@ -147,8 +156,12 @@ export type BalanceContract = {
   group: string | null;
   currency: string | null;
   counterparty: string | null;
+  business_segment: string | null;
+  strategic_segment: string | null;
+  book_value_def: string | null;
   rate_type: string | null;
   maturity_bucket: string | null;
+  remuneration_bucket: string | null;
   maturity_years: number | null;
   amount: number | null;
   rate: number | null;
@@ -199,8 +212,12 @@ export type FacetOption = {
 export type BalanceDetailsFacets = {
   currencies: FacetOption[];
   rate_types: FacetOption[];
-  counterparties: FacetOption[];
+  segments: FacetOption[];
+  strategic_segments: FacetOption[];
+  segment_tree: Record<string, FacetOption[]>;
   maturities: FacetOption[];
+  remunerations: FacetOption[];
+  book_values: FacetOption[];
 };
 
 export type BalanceDetailsGroup = {
@@ -233,8 +250,12 @@ export type BalanceDetailsQuery = {
   subcategory_id?: string;
   currency?: string[];
   rate_type?: string[];
-  counterparty?: string[];
+  segment?: string[];
+  strategic_segment?: string[];
   maturity?: string[];
+  remuneration?: string[];
+  book_value?: string[];
+  group_by?: string[];
 };
 
 export type BalanceContractsQuery = {
@@ -246,8 +267,11 @@ export type BalanceContractsQuery = {
   group?: string[];
   currency?: string[];
   rate_type?: string[];
-  counterparty?: string[];
+  segment?: string[];
+  strategic_segment?: string[];
   maturity?: string[];
+  remuneration?: string[];
+  book_value?: string[];
   page?: number;
   page_size?: number;
   offset?: number;
@@ -336,7 +360,9 @@ export type CalculationResultsResponse = {
   calculated_at: string;
 };
 
-function appendListParam(qs: URLSearchParams, key: string, values?: string[]) {
+export { API_BASE };
+
+export function appendListParam(qs: URLSearchParams, key: string, values?: string[]) {
   if (!values || values.length === 0) return;
   qs.set(key, values.join(","));
 }
@@ -459,8 +485,12 @@ export async function getBalanceDetails(
   if (params?.subcategory_id) qs.set("subcategory_id", params.subcategory_id);
   appendListParam(qs, "currency", params?.currency);
   appendListParam(qs, "rate_type", params?.rate_type);
-  appendListParam(qs, "counterparty", params?.counterparty);
+  appendListParam(qs, "segment", params?.segment);
+  appendListParam(qs, "strategic_segment", params?.strategic_segment);
   appendListParam(qs, "maturity", params?.maturity);
+  appendListParam(qs, "remuneration", params?.remuneration);
+  appendListParam(qs, "book_value", params?.book_value);
+  appendListParam(qs, "group_by", params?.group_by);
 
   const query = qs.toString();
   const path = `/api/sessions/${encodeURIComponent(sessionId)}/balance/details${query ? `?${query}` : ""}`;
@@ -480,8 +510,11 @@ export async function getBalanceContracts(
   appendListParam(qs, "group", params?.group);
   appendListParam(qs, "currency", params?.currency);
   appendListParam(qs, "rate_type", params?.rate_type);
-  appendListParam(qs, "counterparty", params?.counterparty);
+  appendListParam(qs, "segment", params?.segment);
+  appendListParam(qs, "strategic_segment", params?.strategic_segment);
   appendListParam(qs, "maturity", params?.maturity);
+  appendListParam(qs, "remuneration", params?.remuneration);
+  appendListParam(qs, "book_value", params?.book_value);
   if (params?.page !== undefined) qs.set("page", String(params.page));
   if (params?.page_size !== undefined) qs.set("page_size", String(params.page_size));
   if (params?.offset !== undefined) qs.set("offset", String(params.offset));

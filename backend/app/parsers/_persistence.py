@@ -18,7 +18,9 @@ from app.parsers.transforms import _to_float
 _QUERY_COLUMNS = [
     "include_in_balance_tree", "side", "subcategory_id", "subcategoria_ui",
     "categoria_ui", "group", "currency", "rate_type", "counterparty",
-    "maturity_bucket", "amount", "rate_display", "maturity_years",
+    "business_segment", "strategic_segment", "book_value_def",
+    "maturity_bucket", "remuneration_bucket",
+    "amount", "rate_display", "maturity_years",
     "contract_id", "sheet",
 ]
 
@@ -80,10 +82,41 @@ def _read_positions_file(session_id: str) -> list[dict[str, Any]] | None:
 # ── DataFrame cache (Steps 1 + 3: caching + column pruning) ──────────────
 
 
+def _recompute_remuneration_bucket(df: pd.DataFrame) -> pd.DataFrame:
+    """Recompute remuneration_bucket from rate_display if values look stale.
+
+    Detects Parquet files written before the decimal→percentage fix and
+    recomputes the column in-place (~2ms for 1.5M rows).
+    """
+    if "rate_display" not in df.columns:
+        return df
+    if "remuneration_bucket" not in df.columns:
+        return df
+    # Heuristic: if the column has <= 2 unique non-null values, it was
+    # likely computed with the old (broken) decimal-scale bucketing.
+    nunique = df["remuneration_bucket"].dropna().nunique()
+    if nunique > 2:
+        return df
+
+    rate = df["rate_display"]
+    abs_rate = rate.abs() * 100  # decimal → percentage points
+    import numpy as np
+    bucket = pd.Series("-", index=df.index, dtype="object")
+    bucket = bucket.where(rate.isna(), "5%+")
+    bucket = bucket.where(rate.isna() | (abs_rate > 5), "4-5%")
+    bucket = bucket.where(rate.isna() | (abs_rate > 4), "3-4%")
+    bucket = bucket.where(rate.isna() | (abs_rate > 3), "2-3%")
+    bucket = bucket.where(rate.isna() | (abs_rate > 2), "1-2%")
+    bucket = bucket.where(rate.isna() | (abs_rate > 1), "0-1%")
+    bucket = bucket.where(rate.isna() | (abs_rate > 0), "0%")
+    df["remuneration_bucket"] = bucket
+    return df
+
+
 def _load_positions_df(session_id: str) -> pd.DataFrame | None:
     """Load canonical positions as a cached, column-pruned DataFrame.
 
-    First request reads Parquet (only the 15 columns needed for queries).
+    First request reads Parquet (only the columns needed for queries).
     Subsequent requests return the cached DataFrame instantly.
     """
     cached = state._positions_df_cache.get(session_id)
@@ -96,6 +129,7 @@ def _load_positions_df(session_id: str) -> pd.DataFrame | None:
         available = set(pq.read_schema(parquet_path).names)
         cols = [c for c in _QUERY_COLUMNS if c in available]
         df = pd.read_parquet(parquet_path, columns=cols if cols else None)
+        df = _recompute_remuneration_bucket(df)
         state._positions_df_cache[session_id] = df
         return df
 

@@ -18,6 +18,12 @@ export interface SubcategoryDef {
   label: string;
 }
 
+export interface GroupDef {
+  id: string;
+  label: string;
+  children: string[];   // subcategory IDs that belong to this group
+}
+
 export interface CategoryDef {
   id: string;
   label: string;
@@ -46,6 +52,26 @@ export const LIABILITY_SUBCATEGORIES: SubcategoryDef[] = [
   { id: "wholesale-funding", label: "Wholesale Funding" },
   { id: "repo-funding",      label: "Repo & Simultaneous" },
   { id: "other-liabilities", label: "Other Liabilities" },
+];
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Intermediate groups (collapsible in the balance tree)
+// ═════════════════════════════════════════════════════════════════════════════
+
+export const ASSET_GROUPS: GroupDef[] = [
+  {
+    id: "loans",
+    label: "Loans",
+    children: ["mortgages", "personal-loans", "public-sector", "credit-cards", "credit-lines"],
+  },
+];
+
+export const LIABILITY_GROUPS: GroupDef[] = [
+  {
+    id: "deposits",
+    label: "Deposits",
+    children: ["savings", "sight-deposits", "term-deposits"],
+  },
 ];
 
 // ═════════════════════════════════════════════════════════════════════════════

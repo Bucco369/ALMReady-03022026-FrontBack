@@ -198,7 +198,7 @@ const Index = () => {
 
         {/* Dashboard Grid - 3 quadrants: 1 left, 2 stacked right */}
         <main className="flex-1 p-3 overflow-hidden">
-          <div className="grid grid-cols-2 grid-rows-2 gap-3 h-full">
+          <div className="grid grid-cols-2 gap-3 h-full" style={{gridTemplateRows: '1fr 1fr'}}>
             {/* Top-left: Balance Positions */}
             <BalancePositionsCardConnected
               positions={positions}
@@ -220,7 +220,7 @@ const Index = () => {
             />
 
             {/* Bottom: Results (spans full width) */}
-            <div className="col-span-2">
+            <div className="col-span-2 h-full">
               <ResultsCard
                 results={results}
                 isCalculating={isCalculating}
@@ -234,12 +234,6 @@ const Index = () => {
           </div>
         </main>
 
-        {/* Apple-style Footer */}
-        <footer className="shrink-0 border-t border-border/40 bg-white/50 backdrop-blur-sm py-2 px-5">
-          <p className="text-[11px] text-muted-foreground text-center font-normal">
-            Illustrative IRRBB prototype • Results are indicative only
-          </p>
-        </footer>
       </div>
       </WhatIfProvider>
     </BehaviouralProvider>

@@ -182,7 +182,7 @@
 
   /* Dashboard card - Apple style */
   .dashboard-card {
-    @apply flex flex-col rounded-2xl border border-border/60 bg-card overflow-hidden;
+    @apply h-full flex flex-col rounded-2xl border border-border/60 bg-card overflow-hidden;
     box-shadow: 0 2px 8px 0 hsl(0 0% 0% / 0.04), 0 0 0 1px hsl(0 0% 0% / 0.02);
   }
 

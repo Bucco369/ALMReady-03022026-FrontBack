@@ -14,8 +14,9 @@ import { BehaviouralAssumptionsModal } from '@/components/behavioural/Behavioura
 import { useBehavioural } from '@/components/behavioural/BehaviouralContext';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { mapSummaryTreeToUiTree, type BalanceUiTree } from '@/lib/balanceUi';
+import { mapSummaryTreeToUiTree, type BalanceUiTree, type BalanceSubcategoryUiRow } from '@/lib/balanceUi';
 import type { WhatIfModification } from '@/types/whatif';
+import { ASSET_GROUPS, LIABILITY_GROUPS, type GroupDef } from '@/config/balanceSchema';
 
 interface BalancePositionsCardProps {
   positions: Position[];
@@ -323,7 +324,7 @@ export function BalancePositionsCard({
   const [isDragging, setIsDragging] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [selectedCategoryForDetails, setSelectedCategoryForDetails] = useState<string | null>(null);
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set(['assets', 'liabilities']));
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set(['assets', 'liabilities', 'loans', 'deposits']));
   const [showWhatIfBuilder, setShowWhatIfBuilder] = useState(false);
   const [showBehaviouralModal, setShowBehaviouralModal] = useState(false);
   const {
@@ -515,13 +516,13 @@ export function BalancePositionsCard({
               {/* Scrollable Balance Table with Sticky Header - Apple Style */}
               <div className="flex-1 min-h-0 overflow-hidden rounded-xl border border-border/40">
                 <div className="h-full overflow-auto balance-scroll-container">
-                  <table className="w-full min-w-[980px] text-xs table-fixed">
+                  <table className="w-full min-w-[600px] text-xs table-fixed">
                     <colgroup>
-                      <col className="w-[46%]" />
-                      <col className="w-[13.5%]" />
-                      <col className="w-[13.5%]" />
-                      <col className="w-[13.5%]" />
-                      <col className="w-[13.5%]" />
+                      <col className="w-[32%]" />
+                      <col className="w-[17%]" />
+                      <col className="w-[17%]" />
+                      <col className="w-[17%]" />
+                      <col className="w-[17%]" />
                     </colgroup>
                     <thead className="sticky top-0 z-10">
                       <tr className="text-muted-foreground">
@@ -535,43 +536,33 @@ export function BalancePositionsCard({
                     <tbody>
                       {/* Assets Row */}
                       <BalanceRowWithDelta id="assets" label={balanceTree.assets.name} amount={balanceTree.assets.amount} positions={balanceTree.assets.positions} avgRate={balanceTree.assets.avgRate} avgMaturity={balanceTree.assets.avgMaturity} delta={whatIfDeltas.assets ?? emptyDelta()} isExpanded={expandedRows.has('assets')} onToggle={() => toggleRow('assets')} formatAmount={formatAmount} formatPercent={formatPercent} formatYears={formatYears} variant="asset" />
-                      {expandedRows.has('assets') && balanceTree.assets.subcategories.map(sub => <React.Fragment key={`asset-${sub.id}`}>
-                          <SubcategoryRowWithDelta 
-                            id={sub.id} 
-                            label={sub.name} 
-                            amount={sub.amount} 
-                            positions={sub.positions} 
-                            avgRate={sub.avgRate} 
-                            avgMaturity={sub.avgMaturity}
-                            delta={whatIfDeltas[sub.id]} 
-                            formatAmount={formatAmount} 
-                            formatPercent={formatPercent}
-                            formatYears={formatYears}
-                            onViewDetails={() => openDetails(sub.id)}
-                          />
-                          {/* Render What-If items under this subcategory */}
-                          {whatIfDeltas[sub.id]?.items.map((mod: WhatIfModification) => <WhatIfItemRow key={mod.id} label={mod.label} amount={mod.notional || 0} positionDelta={mod.positionDelta ?? 1} type={mod.type} formatAmount={formatAmount} />)}
-                        </React.Fragment>)}
-                      
+                      {expandedRows.has('assets') && renderGroupedSubcategories(
+                        balanceTree.assets.subcategories,
+                        ASSET_GROUPS,
+                        'asset',
+                        whatIfDeltas,
+                        expandedRows,
+                        toggleRow,
+                        openDetails,
+                        formatAmount,
+                        formatPercent,
+                        formatYears,
+                      )}
+
                       {/* Liabilities Row */}
                       <BalanceRowWithDelta id="liabilities" label={balanceTree.liabilities.name} amount={balanceTree.liabilities.amount} positions={balanceTree.liabilities.positions} avgRate={balanceTree.liabilities.avgRate} avgMaturity={balanceTree.liabilities.avgMaturity} delta={whatIfDeltas.liabilities ?? emptyDelta()} isExpanded={expandedRows.has('liabilities')} onToggle={() => toggleRow('liabilities')} formatAmount={formatAmount} formatPercent={formatPercent} formatYears={formatYears} variant="liability" />
-                      {expandedRows.has('liabilities') && balanceTree.liabilities.subcategories.map(sub => <React.Fragment key={`liability-${sub.id}`}>
-                          <SubcategoryRowWithDelta 
-                            id={sub.id} 
-                            label={sub.name} 
-                            amount={sub.amount} 
-                            positions={sub.positions} 
-                            avgRate={sub.avgRate} 
-                            avgMaturity={sub.avgMaturity}
-                            delta={whatIfDeltas[sub.id]} 
-                            formatAmount={formatAmount} 
-                            formatPercent={formatPercent}
-                            formatYears={formatYears}
-                            onViewDetails={() => openDetails(sub.id)}
-                          />
-                          {/* Render What-If items under this subcategory */}
-                          {whatIfDeltas[sub.id]?.items.map((mod: WhatIfModification) => <WhatIfItemRow key={mod.id} label={mod.label} amount={mod.notional || 0} positionDelta={mod.positionDelta ?? 1} type={mod.type} formatAmount={formatAmount} />)}
-                        </React.Fragment>)}
+                      {expandedRows.has('liabilities') && renderGroupedSubcategories(
+                        balanceTree.liabilities.subcategories,
+                        LIABILITY_GROUPS,
+                        'liability',
+                        whatIfDeltas,
+                        expandedRows,
+                        toggleRow,
+                        openDetails,
+                        formatAmount,
+                        formatPercent,
+                        formatYears,
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -763,6 +754,7 @@ interface SubcategoryRowWithDeltaProps {
   formatPercent: (n: number | null | undefined) => string;
   formatYears: (n: number | null | undefined) => string;
   onViewDetails: () => void;
+  indent?: 'grouped';
 }
 function SubcategoryRowWithDelta({
   label,
@@ -774,7 +766,8 @@ function SubcategoryRowWithDelta({
   formatAmount,
   formatPercent,
   formatYears,
-  onViewDetails
+  onViewDetails,
+  indent,
 }: SubcategoryRowWithDeltaProps) {
   const safeDelta = delta ?? emptyDelta();
   const hasAmountDelta = safeDelta.addedAmount > 0 || safeDelta.removedAmount > 0;
@@ -794,8 +787,9 @@ function SubcategoryRowWithDelta({
     const millions = n / 1e6;
     return millions.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '€';
   };
+  const paddingLeft = indent === 'grouped' ? 'pl-11' : 'pl-8';
   return <tr className="text-muted-foreground group hover:bg-accent/40 transition-colors duration-150 border-b border-border/20">
-      <td className="py-1.5 pl-8 pr-2">
+      <td className={`py-1.5 ${paddingLeft} pr-2`}>
         <div className="flex items-center gap-1.5">
           <span className="text-[11px]">{label}</span>
           <button 
@@ -898,6 +892,171 @@ function WhatIfItemRow({
         —
       </td>
     </tr>;
+}
+
+// ─── Intermediate Group Row (e.g. "Loans", "Deposits") ─────────────────────
+interface GroupRowProps {
+  id: string;
+  label: string;
+  amount: number;
+  positions: number;
+  avgRate: number | null;
+  avgMaturity: number | null;
+  isExpanded: boolean;
+  onToggle: () => void;
+  formatAmount: (n: number) => string;
+  formatPercent: (n: number | null | undefined) => string;
+  formatYears: (n: number | null | undefined) => string;
+}
+function GroupRow({ label, amount, positions, avgRate, avgMaturity, isExpanded, onToggle, formatAmount, formatPercent, formatYears }: GroupRowProps) {
+  const ChevronIcon = isExpanded ? ChevronDown : ChevronRight;
+  return (
+    <tr className="group cursor-pointer hover:bg-accent/40 transition-colors duration-150 border-b border-border/20" onClick={onToggle}>
+      <td className="py-1.5 pl-6 pr-2">
+        <div className="flex items-center gap-1.5">
+          <ChevronIcon className="h-2.5 w-2.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+          <span className="text-[11px] font-semibold text-foreground/80">{label}</span>
+        </div>
+      </td>
+      <td className="text-right py-1.5 px-2 font-mono font-medium text-[11px] text-foreground/70 whitespace-nowrap">
+        {formatAmount(amount)}
+      </td>
+      <td className="text-right py-1.5 px-2 font-mono text-[11px] text-muted-foreground whitespace-nowrap">
+        {positions}
+      </td>
+      <td className="text-right py-1.5 px-2 font-mono text-[11px] text-muted-foreground whitespace-nowrap">
+        {formatPercent(avgRate)}
+      </td>
+      <td className="text-right py-1.5 px-2 font-mono text-[11px] text-muted-foreground whitespace-nowrap">
+        {formatYears(avgMaturity)}
+      </td>
+    </tr>
+  );
+}
+
+// Aggregate subcategory rows into group totals
+function aggregateSubcategories(subs: BalanceSubcategoryUiRow[]): { amount: number; positions: number; avgRate: number | null; avgMaturity: number | null } {
+  let amount = 0, positions = 0, weightedRate = 0, rateWeight = 0, weightedMaturity = 0, matWeight = 0;
+  for (const s of subs) {
+    amount += s.amount;
+    positions += s.positions;
+    const w = Math.abs(s.amount);
+    if (s.avgRate !== null && !Number.isNaN(s.avgRate)) { weightedRate += s.avgRate * w; rateWeight += w; }
+    if (s.avgMaturity !== null && !Number.isNaN(s.avgMaturity)) { weightedMaturity += s.avgMaturity * w; matWeight += w; }
+  }
+  return {
+    amount,
+    positions,
+    avgRate: rateWeight > 0 ? weightedRate / rateWeight : null,
+    avgMaturity: matWeight > 0 ? weightedMaturity / matWeight : null,
+  };
+}
+
+// Render subcategories partitioned into groups + ungrouped
+function renderGroupedSubcategories(
+  subcategories: BalanceSubcategoryUiRow[],
+  groups: GroupDef[],
+  variant: 'asset' | 'liability',
+  whatIfDeltas: Record<string, WhatIfDelta>,
+  expandedRows: Set<string>,
+  toggleRow: (id: string) => void,
+  openDetails: (id: string) => void,
+  formatAmount: (n: number) => string,
+  formatPercent: (n: number | null | undefined) => string,
+  formatYears: (n: number | null | undefined) => string,
+) {
+  // Map each subcategory ID → its group (if any)
+  const idToGroup = new Map<string, GroupDef>();
+  for (const g of groups) for (const cid of g.children) idToGroup.set(cid, g);
+
+  const elements: React.ReactNode[] = [];
+  const emittedGroups = new Set<string>();
+
+  // Walk subcategories in their original (schema) order.
+  // When we hit the first child of a group, emit the group row + children.
+  // Ungrouped items emit directly.
+  for (const sub of subcategories) {
+    const group = idToGroup.get(sub.id);
+
+    if (group) {
+      // Only emit the group once (on first child encountered)
+      if (emittedGroups.has(group.id)) continue;
+      emittedGroups.add(group.id);
+
+      const children = group.children
+        .map(childId => subcategories.find(s => s.id === childId))
+        .filter((s): s is BalanceSubcategoryUiRow => s !== undefined);
+      const agg = aggregateSubcategories(children);
+      const isGroupExpanded = expandedRows.has(group.id);
+
+      elements.push(
+        <GroupRow
+          key={`group-${group.id}`}
+          id={group.id}
+          label={group.label}
+          amount={agg.amount}
+          positions={agg.positions}
+          avgRate={agg.avgRate}
+          avgMaturity={agg.avgMaturity}
+          isExpanded={isGroupExpanded}
+          onToggle={() => toggleRow(group.id)}
+          formatAmount={formatAmount}
+          formatPercent={formatPercent}
+          formatYears={formatYears}
+        />
+      );
+
+      if (isGroupExpanded) {
+        for (const child of children) {
+          elements.push(
+            <React.Fragment key={`${variant}-${child.id}`}>
+              <SubcategoryRowWithDelta
+                id={child.id}
+                label={child.name}
+                amount={child.amount}
+                positions={child.positions}
+                avgRate={child.avgRate}
+                avgMaturity={child.avgMaturity}
+                delta={whatIfDeltas[child.id]}
+                formatAmount={formatAmount}
+                formatPercent={formatPercent}
+                formatYears={formatYears}
+                onViewDetails={() => openDetails(child.id)}
+                indent="grouped"
+              />
+              {whatIfDeltas[child.id]?.items.map((mod: WhatIfModification) => (
+                <WhatIfItemRow key={mod.id} label={mod.label} amount={mod.notional || 0} positionDelta={mod.positionDelta ?? 1} type={mod.type} formatAmount={formatAmount} />
+              ))}
+            </React.Fragment>
+          );
+        }
+      }
+    } else {
+      // Ungrouped subcategory — render directly
+      elements.push(
+        <React.Fragment key={`${variant}-${sub.id}`}>
+          <SubcategoryRowWithDelta
+            id={sub.id}
+            label={sub.name}
+            amount={sub.amount}
+            positions={sub.positions}
+            avgRate={sub.avgRate}
+            avgMaturity={sub.avgMaturity}
+            delta={whatIfDeltas[sub.id]}
+            formatAmount={formatAmount}
+            formatPercent={formatPercent}
+            formatYears={formatYears}
+            onViewDetails={() => openDetails(sub.id)}
+          />
+          {whatIfDeltas[sub.id]?.items.map((mod: WhatIfModification) => (
+            <WhatIfItemRow key={mod.id} label={mod.label} amount={mod.notional || 0} positionDelta={mod.positionDelta ?? 1} type={mod.type} formatAmount={formatAmount} />
+          ))}
+        </React.Fragment>
+      );
+    }
+  }
+
+  return <>{elements}</>;
 }
 
 // Compact CET1 Input for header row

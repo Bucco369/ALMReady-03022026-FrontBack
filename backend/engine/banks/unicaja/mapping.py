@@ -40,6 +40,11 @@ OPTIONAL_CANONICAL_COLUMNS = (
     "balance_product",
     "balance_section",
     "balance_epigrafe",
+    # Balance detail filter columns — used by the UI filters, not the motor.
+    "original_currency",
+    "business_segment",
+    "strategic_segment",
+    "book_value_def",
 )
 
 
@@ -67,6 +72,11 @@ BANK_COLUMNS_MAP = {
     "Producto": "balance_product",
     "Apartado": "balance_section",
     "Epigrafe M1": "balance_epigrafe",
+    # Balance detail filter columns
+    "Moneda original": "original_currency",
+    "Segmento negocio": "business_segment",
+    "Segmento estrategico": "strategic_segment",
+    "Book value definition": "book_value_def",
 }
 
 

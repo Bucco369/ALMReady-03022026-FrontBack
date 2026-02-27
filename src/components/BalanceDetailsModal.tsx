@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { FileSpreadsheet, Download, X, Filter } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { FileSpreadsheet, Download, X, Filter, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -8,28 +8,23 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
-import { getBalanceDetails, type BalanceDetailsResponse } from '@/lib/api';
+  getBalanceDetails,
+  appendListParam,
+  API_BASE,
+  type BalanceDetailsResponse,
+} from '@/lib/api';
 import { DETAIL_CONTEXT_LABELS } from '@/config/balanceSchema';
+import { FilterDropdown } from '@/components/shared/FilterDropdown';
+import { HierarchicalFilterDropdown } from '@/components/shared/HierarchicalFilterDropdown';
+import { useBalanceFilters, type BalanceFilters } from '@/hooks/useBalanceFilters';
+import { formatAmount, formatPercent, formatMaturity, getErrorMessage } from '@/lib/formatters';
 
 interface BalanceDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedCategory?: string | null;
   sessionId?: string | null;
-}
-
-interface Filters {
-  currencies: string[];
-  rateTypes: string[];
-  counterparties: string[];
-  maturityBuckets: string[];
 }
 
 function mapCategoryContext(selectedCategory?: string | null): {
@@ -42,25 +37,8 @@ function mapCategoryContext(selectedCategory?: string | null): {
   return { subcategory_id: selectedCategory };
 }
 
-function formatAmount(num: number) {
-  const millions = num / 1e6;
-  return millions.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '€';
-}
-
-function formatPercent(num: number | null | undefined) {
-  if (num === null || num === undefined || Number.isNaN(num)) return '—';
-  return (num * 100).toFixed(2) + '%';
-}
-
-function formatMaturity(num: number | null | undefined) {
-  if (num === null || num === undefined || Number.isNaN(num)) return '—';
-  return `${num.toFixed(1)}Y`;
-}
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  return String(error);
-}
+type SortField = 'group' | 'amount' | 'positions' | 'avg_rate' | 'avg_maturity';
+type SortDir = 'asc' | 'desc';
 
 export function BalanceDetailsModal({
   open,
@@ -68,15 +46,40 @@ export function BalanceDetailsModal({
   selectedCategory,
   sessionId,
 }: BalanceDetailsModalProps) {
-  const [filters, setFilters] = useState<Filters>({
-    currencies: [],
-    rateTypes: [],
-    counterparties: [],
-    maturityBuckets: [],
-  });
+  const { filters, debouncedFilters, toggleFilter, setFilterCategory, clearFilters, activeFilterCount } = useBalanceFilters();
   const [data, setData] = useState<BalanceDetailsResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Sorting
+  const [sortField, setSortField] = useState<SortField>('amount');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+
+  // Multi-dimensional groupby: when a filter dimension has >1 selected value,
+  // that dimension becomes a grouping axis.  Produces cross-product rows.
+  const groupByDims = useMemo(() => {
+    const dims: string[] = [];
+    if (debouncedFilters.currencies.length > 1) dims.push('currency');
+    if (debouncedFilters.rateTypes.length > 1) dims.push('rate_type');
+    if (debouncedFilters.segments.length > 1) dims.push('business_segment');
+    if (debouncedFilters.maturityBuckets.length > 1) dims.push('maturity_bucket');
+    if (debouncedFilters.remunerations.length > 1) dims.push('remuneration_bucket');
+    if (debouncedFilters.bookValues.length > 1) dims.push('book_value_def');
+    return dims;
+  }, [debouncedFilters]);
+
+  const groupByLabel = useMemo(() => {
+    if (groupByDims.length === 0) return 'Group';
+    const labels: Record<string, string> = {
+      currency: 'Currency',
+      rate_type: 'Rate Type',
+      business_segment: 'Segment',
+      maturity_bucket: 'Maturity',
+      remuneration_bucket: 'Remuneration',
+      book_value_def: 'Book Value',
+    };
+    return groupByDims.map((d) => labels[d] || d).join(' | ');
+  }, [groupByDims]);
 
   useEffect(() => {
     if (!open) return;
@@ -93,10 +96,14 @@ export function BalanceDetailsModal({
     const context = mapCategoryContext(selectedCategory);
     getBalanceDetails(sessionId, {
       ...context,
-      currency: filters.currencies,
-      rate_type: filters.rateTypes,
-      counterparty: filters.counterparties,
-      maturity: filters.maturityBuckets,
+      currency: debouncedFilters.currencies,
+      rate_type: debouncedFilters.rateTypes,
+      segment: debouncedFilters.segments,
+      strategic_segment: debouncedFilters.strategicSegments,
+      maturity: debouncedFilters.maturityBuckets,
+      remuneration: debouncedFilters.remunerations,
+      book_value: debouncedFilters.bookValues,
+      group_by: groupByDims.length > 0 ? groupByDims : undefined,
     })
       .then((response) => {
         if (!active) return;
@@ -114,84 +121,98 @@ export function BalanceDetailsModal({
     return () => {
       active = false;
     };
-  }, [
-    filters.counterparties,
-    filters.currencies,
-    filters.maturityBuckets,
-    filters.rateTypes,
-    open,
-    selectedCategory,
-    sessionId,
-  ]);
+  }, [debouncedFilters, open, selectedCategory, sessionId]);
 
   const getContextLabel = () => {
     if (!selectedCategory) return 'Full Balance';
     return DETAIL_CONTEXT_LABELS[selectedCategory] || 'Full Balance';
   };
 
-  const currencyOptions = useMemo(
-    () => data?.facets.currencies.map((it) => it.value) ?? [],
-    [data]
-  );
-  const rateTypeOptions = useMemo(
-    () => data?.facets.rate_types.map((it) => it.value) ?? [],
-    [data]
-  );
-  const counterpartyOptions = useMemo(
-    () => data?.facets.counterparties.map((it) => it.value) ?? [],
-    [data]
-  );
-  const maturityOptions = useMemo(
-    () => data?.facets.maturities.map((it) => it.value) ?? [],
-    [data]
-  );
+  const currencyFacets = useMemo(() => data?.facets.currencies ?? [], [data]);
+  const rateTypeFacets = useMemo(() => data?.facets.rate_types ?? [], [data]);
+  const segmentFacets = useMemo(() => data?.facets.segments ?? [], [data]);
+  const segmentTree = useMemo(() => data?.facets.segment_tree ?? {}, [data]);
+  const maturityFacets = useMemo(() => data?.facets.maturities ?? [], [data]);
+  const remunerationFacets = useMemo(() => data?.facets.remunerations ?? [], [data]);
+  const bookValueFacets = useMemo(() => data?.facets.book_values ?? [], [data]);
 
-  const activeFilterCount =
-    filters.currencies.length +
-    filters.rateTypes.length +
-    filters.counterparties.length +
-    filters.maturityBuckets.length;
+  // Sorting
+  const handleSort = useCallback((field: SortField) => {
+    setSortField((prev) => {
+      if (prev === field) {
+        setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+        return prev;
+      }
+      setSortDir(field === 'group' ? 'asc' : 'desc');
+      return field;
+    });
+  }, []);
 
-  const clearFilters = () => {
-    setFilters({ currencies: [], rateTypes: [], counterparties: [], maturityBuckets: [] });
+  const sortedGroups = useMemo(() => {
+    if (!data?.groups) return [];
+    return [...data.groups].sort((a, b) => {
+      let va: string | number | null;
+      let vb: string | number | null;
+      if (sortField === 'group') {
+        va = a.group.toLowerCase();
+        vb = b.group.toLowerCase();
+        return sortDir === 'asc'
+          ? (va as string).localeCompare(vb as string)
+          : (vb as string).localeCompare(va as string);
+      }
+      va = a[sortField] ?? 0;
+      vb = b[sortField] ?? 0;
+      return sortDir === 'asc' ? (va as number) - (vb as number) : (vb as number) - (va as number);
+    });
+  }, [data?.groups, sortField, sortDir]);
+
+  // Max amount for data bars
+  const maxAmount = useMemo(() => {
+    if (!data?.groups.length) return 1;
+    return Math.max(...data.groups.map((g) => Math.abs(g.amount)), 1);
+  }, [data?.groups]);
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-30" />;
+    return sortDir === 'asc'
+      ? <ArrowUp className="h-3 w-3 ml-1 text-primary" />
+      : <ArrowDown className="h-3 w-3 ml-1 text-primary" />;
   };
 
   const handleExport = () => {
-    if (!data) return;
-    const headers = ['Group', 'Amount (Mln)', 'Positions', 'Avg Rate (%)', 'Avg Maturity (years)'];
-    const rows = data.groups.map((row) => [
-      row.group,
-      row.amount.toString(),
-      row.positions.toString(),
-      row.avg_rate === null ? '' : (row.avg_rate * 100).toFixed(2),
-      row.avg_maturity === null ? '' : row.avg_maturity.toFixed(1),
-    ]);
-    const csv = [
-      headers.join(','),
-      ...rows.map((r) => r.join(',')),
-      '',
-      `Total,${data.totals.amount},${data.totals.positions},${
-        data.totals.avg_rate === null ? '' : (data.totals.avg_rate * 100).toFixed(2)
-      },${data.totals.avg_maturity === null ? '' : data.totals.avg_maturity.toFixed(1)}`,
-    ].join('\n');
+    if (!sessionId) return;
+    const qs = new URLSearchParams();
+    const context = mapCategoryContext(selectedCategory);
+    if (context.categoria_ui) qs.set('categoria_ui', context.categoria_ui);
+    if (context.subcategory_id) qs.set('subcategory_id', context.subcategory_id);
+    appendListParam(qs, 'currency', debouncedFilters.currencies);
+    appendListParam(qs, 'rate_type', debouncedFilters.rateTypes);
+    appendListParam(qs, 'segment', debouncedFilters.segments);
+    appendListParam(qs, 'strategic_segment', debouncedFilters.strategicSegments);
+    appendListParam(qs, 'maturity', debouncedFilters.maturityBuckets);
+    appendListParam(qs, 'remuneration', debouncedFilters.remunerations);
+    appendListParam(qs, 'book_value', debouncedFilters.bookValues);
+    if (groupByDims.length > 0) qs.set('group_by', groupByDims.join(','));
 
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `balance_positions_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const query = qs.toString();
+    const url = `${API_BASE}/api/sessions/${encodeURIComponent(sessionId)}/balance/export${query ? `?${query}` : ''}`;
+    window.open(url, '_blank');
   };
 
-  const toggleFilter = (category: keyof Filters, value: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      [category]: prev[category].includes(value)
-        ? prev[category].filter((v) => v !== value)
-        : [...prev[category], value],
-    }));
-  };
+  const allFilterBadges: { key: string; category: keyof BalanceFilters; value: string }[] = [
+    ...filters.currencies.map((v) => ({ key: `cur-${v}`, category: 'currencies' as const, value: v })),
+    ...filters.rateTypes.map((v) => ({ key: `rt-${v}`, category: 'rateTypes' as const, value: v })),
+    ...filters.segments.map((v) => ({ key: `seg-${v}`, category: 'segments' as const, value: v })),
+    ...filters.strategicSegments.map((v) => ({ key: `sseg-${v}`, category: 'strategicSegments' as const, value: v })),
+    ...filters.maturityBuckets.map((v) => ({ key: `mat-${v}`, category: 'maturityBuckets' as const, value: v })),
+    ...filters.remunerations.map((v) => ({ key: `rem-${v}`, category: 'remunerations' as const, value: v })),
+    ...filters.bookValues.map((v) => ({ key: `bv-${v}`, category: 'bookValues' as const, value: v })),
+  ];
+
+  const handleClearSegments = useCallback(() => {
+    setFilterCategory('segments', []);
+    setFilterCategory('strategicSegments', []);
+  }, [setFilterCategory]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -207,7 +228,7 @@ export function BalanceDetailsModal({
               size="sm"
               onClick={handleExport}
               className="h-7 text-xs"
-              disabled={!data || data.groups.length === 0}
+              disabled={!sessionId || !data || data.groups.length === 0}
             >
               <Download className="mr-1.5 h-3 w-3" />
               Export to Excel
@@ -223,30 +244,53 @@ export function BalanceDetailsModal({
 
           <FilterDropdown
             label="Currency"
-            options={currencyOptions}
+            options={currencyFacets}
             selected={filters.currencies}
             onToggle={(v) => toggleFilter('currencies', v)}
+            onSetAll={(vals) => setFilterCategory('currencies', vals)}
           />
 
           <FilterDropdown
             label="Rate Type"
-            options={rateTypeOptions}
+            options={rateTypeFacets}
             selected={filters.rateTypes}
             onToggle={(v) => toggleFilter('rateTypes', v)}
+            onSetAll={(vals) => setFilterCategory('rateTypes', vals)}
           />
 
-          <FilterDropdown
-            label="Counterparty"
-            options={counterpartyOptions}
-            selected={filters.counterparties}
-            onToggle={(v) => toggleFilter('counterparties', v)}
+          <HierarchicalFilterDropdown
+            label="Segment"
+            parentFacets={segmentFacets}
+            segmentTree={segmentTree}
+            selectedParents={filters.segments}
+            selectedChildren={filters.strategicSegments}
+            onToggleParent={(v) => toggleFilter('segments', v)}
+            onToggleChild={(v) => toggleFilter('strategicSegments', v)}
+            onClearAll={handleClearSegments}
           />
 
           <FilterDropdown
             label="Maturity"
-            options={maturityOptions}
+            options={maturityFacets}
             selected={filters.maturityBuckets}
             onToggle={(v) => toggleFilter('maturityBuckets', v)}
+            onSetAll={(vals) => setFilterCategory('maturityBuckets', vals)}
+          />
+
+          <FilterDropdown
+            label="Remuneration"
+            options={remunerationFacets}
+            selected={filters.remunerations}
+            onToggle={(v) => toggleFilter('remunerations', v)}
+            onSetAll={(vals) => setFilterCategory('remunerations', vals)}
+          />
+
+          <FilterDropdown
+            label="Book Value"
+            options={bookValueFacets}
+            selected={filters.bookValues}
+            onToggle={(v) => toggleFilter('bookValues', v)}
+            onSetAll={(vals) => setFilterCategory('bookValues', vals)}
           />
 
           {activeFilterCount > 0 && (
@@ -264,34 +308,10 @@ export function BalanceDetailsModal({
 
         {activeFilterCount > 0 && (
           <div className="flex items-center gap-1.5 py-2 flex-wrap">
-            {filters.currencies.map((c) => (
-              <Badge key={c} variant="outline" className="text-[10px] h-5">
-                {c}
-                <button onClick={() => toggleFilter('currencies', c)} className="ml-1">
-                  <X className="h-2.5 w-2.5" />
-                </button>
-              </Badge>
-            ))}
-            {filters.rateTypes.map((r) => (
-              <Badge key={r} variant="outline" className="text-[10px] h-5">
-                {r}
-                <button onClick={() => toggleFilter('rateTypes', r)} className="ml-1">
-                  <X className="h-2.5 w-2.5" />
-                </button>
-              </Badge>
-            ))}
-            {filters.counterparties.map((c) => (
-              <Badge key={c} variant="outline" className="text-[10px] h-5">
-                {c}
-                <button onClick={() => toggleFilter('counterparties', c)} className="ml-1">
-                  <X className="h-2.5 w-2.5" />
-                </button>
-              </Badge>
-            ))}
-            {filters.maturityBuckets.map((m) => (
-              <Badge key={m} variant="outline" className="text-[10px] h-5">
-                {m}
-                <button onClick={() => toggleFilter('maturityBuckets', m)} className="ml-1">
+            {allFilterBadges.map((b) => (
+              <Badge key={b.key} variant="outline" className="text-[10px] h-5">
+                {b.value}
+                <button onClick={() => toggleFilter(b.category, b.value)} className="ml-1">
                   <X className="h-2.5 w-2.5" />
                 </button>
               </Badge>
@@ -303,11 +323,36 @@ export function BalanceDetailsModal({
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-card z-10">
               <tr className="text-muted-foreground border-b border-border">
-                <th className="text-left font-medium py-2.5 pl-3 bg-muted/50">Group</th>
-                <th className="text-right font-medium py-2.5 bg-muted/50">Amount (Mln)</th>
-                <th className="text-right font-medium py-2.5 bg-muted/50">Positions</th>
-                <th className="text-right font-medium py-2.5 bg-muted/50">Avg Rate</th>
-                <th className="text-right font-medium py-2.5 pr-3 bg-muted/50">Avg Maturity</th>
+                <th
+                  className="text-left font-medium py-2.5 pl-7 bg-muted/50 cursor-pointer select-none"
+                  onClick={() => handleSort('group')}
+                >
+                  <span className="inline-flex items-center">{groupByLabel}<SortIcon field="group" /></span>
+                </th>
+                <th
+                  className="text-right font-medium py-2.5 bg-muted/50 cursor-pointer select-none"
+                  onClick={() => handleSort('amount')}
+                >
+                  <span className="inline-flex items-center justify-end">Amount (Mln)<SortIcon field="amount" /></span>
+                </th>
+                <th
+                  className="text-right font-medium py-2.5 bg-muted/50 cursor-pointer select-none"
+                  onClick={() => handleSort('positions')}
+                >
+                  <span className="inline-flex items-center justify-end">Positions<SortIcon field="positions" /></span>
+                </th>
+                <th
+                  className="text-right font-medium py-2.5 bg-muted/50 cursor-pointer select-none"
+                  onClick={() => handleSort('avg_rate')}
+                >
+                  <span className="inline-flex items-center justify-end">Avg Rate<SortIcon field="avg_rate" /></span>
+                </th>
+                <th
+                  className="text-right font-medium py-2.5 pr-3 bg-muted/50 cursor-pointer select-none"
+                  onClick={() => handleSort('avg_maturity')}
+                >
+                  <span className="inline-flex items-center justify-end">Avg Maturity<SortIcon field="avg_maturity" /></span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -334,21 +379,33 @@ export function BalanceDetailsModal({
               )}
               {!loading &&
                 !error &&
-                data?.groups.map((row) => (
-                  <tr key={row.group} className="border-b border-border/50 transition-colors hover:bg-muted/20">
-                    <td className="py-2.5 pl-3">{row.group}</td>
-                    <td className="text-right py-2.5 font-mono text-foreground">{formatAmount(row.amount)}</td>
-                    <td className="text-right py-2.5 font-mono text-muted-foreground">{row.positions}</td>
-                    <td className="text-right py-2.5 font-mono text-muted-foreground">{formatPercent(row.avg_rate)}</td>
-                    <td className="text-right py-2.5 pr-3 font-mono text-muted-foreground">
-                      {formatMaturity(row.avg_maturity)}
-                    </td>
-                  </tr>
-                ))}
+                sortedGroups.map((row) => {
+                  const barWidth = Math.round((Math.abs(row.amount) / maxAmount) * 100);
+                  return (
+                      <tr
+                        key={row.group}
+                        className="border-b border-border/50 transition-colors hover:bg-muted/20"
+                      >
+                        <td className="py-2.5 pl-7">{row.group}</td>
+                        <td className="text-right py-2.5 font-mono text-foreground relative">
+                          <div
+                            className="absolute inset-y-0.5 right-0 bg-primary/8 rounded-sm"
+                            style={{ width: `${barWidth}%` }}
+                          />
+                          <span className="relative">{formatAmount(row.amount)}</span>
+                        </td>
+                        <td className="text-right py-2.5 font-mono text-muted-foreground">{row.positions}</td>
+                        <td className="text-right py-2.5 font-mono text-muted-foreground">{formatPercent(row.avg_rate)}</td>
+                        <td className="text-right py-2.5 pr-3 font-mono text-muted-foreground">
+                          {formatMaturity(row.avg_maturity)}
+                        </td>
+                      </tr>
+                  );
+                })}
 
-              {!loading && !error && data && data.groups.length > 0 && (
+              {!loading && !error && data && data.groups.length > 1 && (
                 <tr className="border-t-2 border-border bg-muted/30 font-medium">
-                  <td className="py-2.5 pl-3 text-foreground">Total</td>
+                  <td className="py-2.5 pl-7 text-foreground">Total</td>
                   <td className="text-right py-2.5 font-mono font-bold text-foreground">
                     {formatAmount(data.totals.amount)}
                   </td>
@@ -371,59 +428,9 @@ export function BalanceDetailsModal({
             {data?.totals.positions ?? 0} underlying position{(data?.totals.positions ?? 0) !== 1 ? 's' : ''}
             {activeFilterCount > 0 && ` • ${activeFilterCount} filter${activeFilterCount !== 1 ? 's' : ''} applied`}
           </p>
-          <p className="text-[10px] text-muted-foreground italic">Read-only view • What-If positions excluded</p>
+          <p className="text-[10px] text-muted-foreground italic">Read-only view • Export to Excel for full contract data</p>
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-interface FilterDropdownProps {
-  label: string;
-  options: string[];
-  selected: string[];
-  onToggle: (value: string) => void;
-}
-
-function FilterDropdown({ label, options, selected, onToggle }: FilterDropdownProps) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={cn(
-            'h-6 text-xs px-2',
-            selected.length > 0 && 'border-primary text-primary'
-          )}
-        >
-          {label}
-          {selected.length > 0 && (
-            <Badge variant="secondary" className="ml-1.5 h-4 min-w-4 text-[9px] px-1">
-              {selected.length}
-            </Badge>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-48 p-2" align="start">
-        <div className="space-y-1">
-          {options.length === 0 && (
-            <div className="text-xs text-muted-foreground px-1 py-1">No values</div>
-          )}
-          {options.map((option) => (
-            <label
-              key={option}
-              className="flex items-center gap-2 py-1 px-1 rounded hover:bg-muted/50 cursor-pointer text-sm"
-            >
-              <Checkbox
-                checked={selected.includes(option)}
-                onCheckedChange={() => onToggle(option)}
-              />
-              <span>{option}</span>
-            </label>
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
   );
 }

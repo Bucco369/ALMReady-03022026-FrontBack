@@ -29,8 +29,8 @@
  *   but does NOT enumerate individual contract_ids — it stores the total count
  *   and notional. Phase 1 will need to either enumerate or send filter criteria.
  */
-import React, { useEffect, useMemo, useState } from 'react';
-import { FileSpreadsheet, X, Filter, ChevronLeft, Minus, Search } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { FileSpreadsheet, X, Filter, ChevronLeft, Minus, Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -41,11 +41,6 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import {
@@ -54,6 +49,11 @@ import {
   type BalanceContract,
   type BalanceDetailsResponse,
 } from '@/lib/api';
+import { DETAIL_CONTEXT_LABELS } from '@/config/balanceSchema';
+import { FilterDropdown } from '@/components/shared/FilterDropdown';
+import { HierarchicalFilterDropdown } from '@/components/shared/HierarchicalFilterDropdown';
+import { useBalanceFilters, type BalanceFilters } from '@/hooks/useBalanceFilters';
+import { formatAmount, formatPercent, formatMaturity, getErrorMessage, toTitleCase, compactValues } from '@/lib/formatters';
 import { useWhatIf } from './WhatIfContext';
 
 interface BalanceDetailsModalRemoveProps {
@@ -65,48 +65,8 @@ interface BalanceDetailsModalRemoveProps {
   subcategoryLocked?: boolean;
 }
 
-interface Filters {
-  currencies: string[];
-  rateTypes: string[];
-  counterparties: string[];
-  maturityBuckets: string[];
-}
-
 function normalizeCategory(category: string): 'asset' | 'liability' {
   return category.toLowerCase().startsWith('liab') ? 'liability' : 'asset';
-}
-
-function formatAmount(num: number) {
-  const millions = num / 1e6;
-  return millions.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '€';
-}
-
-function formatPercent(num: number | null | undefined) {
-  if (num === null || num === undefined || Number.isNaN(num)) return '—';
-  return `${(num * 100).toFixed(2)}%`;
-}
-
-function formatMaturity(num: number | null | undefined) {
-  if (num === null || num === undefined || Number.isNaN(num)) return '—';
-  return `${num.toFixed(1)}Y`;
-}
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  return String(error);
-}
-
-function toTitleCase(value: string): string {
-  return value
-    .split(/[\s_-]+/)
-    .filter(Boolean)
-    .map((chunk) => chunk.charAt(0).toUpperCase() + chunk.slice(1).toLowerCase())
-    .join(' ');
-}
-
-function compactValues(values: string[], max = 2): string {
-  if (values.length <= max) return values.join(' ');
-  return `${values.slice(0, max).join(' ')} +${values.length - max}`;
 }
 
 export function BalanceDetailsModalRemove({
@@ -118,12 +78,7 @@ export function BalanceDetailsModalRemove({
   subcategoryLocked = false,
 }: BalanceDetailsModalRemoveProps) {
   const { addModification } = useWhatIf();
-  const [filters, setFilters] = useState<Filters>({
-    currencies: [],
-    rateTypes: [],
-    counterparties: [],
-    maturityBuckets: [],
-  });
+  const { filters, debouncedFilters, toggleFilter, setFilterCategory, clearFilters: clearAllFilters, activeFilterCount } = useBalanceFilters();
   const [drillDownGroup, setDrillDownGroup] = useState<string | null>(null);
   const [showContracts, setShowContracts] = useState(false);
   const [selectedContracts, setSelectedContracts] = useState<Set<string>>(new Set());
@@ -147,6 +102,32 @@ export function BalanceDetailsModalRemove({
     setLocalSearchQuery(externalSearchQuery || '');
   }, [externalSearchQuery, open]);
 
+  // Multi-dimensional groupby: when a filter dimension has >1 selected value,
+  // that dimension becomes a grouping axis.
+  const groupByDims = useMemo(() => {
+    const dims: string[] = [];
+    if (debouncedFilters.currencies.length > 1) dims.push('currency');
+    if (debouncedFilters.rateTypes.length > 1) dims.push('rate_type');
+    if (debouncedFilters.segments.length > 1) dims.push('business_segment');
+    if (debouncedFilters.maturityBuckets.length > 1) dims.push('maturity_bucket');
+    if (debouncedFilters.remunerations.length > 1) dims.push('remuneration_bucket');
+    if (debouncedFilters.bookValues.length > 1) dims.push('book_value_def');
+    return dims;
+  }, [debouncedFilters]);
+
+  const groupByLabel = useMemo(() => {
+    if (groupByDims.length === 0) return 'Group';
+    const labels: Record<string, string> = {
+      currency: 'Currency',
+      rate_type: 'Rate Type',
+      business_segment: 'Segment',
+      maturity_bucket: 'Maturity',
+      remuneration_bucket: 'Remuneration',
+      book_value_def: 'Book Value',
+    };
+    return groupByDims.map((d) => labels[d] || d).join(' | ');
+  }, [groupByDims]);
+
   useEffect(() => {
     if (!open || !sessionId) return;
     let active = true;
@@ -156,10 +137,14 @@ export function BalanceDetailsModalRemove({
 
     getBalanceDetails(sessionId, {
       subcategory_id: selectedCategory,
-      currency: filters.currencies,
-      rate_type: filters.rateTypes,
-      counterparty: filters.counterparties,
-      maturity: filters.maturityBuckets,
+      currency: debouncedFilters.currencies,
+      rate_type: debouncedFilters.rateTypes,
+      segment: debouncedFilters.segments,
+      strategic_segment: debouncedFilters.strategicSegments,
+      maturity: debouncedFilters.maturityBuckets,
+      remuneration: debouncedFilters.remunerations,
+      book_value: debouncedFilters.bookValues,
+      group_by: groupByDims.length > 0 ? groupByDims : undefined,
     })
       .then((response) => {
         if (!active) return;
@@ -177,15 +162,7 @@ export function BalanceDetailsModalRemove({
     return () => {
       active = false;
     };
-  }, [
-    filters.counterparties,
-    filters.currencies,
-    filters.maturityBuckets,
-    filters.rateTypes,
-    open,
-    selectedCategory,
-    sessionId,
-  ]);
+  }, [debouncedFilters, open, selectedCategory, sessionId]);
 
   useEffect(() => {
     if (!open || !showContracts || !sessionId || !drillDownGroup) return;
@@ -198,10 +175,13 @@ export function BalanceDetailsModalRemove({
     getBalanceContracts(sessionId, {
       subcategory_id: selectedCategory,
       group: [drillDownGroup],
-      currency: filters.currencies,
-      rate_type: filters.rateTypes,
-      counterparty: filters.counterparties,
-      maturity: filters.maturityBuckets,
+      currency: debouncedFilters.currencies,
+      rate_type: debouncedFilters.rateTypes,
+      segment: debouncedFilters.segments,
+      strategic_segment: debouncedFilters.strategicSegments,
+      maturity: debouncedFilters.maturityBuckets,
+      remuneration: debouncedFilters.remunerations,
+      book_value: debouncedFilters.bookValues,
       query: q.length >= 2 ? q : undefined,
       page: 1,
       page_size: 1000,
@@ -224,10 +204,7 @@ export function BalanceDetailsModalRemove({
     };
   }, [
     drillDownGroup,
-    filters.counterparties,
-    filters.currencies,
-    filters.maturityBuckets,
-    filters.rateTypes,
+    debouncedFilters,
     localSearchQuery,
     open,
     selectedCategory,
@@ -235,61 +212,71 @@ export function BalanceDetailsModalRemove({
     showContracts,
   ]);
 
-  const currencyOptions = useMemo(
-    () => detailsData?.facets.currencies.map((it) => it.value) ?? [],
-    [detailsData]
-  );
-  const rateTypeOptions = useMemo(
-    () => detailsData?.facets.rate_types.map((it) => it.value) ?? [],
-    [detailsData]
-  );
-  const counterpartyOptions = useMemo(
-    () => detailsData?.facets.counterparties.map((it) => it.value) ?? [],
-    [detailsData]
-  );
-  const maturityOptions = useMemo(
-    () => detailsData?.facets.maturities.map((it) => it.value) ?? [],
-    [detailsData]
-  );
+  const currencyFacets = useMemo(() => detailsData?.facets.currencies ?? [], [detailsData]);
+  const rateTypeFacets = useMemo(() => detailsData?.facets.rate_types ?? [], [detailsData]);
+  const segmentFacets = useMemo(() => detailsData?.facets.segments ?? [], [detailsData]);
+  const segmentTree = useMemo(() => detailsData?.facets.segment_tree ?? {}, [detailsData]);
+  const maturityFacets = useMemo(() => detailsData?.facets.maturities ?? [], [detailsData]);
+  const remunerationFacets = useMemo(() => detailsData?.facets.remunerations ?? [], [detailsData]);
+  const bookValueFacets = useMemo(() => detailsData?.facets.book_values ?? [], [detailsData]);
 
-  const activeFilterCount =
-    filters.currencies.length +
-    filters.rateTypes.length +
-    filters.counterparties.length +
-    filters.maturityBuckets.length;
+  // Sorting
+  type SortField = 'group' | 'amount' | 'positions' | 'avg_rate' | 'avg_maturity';
+  type SortDir = 'asc' | 'desc';
+  const [sortField, setSortField] = useState<SortField>('amount');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
 
-  const getContextLabel = () => {
-    const labels: Record<string, string> = {
-      assets: 'Assets',
-      liabilities: 'Liabilities',
-      mortgages: 'Assets → Mortgages',
-      loans: 'Assets → Loans',
-      securities: 'Assets → Securities',
-      interbank: 'Assets → Interbank / Central Bank',
-      'other-assets': 'Assets → Other assets',
-      deposits: 'Liabilities → Deposits',
-      'term-deposits': 'Liabilities → Term deposits',
-      'wholesale-funding': 'Liabilities → Wholesale funding',
-      'debt-issued': 'Liabilities → Debt issued',
-      'other-liabilities': 'Liabilities → Other liabilities',
-    };
-    return labels[selectedCategory] || selectedCategory;
+  const handleSort = useCallback((field: SortField) => {
+    setSortField((prev) => {
+      if (prev === field) {
+        setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+        return prev;
+      }
+      setSortDir(field === 'group' ? 'asc' : 'desc');
+      return field;
+    });
+  }, []);
+
+  const sortedGroups = useMemo(() => {
+    if (!detailsData?.groups) return [];
+    return [...detailsData.groups].sort((a, b) => {
+      if (sortField === 'group') {
+        const va = a.group.toLowerCase();
+        const vb = b.group.toLowerCase();
+        return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+      }
+      const va = (a[sortField] ?? 0) as number;
+      const vb = (b[sortField] ?? 0) as number;
+      return sortDir === 'asc' ? va - vb : vb - va;
+    });
+  }, [detailsData?.groups, sortField, sortDir]);
+
+  const maxAmount = useMemo(() => {
+    if (!detailsData?.groups.length) return 1;
+    return Math.max(...detailsData.groups.map((g) => Math.abs(g.amount)), 1);
+  }, [detailsData?.groups]);
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-30" />;
+    return sortDir === 'asc'
+      ? <ArrowUp className="h-3 w-3 ml-1 text-primary" />
+      : <ArrowDown className="h-3 w-3 ml-1 text-primary" />;
   };
 
-  const clearFilters = () => {
-    setFilters({ currencies: [], rateTypes: [], counterparties: [], maturityBuckets: [] });
+  const getContextLabel = () => {
+    return DETAIL_CONTEXT_LABELS[selectedCategory] || selectedCategory;
+  };
+
+  const handleClearFilters = () => {
+    clearAllFilters();
     setDrillDownGroup(null);
     setShowContracts(false);
   };
 
-  const toggleFilter = (category: keyof Filters, value: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      [category]: prev[category].includes(value)
-        ? prev[category].filter((v) => v !== value)
-        : [...prev[category], value],
-    }));
-  };
+  const handleClearSegments = useCallback(() => {
+    setFilterCategory('segments', []);
+    setFilterCategory('strategicSegments', []);
+  }, [setFilterCategory]);
 
   const toggleContractSelection = (contractId: string) => {
     setSelectedContracts((prev) => {
@@ -328,16 +315,19 @@ export function BalanceDetailsModalRemove({
     const parts: string[] = [];
     if (filters.currencies.length > 0) parts.push(`Currency: ${filters.currencies.join(', ')}`);
     if (filters.rateTypes.length > 0) parts.push(`Rate Type: ${filters.rateTypes.join(', ')}`);
-    if (filters.counterparties.length > 0) parts.push(`Counterparty: ${filters.counterparties.join(', ')}`);
+    if (filters.segments.length > 0) parts.push(`Segment: ${filters.segments.join(', ')}`);
+    if (filters.strategicSegments.length > 0) parts.push(`Strategic: ${filters.strategicSegments.join(', ')}`);
     if (filters.maturityBuckets.length > 0) parts.push(`Maturity: ${filters.maturityBuckets.join(', ')}`);
+    if (filters.remunerations.length > 0) parts.push(`Remuneration: ${filters.remunerations.join(', ')}`);
+    if (filters.bookValues.length > 0) parts.push(`Book Value: ${filters.bookValues.join(', ')}`);
     return parts.join(' | ');
   };
 
   const buildFilteredLabel = (subcategoryLabel: string) => {
     const labelParts: string[] = [];
 
-    if (filters.counterparties.length > 0) {
-      labelParts.push(compactValues(filters.counterparties.map(toTitleCase), 2));
+    if (filters.segments.length > 0) {
+      labelParts.push(compactValues(filters.segments.map(toTitleCase), 2));
     }
 
     if (filters.rateTypes.length > 0) {
@@ -350,6 +340,10 @@ export function BalanceDetailsModalRemove({
 
     if (filters.maturityBuckets.length > 0) {
       labelParts.push(compactValues(filters.maturityBuckets, 1));
+    }
+
+    if (filters.remunerations.length > 0) {
+      labelParts.push(compactValues(filters.remunerations, 1));
     }
 
     labelParts.push(subcategoryLabel);
@@ -371,8 +365,11 @@ export function BalanceDetailsModalRemove({
         subcategory_id: selectedCategory,
         currency: filters.currencies,
         rate_type: filters.rateTypes,
-        counterparty: filters.counterparties,
+        segment: filters.segments,
+        strategic_segment: filters.strategicSegments,
         maturity: filters.maturityBuckets,
+        remuneration: filters.remunerations,
+        book_value: filters.bookValues,
         page: 1,
         page_size: 50_000,
       });
@@ -507,37 +504,60 @@ export function BalanceDetailsModalRemove({
 
           <FilterDropdown
             label="Currency"
-            options={currencyOptions}
+            options={currencyFacets}
             selected={filters.currencies}
             onToggle={(v) => toggleFilter('currencies', v)}
+            onSetAll={(vals) => setFilterCategory('currencies', vals)}
           />
 
           <FilterDropdown
             label="Rate Type"
-            options={rateTypeOptions}
+            options={rateTypeFacets}
             selected={filters.rateTypes}
             onToggle={(v) => toggleFilter('rateTypes', v)}
+            onSetAll={(vals) => setFilterCategory('rateTypes', vals)}
           />
 
-          <FilterDropdown
-            label="Counterparty"
-            options={counterpartyOptions}
-            selected={filters.counterparties}
-            onToggle={(v) => toggleFilter('counterparties', v)}
+          <HierarchicalFilterDropdown
+            label="Segment"
+            parentFacets={segmentFacets}
+            segmentTree={segmentTree}
+            selectedParents={filters.segments}
+            selectedChildren={filters.strategicSegments}
+            onToggleParent={(v) => toggleFilter('segments', v)}
+            onToggleChild={(v) => toggleFilter('strategicSegments', v)}
+            onClearAll={handleClearSegments}
           />
 
           <FilterDropdown
             label="Maturity"
-            options={maturityOptions}
+            options={maturityFacets}
             selected={filters.maturityBuckets}
             onToggle={(v) => toggleFilter('maturityBuckets', v)}
+            onSetAll={(vals) => setFilterCategory('maturityBuckets', vals)}
+          />
+
+          <FilterDropdown
+            label="Remuneration"
+            options={remunerationFacets}
+            selected={filters.remunerations}
+            onToggle={(v) => toggleFilter('remunerations', v)}
+            onSetAll={(vals) => setFilterCategory('remunerations', vals)}
+          />
+
+          <FilterDropdown
+            label="Book Value"
+            options={bookValueFacets}
+            selected={filters.bookValues}
+            onToggle={(v) => toggleFilter('bookValues', v)}
+            onSetAll={(vals) => setFilterCategory('bookValues', vals)}
           />
 
           {activeFilterCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={clearFilters}
+              onClick={handleClearFilters}
               className="h-6 text-xs px-2 text-muted-foreground hover:text-foreground"
             >
               <X className="h-3 w-3 mr-1" />
@@ -546,42 +566,29 @@ export function BalanceDetailsModalRemove({
           )}
         </div>
 
-        {activeFilterCount > 0 && (
-          <div className="flex items-center gap-1.5 py-2 flex-wrap">
-            {filters.currencies.map((c) => (
-              <Badge key={c} variant="outline" className="text-[10px] h-5">
-                {c}
-                <button onClick={() => toggleFilter('currencies', c)} className="ml-1">
-                  <X className="h-2.5 w-2.5" />
-                </button>
-              </Badge>
-            ))}
-            {filters.rateTypes.map((r) => (
-              <Badge key={r} variant="outline" className="text-[10px] h-5">
-                {r}
-                <button onClick={() => toggleFilter('rateTypes', r)} className="ml-1">
-                  <X className="h-2.5 w-2.5" />
-                </button>
-              </Badge>
-            ))}
-            {filters.counterparties.map((c) => (
-              <Badge key={c} variant="outline" className="text-[10px] h-5">
-                {c}
-                <button onClick={() => toggleFilter('counterparties', c)} className="ml-1">
-                  <X className="h-2.5 w-2.5" />
-                </button>
-              </Badge>
-            ))}
-            {filters.maturityBuckets.map((m) => (
-              <Badge key={m} variant="outline" className="text-[10px] h-5">
-                {m}
-                <button onClick={() => toggleFilter('maturityBuckets', m)} className="ml-1">
-                  <X className="h-2.5 w-2.5" />
-                </button>
-              </Badge>
-            ))}
-          </div>
-        )}
+        {activeFilterCount > 0 && (() => {
+          const allBadges: { key: string; category: keyof BalanceFilters; value: string }[] = [
+            ...filters.currencies.map((v) => ({ key: `cur-${v}`, category: 'currencies' as const, value: v })),
+            ...filters.rateTypes.map((v) => ({ key: `rt-${v}`, category: 'rateTypes' as const, value: v })),
+            ...filters.segments.map((v) => ({ key: `seg-${v}`, category: 'segments' as const, value: v })),
+            ...filters.strategicSegments.map((v) => ({ key: `sseg-${v}`, category: 'strategicSegments' as const, value: v })),
+            ...filters.maturityBuckets.map((v) => ({ key: `mat-${v}`, category: 'maturityBuckets' as const, value: v })),
+            ...filters.remunerations.map((v) => ({ key: `rem-${v}`, category: 'remunerations' as const, value: v })),
+            ...filters.bookValues.map((v) => ({ key: `bv-${v}`, category: 'bookValues' as const, value: v })),
+          ];
+          return (
+            <div className="flex items-center gap-1.5 py-2 flex-wrap">
+              {allBadges.map((b) => (
+                <Badge key={b.key} variant="outline" className="text-[10px] h-5">
+                  {b.value}
+                  <button onClick={() => toggleFilter(b.category, b.value)} className="ml-1">
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          );
+        })()}
 
         {subcategoryLocked && (
           <div className="py-2 text-[11px] text-muted-foreground border-b border-border/40">
@@ -594,11 +601,21 @@ export function BalanceDetailsModalRemove({
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-card z-10">
                 <tr className="text-muted-foreground border-b border-border">
-                  <th className="text-left font-medium py-2.5 pl-3 bg-muted/50">Group</th>
-                  <th className="text-right font-medium py-2.5 bg-muted/50">Amount (Mln)</th>
-                  <th className="text-right font-medium py-2.5 bg-muted/50">Contracts</th>
-                  <th className="text-right font-medium py-2.5 bg-muted/50">Avg Rate</th>
-                  <th className="text-right font-medium py-2.5 pr-3 bg-muted/50">Avg Maturity</th>
+                  <th className="text-left font-medium py-2.5 pl-3 bg-muted/50 cursor-pointer select-none" onClick={() => handleSort('group')}>
+                    <span className="inline-flex items-center">{groupByLabel}<SortIcon field="group" /></span>
+                  </th>
+                  <th className="text-right font-medium py-2.5 bg-muted/50 cursor-pointer select-none" onClick={() => handleSort('amount')}>
+                    <span className="inline-flex items-center justify-end">Amount (Mln)<SortIcon field="amount" /></span>
+                  </th>
+                  <th className="text-right font-medium py-2.5 bg-muted/50 cursor-pointer select-none" onClick={() => handleSort('positions')}>
+                    <span className="inline-flex items-center justify-end">Contracts<SortIcon field="positions" /></span>
+                  </th>
+                  <th className="text-right font-medium py-2.5 bg-muted/50 cursor-pointer select-none" onClick={() => handleSort('avg_rate')}>
+                    <span className="inline-flex items-center justify-end">Avg Rate<SortIcon field="avg_rate" /></span>
+                  </th>
+                  <th className="text-right font-medium py-2.5 pr-3 bg-muted/50 cursor-pointer select-none" onClick={() => handleSort('avg_maturity')}>
+                    <span className="inline-flex items-center justify-end">Avg Maturity<SortIcon field="avg_maturity" /></span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -625,25 +642,34 @@ export function BalanceDetailsModalRemove({
                 )}
                 {!detailsLoading &&
                   !detailsError &&
-                  detailsData?.groups.map((row) => (
-                    <tr
-                      key={row.group}
-                      className="border-b border-border/50 cursor-pointer hover:bg-muted/30 transition-colors"
-                      onClick={() => handleDrillDown(row.group)}
-                    >
-                      <td className="py-2.5 pl-3">
-                        <span className="text-foreground underline decoration-dotted underline-offset-2">
-                          {row.group}
-                        </span>
-                      </td>
-                      <td className="text-right py-2.5 font-mono text-foreground">{formatAmount(row.amount)}</td>
-                      <td className="text-right py-2.5 font-mono text-muted-foreground">{row.positions}</td>
-                      <td className="text-right py-2.5 font-mono text-muted-foreground">{formatPercent(row.avg_rate)}</td>
-                      <td className="text-right py-2.5 pr-3 font-mono text-muted-foreground">
-                        {formatMaturity(row.avg_maturity)}
-                      </td>
-                    </tr>
-                  ))}
+                  sortedGroups.map((row) => {
+                    const barWidth = Math.round((Math.abs(row.amount) / maxAmount) * 100);
+                    return (
+                      <tr
+                        key={row.group}
+                        className="border-b border-border/50 cursor-pointer hover:bg-muted/30 transition-colors"
+                        onClick={() => handleDrillDown(row.group)}
+                      >
+                        <td className="py-2.5 pl-3">
+                          <span className="text-foreground underline decoration-dotted underline-offset-2">
+                            {row.group}
+                          </span>
+                        </td>
+                        <td className="text-right py-2.5 font-mono text-foreground relative">
+                          <div
+                            className="absolute inset-y-0.5 right-0 bg-primary/8 rounded-sm"
+                            style={{ width: `${barWidth}%` }}
+                          />
+                          <span className="relative">{formatAmount(row.amount)}</span>
+                        </td>
+                        <td className="text-right py-2.5 font-mono text-muted-foreground">{row.positions}</td>
+                        <td className="text-right py-2.5 font-mono text-muted-foreground">{formatPercent(row.avg_rate)}</td>
+                        <td className="text-right py-2.5 pr-3 font-mono text-muted-foreground">
+                          {formatMaturity(row.avg_maturity)}
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </ScrollArea>
@@ -699,7 +725,7 @@ export function BalanceDetailsModalRemove({
                         )}
                       </div>
                       <div className="text-[10px] text-muted-foreground mt-0.5">
-                        {(contract.counterparty ?? 'n/a')} • {(contract.maturity_bucket ?? 'n/a')} • Rate:{' '}
+                        {(contract.business_segment ?? 'n/a')} • {(contract.maturity_bucket ?? 'n/a')} • Rate:{' '}
                         {formatPercent(contract.rate)}
                       </div>
                     </div>
@@ -726,55 +752,5 @@ export function BalanceDetailsModalRemove({
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-interface FilterDropdownProps {
-  label: string;
-  options: string[];
-  selected: string[];
-  onToggle: (value: string) => void;
-}
-
-function FilterDropdown({ label, options, selected, onToggle }: FilterDropdownProps) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={cn(
-            'h-6 text-xs px-2',
-            selected.length > 0 && 'border-primary text-primary'
-          )}
-        >
-          {label}
-          {selected.length > 0 && (
-            <Badge variant="secondary" className="ml-1.5 h-4 min-w-4 text-[9px] px-1">
-              {selected.length}
-            </Badge>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-48 p-2" align="start">
-        <div className="space-y-1">
-          {options.length === 0 && (
-            <div className="text-xs text-muted-foreground px-1 py-1">No values</div>
-          )}
-          {options.map((option) => (
-            <label
-              key={option}
-              className="flex items-center gap-2 py-1 px-1 rounded hover:bg-muted/50 cursor-pointer text-sm"
-            >
-              <Checkbox
-                checked={selected.includes(option)}
-                onCheckedChange={() => onToggle(option)}
-              />
-              <span>{option}</span>
-            </label>
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
   );
 }

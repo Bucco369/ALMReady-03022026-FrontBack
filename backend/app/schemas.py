@@ -77,8 +77,12 @@ class BalanceContract(BaseModel):
     group: str | None = None
     currency: str | None = None
     counterparty: str | None = None
+    business_segment: str | None = None
+    strategic_segment: str | None = None
+    book_value_def: str | None = None
     rate_type: str | None = None
     maturity_bucket: str | None = None
+    remuneration_bucket: str | None = None
     maturity_years: float | None = None
     amount: float | None = None
     rate: float | None = None
@@ -100,8 +104,12 @@ class FacetOption(BaseModel):
 class BalanceDetailsFacets(BaseModel):
     currencies: list[FacetOption] = Field(default_factory=list)
     rate_types: list[FacetOption] = Field(default_factory=list)
-    counterparties: list[FacetOption] = Field(default_factory=list)
+    segments: list[FacetOption] = Field(default_factory=list)
+    strategic_segments: list[FacetOption] = Field(default_factory=list)
+    segment_tree: dict[str, list[FacetOption]] = Field(default_factory=dict)
     maturities: list[FacetOption] = Field(default_factory=list)
+    remunerations: list[FacetOption] = Field(default_factory=list)
+    book_values: list[FacetOption] = Field(default_factory=list)
 
 
 class BalanceDetailsGroup(BaseModel):

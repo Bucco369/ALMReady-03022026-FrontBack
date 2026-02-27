@@ -38,6 +38,7 @@ lerna-debug.log*
 *.pyc
 *.pyo
 .pytest_cache/
+.venv/
 backend/.venv/
 
 # ── Backend runtime data (sessions, uploads, caches) ──

@@ -1,11 +1,13 @@
-"""Balance upload, summary, details, contracts, progress, and delete routes."""
+"""Balance upload, summary, details, contracts, progress, export, and delete routes."""
 
 from __future__ import annotations
 
+from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
 from fastapi import APIRouter, File, HTTPException, Response, UploadFile
+from fastapi.responses import StreamingResponse
 
 import app.state as state
 from app.schemas import (
@@ -36,7 +38,7 @@ from app.services.balance_query import (
     _aggregate_groups_df,
     _aggregate_totals_df,
     _apply_filters_df,
-    _build_facets_df,
+    _build_cross_filtered_facets_df,
 )
 
 router = APIRouter()
@@ -175,7 +177,12 @@ def get_balance_details(
     currency: str | None = None,
     rate_type: str | None = None,
     counterparty: str | None = None,
+    segment: str | None = None,
+    strategic_segment: str | None = None,
     maturity: str | None = None,
+    remuneration: str | None = None,
+    book_value: str | None = None,
+    group_by: str | None = None,
 ) -> BalanceDetailsResponse:
     _assert_session_exists(session_id)
 
@@ -193,12 +200,30 @@ def get_balance_details(
         currency=currency,
         rate_type=rate_type,
         counterparty=counterparty,
+        segment=segment,
+        strategic_segment=strategic_segment,
         maturity=maturity,
+        remuneration=remuneration,
+        book_value=book_value,
     )
 
-    groups = _aggregate_groups_df(filtered_df)
+    group_by_cols = [c.strip() for c in group_by.split(",")] if group_by else None
+    groups = _aggregate_groups_df(filtered_df, group_by=group_by_cols)
     totals = _aggregate_totals_df(filtered_df)
-    facets = _build_facets_df(context_df)
+    # Cross-filtered facets: each dimension's counts reflect all OTHER active
+    # filters but NOT its own.  This way selecting "<1Y" maturity still shows
+    # all maturity options (with counts narrowed by currency/segment/etc.),
+    # and users can freely multi-select within any dimension.
+    facets = _build_cross_filtered_facets_df(
+        context_df,
+        currency=currency,
+        rate_type=rate_type,
+        segment=segment,
+        strategic_segment=strategic_segment,
+        maturity=maturity,
+        remuneration=remuneration,
+        book_value=book_value,
+    )
 
     pretty_subcategory = subcategoria_ui
     if pretty_subcategory is None and subcategory_id:
@@ -230,7 +255,11 @@ def get_balance_contracts(
     currency: str | None = None,
     rate_type: str | None = None,
     counterparty: str | None = None,
+    segment: str | None = None,
+    strategic_segment: str | None = None,
     maturity: str | None = None,
+    remuneration: str | None = None,
+    book_value: str | None = None,
     page: int = 1,
     page_size: int = 100,
     offset: int | None = None,
@@ -266,7 +295,11 @@ def get_balance_contracts(
         currency=currency,
         rate_type=rate_type,
         counterparty=counterparty,
+        segment=segment,
+        strategic_segment=strategic_segment,
         maturity=maturity,
+        remuneration=remuneration,
+        book_value=book_value,
         query_text=query,
     )
 
@@ -288,8 +321,12 @@ def get_balance_contracts(
             group=_to_text(row.get("group")),
             currency=_to_text(row.get("currency")),
             counterparty=_to_text(row.get("counterparty")),
+            business_segment=_to_text(row.get("business_segment")),
+            strategic_segment=_to_text(row.get("strategic_segment")),
+            book_value_def=_to_text(row.get("book_value_def")),
             rate_type=_to_text(row.get("rate_type")),
             maturity_bucket=_to_text(row.get("maturity_bucket")),
+            remuneration_bucket=_to_text(row.get("remuneration_bucket")),
             maturity_years=_to_float(row.get("maturity_years")),
             amount=_to_float(row.get("amount")),
             rate=_to_float(row.get("rate_display")),
@@ -303,4 +340,178 @@ def get_balance_contracts(
         page=effective_page,
         page_size=effective_page_size,
         contracts=contracts,
+    )
+
+
+# ── Excel export ───────────────────────────────────────────────────────────
+
+_EXPORT_COLUMNS: list[tuple[str, str]] = [
+    ("Contract ID", "contract_id"),
+    ("Sheet", "sheet"),
+    ("Category", "categoria_ui"),
+    ("Subcategory", "subcategoria_ui"),
+    ("Group", "group"),
+    ("Currency", "currency"),
+    ("Rate Type", "rate_type"),
+    ("Segment", "business_segment"),
+    ("Book Value Def", "book_value_def"),
+    ("Maturity Bucket", "maturity_bucket"),
+    ("Remuneration Bucket", "remuneration_bucket"),
+    ("Amount", "amount"),
+    ("Rate (%)", "rate_display"),
+    ("Maturity (Years)", "maturity_years"),
+]
+
+
+def _sanitize_sheet_name(name: str) -> str:
+    """Excel sheet names: max 31 chars, no special chars."""
+    for ch in "[]:*?/\\":
+        name = name.replace(ch, "_")
+    return name[:31] or "Sheet"
+
+
+def _write_export_sheet(
+    wb, sheet_name: str, df: pd.DataFrame, export_cols: list[tuple[str, str]],
+) -> None:
+    """Write a single sheet with headers, data rows, and a summary row."""
+    from openpyxl.styles import Font, numbers
+
+    ws = wb.create_sheet(title=_sanitize_sheet_name(sheet_name))
+
+    headers = [h for h, _ in export_cols]
+    cols = [c for _, c in export_cols]
+    available = [c for c in cols if c in df.columns]
+    header_map = {c: h for h, c in export_cols}
+
+    # Write header row
+    for ci, col in enumerate(available, start=1):
+        cell = ws.cell(row=1, column=ci, value=header_map[col])
+        cell.font = Font(bold=True)
+
+    # Write data rows
+    for ri, (_, row) in enumerate(df.iterrows(), start=2):
+        for ci, col in enumerate(available, start=1):
+            val = row.get(col)
+            if pd.isna(val):
+                continue
+            if col == "rate_display":
+                val = float(val) * 100  # decimal → percentage
+            elif col in ("amount", "maturity_years"):
+                val = float(val)
+            else:
+                val = str(val)
+            ws.cell(row=ri, column=ci, value=val)
+
+    # Number formatting for Amount and Rate columns
+    for ci, col in enumerate(available, start=1):
+        if col == "amount":
+            for ri in range(2, len(df) + 2):
+                ws.cell(row=ri, column=ci).number_format = '#,##0'
+        elif col == "rate_display":
+            for ri in range(2, len(df) + 2):
+                ws.cell(row=ri, column=ci).number_format = '0.00'
+        elif col == "maturity_years":
+            for ri in range(2, len(df) + 2):
+                ws.cell(row=ri, column=ci).number_format = '0.0'
+
+    # Summary row
+    summary_row = len(df) + 2
+    ws.cell(row=summary_row, column=1, value="TOTAL").font = Font(bold=True)
+    for ci, col in enumerate(available, start=1):
+        if col == "amount":
+            total_amount = float(df["amount"].sum()) if "amount" in df.columns else 0
+            cell = ws.cell(row=summary_row, column=ci, value=total_amount)
+            cell.font = Font(bold=True)
+            cell.number_format = '#,##0'
+    # Position count next to Contract ID header
+    ws.cell(row=summary_row, column=2, value=f"{len(df)} positions").font = Font(bold=True)
+
+    # Auto-filter
+    if available:
+        from openpyxl.utils import get_column_letter
+        ws.auto_filter.ref = f"A1:{get_column_letter(len(available))}{len(df) + 1}"
+
+
+@router.get("/api/sessions/{session_id}/balance/export")
+def export_balance(
+    session_id: str,
+    categoria_ui: str | None = None,
+    subcategoria_ui: str | None = None,
+    subcategory_id: str | None = None,
+    currency: str | None = None,
+    rate_type: str | None = None,
+    counterparty: str | None = None,
+    segment: str | None = None,
+    strategic_segment: str | None = None,
+    maturity: str | None = None,
+    remuneration: str | None = None,
+    book_value: str | None = None,
+    group_by: str | None = None,
+):
+    """Export filtered balance positions as an Excel (.xlsx) file."""
+    from datetime import date
+
+    from openpyxl import Workbook
+
+    _assert_session_exists(session_id)
+
+    df = _load_or_rebuild_positions_df(session_id)
+
+    # Context filters (category / subcategory)
+    context_df = _apply_filters_df(
+        df,
+        categoria_ui=categoria_ui,
+        subcategoria_ui=subcategoria_ui,
+        subcategory_id=subcategory_id,
+    )
+
+    # Detail filters
+    filtered_df = _apply_filters_df(
+        context_df,
+        currency=currency,
+        rate_type=rate_type,
+        counterparty=counterparty,
+        segment=segment,
+        strategic_segment=strategic_segment,
+        maturity=maturity,
+        remuneration=remuneration,
+        book_value=book_value,
+    )
+
+    if filtered_df.empty:
+        raise HTTPException(status_code=404, detail="No positions match the current filters")
+
+    wb = Workbook()
+    wb.remove(wb.active)  # remove default empty sheet
+
+    group_by_cols = [c.strip() for c in group_by.split(",")] if group_by else None
+
+    if group_by_cols:
+        valid_cols = [c for c in group_by_cols if c in filtered_df.columns]
+        if valid_cols:
+            if len(valid_cols) == 1:
+                grp_series = filtered_df[valid_cols[0]].fillna("Ungrouped")
+            else:
+                grp_series = filtered_df[valid_cols].fillna("—").apply(
+                    lambda row: " | ".join(str(v) for v in row), axis=1
+                )
+            filtered_df = filtered_df.copy()
+            filtered_df["_export_group"] = grp_series
+            for group_name, group_df in filtered_df.groupby("_export_group", sort=True):
+                _write_export_sheet(wb, str(group_name), group_df, _EXPORT_COLUMNS)
+        else:
+            _write_export_sheet(wb, "Positions", filtered_df, _EXPORT_COLUMNS)
+    else:
+        _write_export_sheet(wb, "Positions", filtered_df, _EXPORT_COLUMNS)
+
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    today = date.today().isoformat()
+    filename = f"balance_export_{session_id[:8]}_{today}.xlsx"
+    return StreamingResponse(
+        buf,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

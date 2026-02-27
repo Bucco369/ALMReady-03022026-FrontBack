@@ -34,6 +34,34 @@ from app.parsers.transforms import (
 _log = logging.getLogger(__name__)
 
 
+# ── Remuneration bucketing ────────────────────────────────────────────────────
+
+def _remuneration_bucket(rate: float | None) -> str:
+    """Bucket a display rate (already in percentage points, e.g. 3.5 = 3.5%) into ranges."""
+    if rate is None:
+        return "-"
+    try:
+        import math
+        if math.isnan(rate):
+            return "-"
+    except (TypeError, ValueError):
+        return "-"
+    r = abs(rate)
+    if r == 0:
+        return "0%"
+    if r <= 1:
+        return "0-1%"
+    if r <= 2:
+        return "1-2%"
+    if r <= 3:
+        return "2-3%"
+    if r <= 4:
+        return "3-4%"
+    if r <= 5:
+        return "4-5%"
+    return "5%+"
+
+
 # ── Excel position canonicalization ──────────────────────────────────────────
 
 def _canonicalize_position_row(sheet_name: str, record: dict[str, Any], idx: int) -> dict[str, Any]:
@@ -70,7 +98,13 @@ def _canonicalize_position_row(sheet_name: str, record: dict[str, Any], idx: int
     core_avg_maturity = _to_float(get("core_avg_maturity_y"))
     maturity_years_val = _maturity_years(fecha_vencimiento, core_avg_maturity)
 
-    maturity_bucket = _to_text(get("bucket_vencimiento")) or _bucket_from_years(maturity_years_val)
+    explicit_bucket = _to_text(get("bucket_vencimiento"))
+    if explicit_bucket:
+        maturity_bucket = explicit_bucket
+    elif maturity_years_val is None:
+        maturity_bucket = "-"
+    else:
+        maturity_bucket = _bucket_from_years(maturity_years_val)
     repricing_bucket = _to_text(get("bucket_reprecio"))
 
     return {
@@ -83,10 +117,14 @@ def _canonicalize_position_row(sheet_name: str, record: dict[str, Any], idx: int
         "group": _to_text(get("grupo")),
         "currency": _to_text(get("moneda")),
         "counterparty": _to_text(get("contraparte")),
+        "business_segment": _to_text(get("segmento_negocio")),
+        "strategic_segment": _to_text(get("segmento_estrategico")),
+        "book_value_def": _to_text(get("book_value_def")),
         "amount": amount,
         "book_value": book_value,
         "rate_type": rate_type,
         "rate_display": rate_display_val,
+        "remuneration_bucket": _remuneration_bucket(rate_display_val),
         "tipo_tasa_raw": tipo_tasa,
         "tasa_fija": tasa_fija,
         "spread": _to_float(get("spread")),
@@ -146,9 +184,10 @@ def _canonicalize_motor_row(
     if is_non_maturity:
         mat_years = 0.0
 
-    maturity_bucket = _bucket_from_years(mat_years)
     if is_non_maturity:
-        maturity_bucket = "<1Y"
+        maturity_bucket = "-"
+    else:
+        maturity_bucket = _bucket_from_years(mat_years)
 
     return {
         "contract_id": contract_id,
@@ -158,12 +197,16 @@ def _canonicalize_motor_row(
         "subcategoria_ui": subcategoria_ui,
         "subcategory_id": subcategory_id,
         "group": subcategoria_ui,
-        "currency": "EUR",
+        "currency": _to_text(record.get("original_currency")) or "EUR",
         "counterparty": None,
+        "business_segment": _to_text(record.get("business_segment")),
+        "strategic_segment": _to_text(record.get("strategic_segment")),
+        "book_value_def": _to_text(record.get("book_value_def")),
         "amount": amount,
         "book_value": None,
         "rate_type": rate_type,
         "rate_display": rate_display_val,
+        "remuneration_bucket": _remuneration_bucket(rate_display_val),
         "tipo_tasa_raw": rate_type_raw,
         "tasa_fija": fixed_rate,
         "spread": spread_val,
@@ -350,7 +393,7 @@ def _canonicalize_motor_df(
         right=False,
     ).astype("object")
     maturity_bucket = maturity_bucket.where(mat_years.notna(), other=None)
-    maturity_bucket = maturity_bucket.where(~is_non_maturity, "<1Y")
+    maturity_bucket = maturity_bucket.where(~is_non_maturity, "-")
 
     # ── Float columns (already float64 — skip pd.to_numeric) ──────────
     def _float_col(name: str) -> pd.Series:
@@ -380,6 +423,21 @@ def _canonicalize_motor_df(
     # ── Build canonical DataFrame ─────────────────────────────────────
     # Keep dates as datetime64 — Parquet serializes natively.
     # Only convert to ISO strings at JSON read time (_read_positions_file).
+    # ── Remuneration bucket (vectorised) ──────────────────────────────
+    rate_display = _float_col("fixed_rate")
+    # Vectorised bucketing: map rate_display → bucket label
+    # rate_display is in decimal form (0.035 = 3.5%) due to NUMERIC_SCALE_MAP,
+    # so convert to percentage points before bucketing.
+    abs_rate = rate_display.abs() * 100
+    remuneration_bucket = pd.Series("-", index=motor_df.index, dtype="object")
+    remuneration_bucket = remuneration_bucket.where(rate_display.isna(), "5%+")
+    remuneration_bucket = remuneration_bucket.where(rate_display.isna() | (abs_rate > 5), "4-5%")
+    remuneration_bucket = remuneration_bucket.where(rate_display.isna() | (abs_rate > 4), "3-4%")
+    remuneration_bucket = remuneration_bucket.where(rate_display.isna() | (abs_rate > 3), "2-3%")
+    remuneration_bucket = remuneration_bucket.where(rate_display.isna() | (abs_rate > 2), "1-2%")
+    remuneration_bucket = remuneration_bucket.where(rate_display.isna() | (abs_rate > 1), "0-1%")
+    remuneration_bucket = remuneration_bucket.where(rate_display.isna() | (abs_rate > 0), "0%")
+
     canonical_df = pd.DataFrame({
         "contract_id": cid,
         "sheet": sct,
@@ -388,12 +446,16 @@ def _canonicalize_motor_df(
         "subcategoria_ui": cls["cls_subcategory_label"],
         "subcategory_id": cls["cls_subcategory_id"],
         "group": cls["cls_subcategory_label"],
-        "currency": "EUR",
+        "currency": _text_col("original_currency").fillna("EUR"),
         "counterparty": None,
+        "business_segment": _text_col("business_segment"),
+        "strategic_segment": _text_col("strategic_segment"),
+        "book_value_def": _text_col("book_value_def"),
         "amount": notional,
         "book_value": None,
         "rate_type": rate_type,
-        "rate_display": _float_col("fixed_rate"),
+        "rate_display": rate_display,
+        "remuneration_bucket": remuneration_bucket,
         "tipo_tasa_raw": rate_type_raw,
         "tasa_fija": _float_col("fixed_rate"),
         "spread": _float_col("spread"),

@@ -112,6 +112,14 @@ class _RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(_RequestLoggingMiddleware)
 
+# ALMREADY_CORS_ORIGINS: comma-separated extra origins injected by the Tauri
+# shell at runtime (e.g. "tauri://localhost,https://tauri.localhost").
+_extra_origins = [
+    o.strip()
+    for o in os.environ.get("ALMREADY_CORS_ORIGINS", "").split(",")
+    if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -119,6 +127,10 @@ app.add_middleware(
         "http://127.0.0.1:8080",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        # Tauri webview origins (macOS and Windows respectively)
+        "tauri://localhost",
+        "https://tauri.localhost",
+        *_extra_origins,
     ],
     allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
