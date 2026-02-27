@@ -30,8 +30,14 @@ logging.basicConfig(
 _log = logging.getLogger("engine")
 
 
-def _cleanup_old_sessions(max_age_days: int = 7) -> None:
+SESSION_TTL_DAYS = int(os.environ.get("SESSION_TTL_DAYS", "7"))
+_CLEANUP_INTERVAL_HOURS = 6
+
+
+def _cleanup_old_sessions(max_age_days: int | None = None) -> None:
     """Remove session directories older than *max_age_days* from disk."""
+    if max_age_days is None:
+        max_age_days = SESSION_TTL_DAYS
     cutoff = datetime.now(timezone.utc) - timedelta(days=max_age_days)
     purged = 0
     for entry in state.SESSIONS_DIR.iterdir():
@@ -48,6 +54,7 @@ def _cleanup_old_sessions(max_age_days: int = 7) -> None:
                 if created >= cutoff:
                     continue
             shutil.rmtree(entry)
+            state._positions_df_cache.pop(entry.name, None)
             purged += 1
         except Exception:
             _log.debug("Skipping cleanup of %s", entry.name, exc_info=True)
@@ -55,9 +62,23 @@ def _cleanup_old_sessions(max_age_days: int = 7) -> None:
         _log.info("Purged %d session(s) older than %d days", purged, max_age_days)
 
 
+async def _periodic_cleanup() -> None:
+    """Run session cleanup every _CLEANUP_INTERVAL_HOURS while the server is up."""
+    import asyncio
+
+    while True:
+        await asyncio.sleep(_CLEANUP_INTERVAL_HOURS * 3600)
+        try:
+            _cleanup_old_sessions()
+        except Exception:
+            _log.warning("Periodic session cleanup failed", exc_info=True)
+
+
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
-    """Startup: purge stale sessions, pre-warm process pool."""
+    """Startup: purge stale sessions, pre-warm process pool, schedule cleanup."""
+    import asyncio
+
     import engine.workers as _workers
 
     _cleanup_old_sessions()
@@ -65,7 +86,10 @@ async def _lifespan(app: FastAPI):
     n_workers = os.cpu_count() or 1
     state._executor = ProcessPoolExecutor(max_workers=n_workers)
     _cf_wait([state._executor.submit(_workers.warmup) for _ in range(n_workers)])
+
+    cleanup_task = asyncio.create_task(_periodic_cleanup())
     yield
+    cleanup_task.cancel()
     state._executor.shutdown(wait=True)
     state._executor = None
 

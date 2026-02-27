@@ -11,6 +11,7 @@ import pandas as pd
 
 from app.config import POSITION_PREFIXES, SUBCATEGORY_ID_ALIASES
 from app.schemas import BalanceSheetSummary
+from engine.io._utils import norm_token as _engine_norm_token, parse_number as _engine_parse_number
 
 
 def _norm_key(text: str) -> str:
@@ -37,31 +38,21 @@ def _slugify(text: str) -> str:
 
 
 def _to_text(value: Any) -> str | None:
-    if value is None:
-        return None
-    if isinstance(value, float) and np.isnan(value):
-        return None
+    """Normalise a value to a stripped string, or None if blank/NaN.
 
-    text = str(value).strip()
-    return text if text != "" else None
+    Delegates to ``engine.io._utils.norm_token`` as the single source of truth.
+    """
+    return _engine_norm_token(value)
 
 
 def _to_float(value: Any) -> float | None:
+    """Parse a numeric value to float, or None if blank/NaN/unparseable.
+
+    Delegates to ``engine.io._utils.parse_number`` as the single source of truth.
+    """
     if value is None:
         return None
-    if isinstance(value, str):
-        value = value.strip()
-        if value == "":
-            return None
-
-    try:
-        number = float(value)
-    except (TypeError, ValueError):
-        return None
-
-    if np.isnan(number):
-        return None
-    return number
+    return _engine_parse_number(value)
 
 
 def _to_iso_date(value: Any) -> str | None:

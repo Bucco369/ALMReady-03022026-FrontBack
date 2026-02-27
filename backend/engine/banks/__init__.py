@@ -1,27 +1,36 @@
-"""Bank adapter registry.
+"""Unified bank registry.
 
 To add a new bank:
-  1. Create ``app/bank_adapters/<bank>.py`` (copy ``unicaja.py`` as template).
-  2. Register its module path in ``_REGISTRY`` below.
+  1. Create ``engine/banks/<bank>/`` (copy an existing bank as template).
+  2. Define ``__init__.py`` exporting an ``ADAPTER`` instance.
+  3. Add ``mapping.py``, ``classification.py``, and ``whatif.py``.
+  4. Register the module path in ``_REGISTRY`` below.
 """
 
 from __future__ import annotations
 
 import importlib
 
-from app.bank_adapters._base import BankAdapter
+from engine.banks._base import BankAdapter
 
-__all__ = ["BankAdapter", "resolve_adapter", "available_banks", "default_bank"]
+__all__ = [
+    "BankAdapter",
+    "resolve_bank",
+    "available_banks",
+    "default_bank",
+    # Backward-compat alias
+    "resolve_adapter",
+]
 
 _REGISTRY: dict[str, str] = {
-    "unicaja": "app.bank_adapters.unicaja",
-    # "bbva": "app.bank_adapters.bbva",
+    "unicaja": "engine.banks.unicaja",
+    # "bbva": "engine.banks.bbva",
 }
 
 _DEFAULT_BANK = "unicaja"
 
 
-def resolve_adapter(bank_id: str) -> BankAdapter:
+def resolve_bank(bank_id: str) -> BankAdapter:
     """Load and return the adapter for *bank_id*.
 
     Raises ``ValueError`` with list of available banks on unknown id.
@@ -34,6 +43,10 @@ def resolve_adapter(bank_id: str) -> BankAdapter:
         )
     mod = importlib.import_module(module_path)
     return mod.ADAPTER  # type: ignore[attr-defined]
+
+
+# Backward-compat alias used by app.bank_adapters shim.
+resolve_adapter = resolve_bank
 
 
 def available_banks() -> list[str]:

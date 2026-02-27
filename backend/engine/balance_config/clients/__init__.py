@@ -17,9 +17,8 @@ from __future__ import annotations
 from typing import Any
 
 _CLIENT_MODULES: dict[str, str] = {
-    "unicaja": "engine.balance_config.clients.unicaja",
-    # "bbva": "engine.balance_config.clients.bbva",
-    # "santander": "engine.balance_config.clients.santander",
+    "unicaja": "engine.banks.unicaja.classification",
+    # "bbva": "engine.banks.bbva.classification",
 }
 
 

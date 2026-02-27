@@ -43,6 +43,11 @@ OPTIONAL_CANONICAL_COLUMNS = (
     "next_reprice_date",
     "floor_rate",
     "cap_rate",
+    # Balance classification columns — used by app-level canonicalization
+    # to map motor positions into UI categories/subcategories.
+    "balance_product",
+    "balance_section",
+    "balance_epigrafe",
 )
 
 # Input columns -> canonical.

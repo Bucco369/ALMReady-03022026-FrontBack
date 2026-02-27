@@ -14,7 +14,7 @@ import pandas as pd
 from fastapi import HTTPException
 
 import app.state as state
-from app.bank_adapters import BankAdapter
+from engine.banks import BankAdapter
 from app.config import BASE_REQUIRED_COLS, META_SHEETS, POSITION_PREFIXES, _bc_get_rules
 from app.schemas import BalanceSheetSummary, BalanceUploadResponse
 from app.session import (
@@ -29,7 +29,7 @@ from app.parsers._canonicalization import (
     _canonicalize_position_row,
     _serialize_motor_df_to_parquet,
 )
-from app.parsers._tree_builder import _build_summary_tree, _build_summary_tree_df
+from app.services.balance_tree import _build_summary_tree, _build_summary_tree_df
 from app.parsers._persistence import (
     _invalidate_positions_cache,
     _load_positions_df,
@@ -262,6 +262,14 @@ def _parse_zip_balance(
         bank_id=adapter.bank_id,
     )
     _persist_balance_payload(session_id, response, canonical_df)
+
+    # 8. Clean up throwaway files (CSVs ~200-500MB, ZIP ~100-200MB)
+    #    All data is now in Parquet — these are never read again.
+    csv_dir = sdir / "balance_csvs"
+    if csv_dir.exists():
+        shutil.rmtree(csv_dir, ignore_errors=True)
+    if zip_path.exists():
+        zip_path.unlink(missing_ok=True)
 
     return response
 

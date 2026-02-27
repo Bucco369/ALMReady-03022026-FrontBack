@@ -11,11 +11,16 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException
 
 import app.state as state
-from app.config import (
-    _CATEGORY_SIDE_MAP,
-    _FREQ_TO_MONTHS,
-    _PRODUCT_TEMPLATE_TO_MOTOR,
-    _REF_INDEX_TO_MOTOR,
+from engine.banks.unicaja.whatif import (
+    PRODUCT_TEMPLATE_TO_MOTOR as _PRODUCT_TEMPLATE_TO_MOTOR,
+    CATEGORY_SIDE_MAP as _CATEGORY_SIDE_MAP,
+    FREQ_TO_MONTHS as _FREQ_TO_MONTHS,
+    REF_INDEX_TO_MOTOR as _REF_INDEX_TO_MOTOR,
+    DEFAULT_DISCOUNT_INDEX as _DEFAULT_DISCOUNT_INDEX,
+)
+from engine.services.whatif import (
+    build_whatif_delta_dataframe as _build_whatif_delta_dataframe,
+    unified_whatif_map as _unified_whatif_map,
 )
 from app.schemas import (
     CalculateRequest,
@@ -24,7 +29,6 @@ from app.schemas import (
     ScenarioResultItem,
     WhatIfBucketDelta,
     WhatIfCalculateRequest,
-    WhatIfModificationItem,
     WhatIfMonthDelta,
     WhatIfResultsResponse,
 )
@@ -345,134 +349,20 @@ def get_chart_data(session_id: str) -> ChartDataResponse:
     return ChartDataResponse.model_validate_json(cache_path.read_text(encoding="utf-8"))
 
 
-# ── What-If helpers ─────────────────────────────────────────────────────────
-
-def _create_synthetic_motor_row(
-    mod: WhatIfModificationItem,
-    analysis_date: date,
-) -> dict[str, Any]:
-    mapping = _PRODUCT_TEMPLATE_TO_MOTOR.get(mod.productTemplateId or "", {})
-    sct = mapping.get("source_contract_type", "fixed_bullet")
-    side = mapping.get("side", _CATEGORY_SIDE_MAP.get(mod.category or "asset", "A"))
-
-    if mod.startDate:
-        try:
-            start = date.fromisoformat(mod.startDate)
-        except ValueError:
-            start = analysis_date
-    else:
-        start = analysis_date
-
-    if mod.maturityDate:
-        try:
-            mat = date.fromisoformat(mod.maturityDate)
-        except ValueError:
-            mat = None
-    else:
-        mat = None
-
-    if mat is None and mod.maturity and mod.maturity > 0:
-        from datetime import timedelta
-        mat = start + timedelta(days=round(mod.maturity * 365.25))
-
-    if mat is None:
-        from datetime import timedelta
-        mat = start + timedelta(days=365)
-
-    fixed_rate = mod.rate if mod.rate is not None else 0.0
-    spread_val = (mod.spread or 0.0) / 10000.0 if mod.spread else 0.0
-
-    is_variable = "variable" in sct
-    raw_ref = (mod.refIndex or "").strip()
-    ref_index = _REF_INDEX_TO_MOTOR.get(raw_ref, raw_ref) or "EUR_ESTR_OIS"
-
-    freq_str = (mod.paymentFreq or "annual").lower()
-    coupon_months = _FREQ_TO_MONTHS.get(freq_str, 12)
-
-    reprice_str = (mod.repricingFreq or freq_str).lower()
-    reprice_months = _FREQ_TO_MONTHS.get(reprice_str, coupon_months)
-
-    payment_freq_str = f"{coupon_months}M"
-    repricing_freq_str = f"{reprice_months}M" if is_variable else None
-
-    row: dict[str, Any] = {
-        "contract_id": f"whatif_{mod.id}",
-        "side": side,
-        "source_contract_type": sct,
-        "notional": abs(mod.notional or 0.0),
-        "fixed_rate": 0.0 if is_variable else fixed_rate,
-        "spread": spread_val if is_variable else 0.0,
-        "start_date": start,
-        "maturity_date": mat,
-        "index_name": ref_index if is_variable else None,
-        "next_reprice_date": start if is_variable else None,
-        "daycount_base": "ACT/360",
-        "payment_freq": payment_freq_str,
-        "repricing_freq": repricing_freq_str,
-        "currency": mod.currency or "EUR",
-        "floor_rate": None,
-        "cap_rate": None,
-    }
-    return row
-
-
-def _build_whatif_delta_dataframe(
-    modifications: list[WhatIfModificationItem],
-    motor_df: pd.DataFrame,
-    balance_rows: list[dict[str, Any]],
-    analysis_date: date,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
-    add_rows: list[dict[str, Any]] = []
-    remove_ids: list[str] = []
-
-    for mod in modifications:
-        if mod.type == "add":
-            add_rows.append(_create_synthetic_motor_row(mod, analysis_date))
-
-        elif mod.type == "remove":
-            if mod.removeMode == "contracts" and mod.contractIds:
-                remove_ids.extend(mod.contractIds)
-            elif mod.removeMode == "all" and mod.subcategory:
-                for row in balance_rows:
-                    sub_id = row.get("subcategory_id", "")
-                    if sub_id == mod.subcategory:
-                        cid = row.get("contract_id")
-                        if cid:
-                            remove_ids.append(cid)
-
-    add_df = pd.DataFrame(add_rows) if add_rows else pd.DataFrame()
-    if add_df.empty and motor_df is not None and not motor_df.empty:
-        add_df = motor_df.iloc[0:0].copy()
-
-    if remove_ids and motor_df is not None and not motor_df.empty and "contract_id" in motor_df.columns:
-        unique_ids = set(remove_ids)
-        remove_df = motor_df[motor_df["contract_id"].isin(unique_ids)].copy()
-    else:
-        remove_df = motor_df.iloc[0:0].copy() if (motor_df is not None and not motor_df.empty) else pd.DataFrame()
-
-    date_cols = ["start_date", "maturity_date", "next_reprice_date"]
-    for col in date_cols:
-        if col in add_df.columns:
-            add_df[col] = add_df[col].apply(
-                lambda d: d if isinstance(d, date) else None
-            )
-
-    numeric_cols = ["notional", "fixed_rate", "spread", "floor_rate", "cap_rate"]
-    for col in numeric_cols:
-        if col in add_df.columns:
-            add_df[col] = pd.to_numeric(add_df[col], errors="coerce")
-
-    return add_df, remove_df
-
-
 # ── What-If calculation ─────────────────────────────────────────────────────
+
+_WHATIF_BANK_CONFIG = dict(
+    product_templates=_PRODUCT_TEMPLATE_TO_MOTOR,
+    category_side_map=_CATEGORY_SIDE_MAP,
+    freq_to_months=_FREQ_TO_MONTHS,
+    ref_index_to_motor=_REF_INDEX_TO_MOTOR,
+    default_discount_index=_DEFAULT_DISCOUNT_INDEX,
+)
+
 
 @router.post("/api/sessions/{session_id}/calculate/whatif", response_model=WhatIfResultsResponse)
 def calculate_whatif(session_id: str, req: WhatIfCalculateRequest) -> WhatIfResultsResponse:
     from engine.services.regulatory_curves import build_regulatory_curve_sets
-    from engine.services.eve import build_eve_cashflows
-    from engine.services.eve_analytics import compute_eve_full
-    from engine.services.nii import compute_nii_from_cashflows, compute_nii_margin_set
     from engine.config import NII_HORIZON_MONTHS
 
     _assert_session_exists(session_id)
@@ -491,13 +381,12 @@ def calculate_whatif(session_id: str, req: WhatIfCalculateRequest) -> WhatIfResu
     except (KeyError, ValueError):
         analysis_date = date.today()
 
-    discount_curve_id = calc_params.get("discount_curve_id", "EUR_ESTR_OIS")
+    discount_curve_id = calc_params.get("discount_curve_id", _DEFAULT_DISCOUNT_INDEX)
     scenarios = calc_params.get("scenarios", [])
     risk_free_index = calc_params.get("risk_free_index", discount_curve_id)
     worst_scenario = calc_params.get("worst_case_scenario", "base")
 
     # 2. Load motor positions (for removes)
-    # Check both Parquet (new) and JSON (legacy) paths
     motor_path = _motor_positions_path(session_id)
     motor_json_path = motor_path.with_suffix(".json")
     if motor_path.exists() or motor_json_path.exists():
@@ -505,13 +394,13 @@ def calculate_whatif(session_id: str, req: WhatIfCalculateRequest) -> WhatIfResu
     else:
         motor_df = pd.DataFrame()
 
-    # Load canonical positions (Parquet-first, JSON-legacy fallback)
     from app.parsers.balance_parser import _read_positions_file
     balance_rows: list[dict[str, Any]] = _read_positions_file(session_id) or []
 
-    # 3. Build delta DataFrames
+    # 3. Build delta DataFrames (delegated to engine/services/whatif)
     add_df, remove_df = _build_whatif_delta_dataframe(
         req.modifications, motor_df, balance_rows, analysis_date,
+        **_WHATIF_BANK_CONFIG,
     )
 
     has_adds = not add_df.empty
@@ -545,87 +434,21 @@ def calculate_whatif(session_id: str, req: WhatIfCalculateRequest) -> WhatIfResu
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Error building scenario curves: {exc}")
 
-    # 5+6. Unified EVE+NII deltas
-    def _unified_whatif_map(df: pd.DataFrame):
-        eve_data: dict[tuple[str, str], dict[str, float]] = {}
-        eve_meta: dict[str, float] = {}
-        nii_data: dict[tuple[str, int], dict[str, float]] = {}
-        if df.empty:
-            return eve_data, eve_meta, nii_data
-
-        try:
-            margin_set = compute_nii_margin_set(
-                df,
-                curve_set=base_curve_set,
-                risk_free_index=risk_free_index,
-                as_of=base_curve_set.analysis_date,
-            )
-        except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"What-If margin calibration error: {exc}")
-
-        scenario_items: list[tuple[str, Any, Any]] = [
-            ("base", base_curve_set, base_curve_set),
-        ]
-        for sc_name, sc_set in scenario_curve_sets.items():
-            scenario_items.append((sc_name, sc_set, sc_set))
-
-        for sc_label, disc_set, proj_set in scenario_items:
-            try:
-                cashflows = build_eve_cashflows(
-                    df,
-                    analysis_date=disc_set.analysis_date,
-                    projection_curve_set=proj_set,
-                )
-
-                _, eve_buckets = compute_eve_full(
-                    cashflows,
-                    discount_curve_set=disc_set,
-                    discount_index=discount_curve_id,
-                    include_buckets=True,
-                )
-                if eve_buckets:
-                    for b in eve_buckets:
-                        bname = b["bucket_name"]
-                        sg = b["side_group"]
-                        if sg in ("asset", "liability"):
-                            key = (sc_label, bname)
-                            if key not in eve_data:
-                                eve_data[key] = {"asset": 0.0, "liab": 0.0}
-                            if sg == "asset":
-                                eve_data[key]["asset"] = float(b["pv_total"])
-                            else:
-                                eve_data[key]["liab"] = float(b["pv_total"])
-                            if bname not in eve_meta:
-                                eve_meta[bname] = float(b["bucket_start_years"])
-
-                nii_result = compute_nii_from_cashflows(
-                    cashflows, df, proj_set,
-                    analysis_date=disc_set.analysis_date,
-                    horizon_months=NII_HORIZON_MONTHS,
-                    balance_constant=True,
-                    margin_set=margin_set,
-                    risk_free_index=risk_free_index,
-                )
-                for m in nii_result.monthly_breakdown:
-                    mi = m["month_index"]
-                    nii_data[(sc_label, mi)] = {
-                        "income": m["interest_income"],
-                        "expense": m["interest_expense"],
-                        "label": m["month_label"],
-                    }
-
-            except HTTPException:
-                raise
-            except Exception as exc:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"What-If unified [{sc_label}] error: {exc}",
-                )
-
-        return eve_data, eve_meta, nii_data
-
-    add_eve, add_meta, add_nii = _unified_whatif_map(add_df) if has_adds else ({}, {}, {})
-    rem_eve, rem_meta, rem_nii = _unified_whatif_map(remove_df) if has_removes else ({}, {}, {})
+    # 5+6. Unified EVE+NII deltas (delegated to engine/services/whatif)
+    _whatif_kw = dict(
+        base_curve_set=base_curve_set,
+        scenario_curve_sets=scenario_curve_sets,
+        discount_curve_id=discount_curve_id,
+        risk_free_index=risk_free_index,
+        horizon_months=NII_HORIZON_MONTHS,
+    )
+    try:
+        add_eve, add_meta, add_nii = _unified_whatif_map(add_df, **_whatif_kw) if has_adds else ({}, {}, {})
+        rem_eve, rem_meta, rem_nii = _unified_whatif_map(remove_df, **_whatif_kw) if has_removes else ({}, {}, {})
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"What-If computation error: {exc}")
 
     # EVE: Build per-bucket delta list
     bucket_meta = {**rem_meta, **add_meta}

@@ -89,29 +89,3 @@ _CONTRACT_TYPE_LABELS = {
     "variable_non_maturity": "Non-Maturity (Variable)",
     "variable_scheduled": "Variable Scheduled",
 }
-
-# ── What-If maps ────────────────────────────────────────────────────────────
-
-_PRODUCT_TEMPLATE_TO_MOTOR = {
-    "fixed-loan":     {"source_contract_type": "fixed_annuity",   "side": "A"},
-    "floating-loan":  {"source_contract_type": "variable_bullet", "side": "A"},
-    "bond-portfolio": {"source_contract_type": "fixed_bullet",    "side": "A"},
-    "securitised":    {"source_contract_type": "fixed_annuity",   "side": "A"},
-    "term-deposit":   {"source_contract_type": "fixed_bullet",    "side": "L"},
-    "wholesale":      {"source_contract_type": "fixed_bullet",    "side": "L"},
-    "irs-hedge":      {"source_contract_type": "fixed_bullet",    "side": "A"},
-}
-
-_CATEGORY_SIDE_MAP = {"asset": "A", "liability": "L", "derivative": "A"}
-
-_FREQ_TO_MONTHS = {
-    "monthly": 1, "quarterly": 3, "semi-annual": 6, "annual": 12,
-}
-
-_REF_INDEX_TO_MOTOR: dict[str, str] = {
-    "EURIBOR 3M":  "EUR_EURIBOR_3M",
-    "EURIBOR 6M":  "EUR_EURIBOR_6M",
-    "EURIBOR 12M": "EUR_EURIBOR_12M",
-    "SOFR":        "USD_SOFR",
-    "SONIA":       "GBP_SONIA",
-}

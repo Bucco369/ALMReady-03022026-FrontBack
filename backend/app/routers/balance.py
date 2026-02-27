@@ -31,7 +31,8 @@ from app.parsers.balance_parser import (
 )
 from app.parsers._persistence import _invalidate_positions_cache
 from app.parsers.transforms import _to_float, _to_text
-from app.filters import (
+from engine.banks import default_bank
+from app.services.balance_query import (
     _aggregate_groups_df,
     _aggregate_totals_df,
     _apply_filters_df,
@@ -94,11 +95,11 @@ async def upload_balance(session_id: str, file: UploadFile = File(...)) -> Balan
 async def upload_balance_zip(
     session_id: str,
     file: UploadFile = File(...),
-    bank_id: str = "unicaja",
+    bank_id: str = default_bank(),
 ) -> BalanceUploadResponse:
     import asyncio
 
-    from app.bank_adapters import resolve_adapter
+    from engine.banks import resolve_bank as resolve_adapter
 
     _assert_session_exists(session_id)
     _invalidate_positions_cache(session_id)
