@@ -1,17 +1,27 @@
 /**
- * WhatIfAddTab.tsx – Template-based form for adding synthetic positions.
+ * WhatIfAddTab.tsx – LEGACY template-based form for adding synthetic positions.
  *
- * === ROLE IN THE SYSTEM ===
- * Two-step flow inside WhatIfBuilder's "Add Position" tab:
- * 1. Template selection: PRODUCT_TEMPLATES grouped by category (Asset/Liability/Derivative).
- * 2. Form entry: Dynamic fields → creates WhatIfModification of type='add'.
+ * ── STATUS ───────────────────────────────────────────────────────────────
  *
- * Maps template IDs to balance-tree subcategories (e.g. 'nmd' → 'deposits').
- * Computes rate (% → decimal) and maturity (from dates or avgLife).
+ *   SUPERSEDED by BuySellCompartment.tsx (AddCatalog component) inside
+ *   the WhatIfWorkbench modal. This file is retained for reference.
  *
- * === CURRENT LIMITATIONS ===
- * - Synthetic positions are simple metadata objects, NOT real cashflow schedules.
- * - Phase 1: Backend will generate proper cashflow structures from these parameters.
+ *   The current flow uses:
+ *     CascadingDropdowns → StructuralConfigRow → TemplateFieldsForm
+ *     (all from shared/ProductConfigForm.tsx)
+ *
+ * ── ORIGINAL ROLE ────────────────────────────────────────────────────────
+ *
+ *   Two-step flow inside WhatIfBuilder's "Add Position" tab:
+ *   1. Template selection: PRODUCT_TEMPLATES grouped by category.
+ *   2. Form entry: Dynamic fields → WhatIfModification of type='add'.
+ *
+ *   Key differences vs current AddCatalog:
+ *   • Flat template list (no cascading dropdowns)
+ *   • No amortization selection
+ *   • No progressive field reveal
+ *   • No edit mode / Calculate Impact
+ *   • Duplicates subcategoryMap inline (now in shared/constants.ts)
  */
 import React, { useState } from 'react';
 import { Plus, Building2, Landmark, TrendingUp, ChevronRight } from 'lucide-react';

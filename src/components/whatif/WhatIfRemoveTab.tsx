@@ -1,15 +1,42 @@
 /**
  * WhatIfRemoveTab.tsx – Browse and remove positions from the balance.
  *
- * === ROLE IN THE SYSTEM ===
- * Inside WhatIfBuilder's "Remove Position" tab. Two removal modes:
- * 1. Search by contract ID (debounced API call to /balance/contracts).
- * 2. Browse balance tree: subcategory-level "remove all" or drill-down to
- *    individual contracts via BalanceDetailsModalRemove.
+ * ── ROLE IN THE SYSTEM ─────────────────────────────────────────────────
  *
- * === CURRENT LIMITATIONS ===
- * - Removals are frontend-only (WhatIfContext state). Never sent to backend.
- * - Phase 1: Modifications sent as overlay mask for engine exclusion.
+ *   Used by BOTH WhatIfBuilder (legacy) and BuySellCompartment (current).
+ *   BuySellCompartment embeds the same removal logic: the "Remove" sub-tab
+ *   shows the balance tree and supports "remove all" or contract drill-down.
+ *
+ *   Two removal modes:
+ *   1. SEARCH: Contract ID search (debounced API → /balance/contracts).
+ *   2. BROWSE: Balance tree subcategory → "Remove All" or Eye icon →
+ *      BalanceDetailsModalRemove (filter + cherry-pick contracts).
+ *
+ * ── DATA FLOW ───────────────────────────────────────────────────────────
+ *
+ *   Balance tree (BalanceUiTree) → RemoveTreeNode[] → TreeNode component.
+ *   Each node shows: label, amount (Mln), position count, hover actions.
+ *
+ *   Remove actions:
+ *   • Subcategory "Remove All" (Minus icon):
+ *     Creates WhatIfModification { type: 'remove', removeMode: 'all' }.
+ *     Locks the subcategory (Lock icon, further removals disabled).
+ *     Fetches per-contract maturityProfile for accurate chart allocation.
+ *
+ *   • Eye icon → BalanceDetailsModalRemove:
+ *     Opens modal for filtered/cherry-picked contract removal.
+ *     Creates per-contract modifications { removeMode: 'contracts' }.
+ *
+ *   • Search result removal:
+ *     Individual contract removal via handleRemoveContract().
+ *     Disabled if subcategory already has "remove all" active.
+ *
+ * ── MATURITY PROFILE ────────────────────────────────────────────────────
+ *
+ *   Both "remove all" and filtered removals fetch maturityProfile[] from
+ *   the backend (per-contract amount + maturityYears). This allows the
+ *   EVE chart to distribute the removal across correct time buckets
+ *   rather than using a single average maturity.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Search, ChevronRight, ChevronDown, Minus, FileText, Folder, FolderOpen, Eye, Lock } from 'lucide-react';

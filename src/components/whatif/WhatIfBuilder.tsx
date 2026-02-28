@@ -1,16 +1,32 @@
 /**
- * WhatIfBuilder.tsx – Side-sheet for building What-If balance modifications.
+ * WhatIfBuilder.tsx – LEGACY side-sheet for building What-If modifications.
  *
- * === ROLE IN THE SYSTEM ===
- * Opens as a right-side Sheet when the user clicks the What-If button.
- * Contains two tabs: "Add Position" (WhatIfAddTab) and "Remove Position"
- * (WhatIfRemoveTab). Shows pending modifications as green/red badges.
- * "Apply to Analysis" calls applyModifications() → sets isApplied=true.
+ * ── STATUS ───────────────────────────────────────────────────────────────
  *
- * === CURRENT LIMITATIONS ===
- * - "Apply" only flips a boolean flag in React state. It does NOT trigger
- *   backend calculation. ResultsCard shows HARDCODED impact deltas.
- * - Phase 1: Apply will POST modifications to /api/sessions/{id}/calculate.
+ *   SUPERSEDED by WhatIfWorkbench.tsx (the modal-based 4-compartment UI).
+ *   This file is retained for reference but is NOT rendered in the current
+ *   application. The active What-If entry point is:
+ *     BalancePositionsCard → WhatIfWorkbench (modal)
+ *
+ * ── ORIGINAL ROLE ────────────────────────────────────────────────────────
+ *
+ *   Opened as a right-side Sheet. Contains two tabs:
+ *   • "Add Position"  → WhatIfAddTab  (simple template picker + form)
+ *   • "Remove Position" → WhatIfRemoveTab (balance tree browser)
+ *
+ *   Shows pending modifications as green/red badges.
+ *   "Apply to Analysis" → applyModifications() → isApplied=true.
+ *
+ * ── KEY DIFFERENCES vs WhatIfWorkbench ───────────────────────────────────
+ *
+ *   WhatIfBuilder (legacy)         WhatIfWorkbench (current)
+ *   ─────────────────────────      ──────────────────────────────
+ *   Sheet (side panel)             Dialog (centered modal, wider)
+ *   2 tabs (add/remove)            4 compartments (buy-sell, find-limit,
+ *                                    behavioural, pricing)
+ *   Simple template list           Cascading dropdowns + progressive form
+ *   No Calculate Impact            Has per-position Calculate Impact
+ *   No edit mode                   Supports editing existing modifications
  */
 import React, { useState } from 'react';
 import { X, Plus, Minus, Trash2, Check, SlidersHorizontal } from 'lucide-react';

@@ -1,15 +1,66 @@
 /**
- * ProductConfigForm.tsx – Shared product configuration components.
+ * ProductConfigForm.tsx – Shared product configuration form engine.
  *
- * Used by both AddCatalog (Buy/Sell tab) and FindLimitCompartment (Find Limit tab).
- * Any change to dropdowns, fields, or progressive reveal logic automatically
- * propagates to both consumers.
+ * ── ROLE IN THE SYSTEM ──────────────────────────────────────────────────
  *
- * Exports:
- *   - useProductFormState()     – State + derived logic hook
- *   - CascadingDropdowns        – Side → Category → Amortization → Rate Type
- *   - StructuralConfigRow       – Currency → DayCount → Grace → Grace Years
- *   - TemplateFieldsForm        – Progressive 3-column template form
+ *   The single source of truth for product selection UI. Used by:
+ *
+ *   • AddCatalog (BuySellCompartment) — full form, all fields editable
+ *   • FindLimitCompartment            — same form, but "solve-for" field
+ *                                       is excluded (shown as "Solved by
+ *                                       Find Limit" placeholder)
+ *
+ *   Any change here automatically propagates to both consumers.
+ *
+ * ── PROGRESSIVE REVEAL ──────────────────────────────────────────────────
+ *
+ *   Fields appear one-by-one as the user fills required values:
+ *
+ *   Row 1 (CascadingDropdowns):
+ *     Side → Category → Amortization → Rate Type
+ *     • Category is hidden when only 1 family exists (e.g. Derivatives)
+ *     • Amortization hidden for families with noAmortization flag
+ *     • Derivatives promote Currency into Row 1 (saves vertical space)
+ *
+ *   Row 2 (StructuralConfigRow):
+ *     Currency → Day Count → Grace Period → Grace Years
+ *     • Hidden entirely for Derivatives (Currency in Row 1, no DayCount)
+ *     • Grace only shown for loans family
+ *
+ *   Row 3 (TemplateFieldsForm):
+ *     Dynamic 3-column grid of template-specific fields
+ *     • Fields with showWhen conditions appear/hide based on parent value
+ *     • Required unfilled fields block downstream fields (progressive)
+ *     • fieldGroups enable side-by-side panels (used by IRS swap legs)
+ *     • excludeFieldIds marks "solved" fields for FindLimit mode
+ *
+ * ── FIELD GROUPS (IRS / DERIVATIVES) ────────────────────────────────────
+ *
+ *   Templates can define fieldGroups for multi-panel layouts:
+ *   ┌─────────────────┬─────────────────┐
+ *   │    Leg A (Pay)   │   Leg B (Receive)│
+ *   │  ─────────────   │  ─────────────   │
+ *   │  Notional        │  Notional        │
+ *   │  Rate            │  RefIndex        │
+ *   │  Frequency       │  Spread          │
+ *   └─────────────────┴─────────────────┘
+ *   Each group has independent progressive reveal chains.
+ *   Pay leg is always sorted to the left.
+ *
+ * ── EXPORTS ─────────────────────────────────────────────────────────────
+ *
+ *   useProductFormState():
+ *     Hook returning { state, callbacks, derived, prefill, reset }.
+ *     state:     raw selections (side, family, amortization, variant, formValues)
+ *     callbacks: cascade handlers that reset downstream on change
+ *     derived:   computed values (selectedTemplate, fieldVisibility, etc.)
+ *     prefill:   bulk-set all state at once (used for edit mode round-trips)
+ *     reset:     clear everything back to initial state
+ *
+ *   CascadingDropdowns:    Row 1 — Side → Category → Amortization → Rate Type
+ *   StructuralConfigRow:   Row 2 — Currency → DayCount → Grace
+ *   TemplateFieldsForm:    Row 3 — Dynamic template fields (3-col or grouped)
+ *   ComingSoonPlaceholder: Disabled-variant badge for unreleased products
  */
 import React, { useCallback, useMemo, useState } from 'react';
 import { Clock } from 'lucide-react';
