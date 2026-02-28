@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import type { Position } from '@/types/financial';
+import type { Position, Scenario } from '@/types/financial';
 import type { BalanceSummaryTree } from '@/lib/api';
 import { parsePositionsCSV, generateSamplePositionsCSV } from '@/lib/csvParser';
-import { WhatIfBuilder } from '@/components/whatif/WhatIfBuilder';
+import { WhatIfWorkbench } from '@/components/whatif/WhatIfWorkbench';
 import { useWhatIf } from '@/components/whatif/WhatIfContext';
 import { BalanceDetailsModal } from '@/components/BalanceDetailsModal';
 import { BehaviouralAssumptionsModal } from '@/components/behavioural/BehaviouralAssumptionsModal';
@@ -26,6 +26,7 @@ interface BalancePositionsCardProps {
   isUploading?: boolean;
   uploadProgress?: number;
   uploadPhase?: string;
+  scenarios?: Scenario[];
 }
 
 type WhatIfDelta = {
@@ -319,6 +320,7 @@ export function BalancePositionsCard({
   isUploading = false,
   uploadProgress = 0,
   uploadPhase = '',
+  scenarios,
 }: BalancePositionsCardProps) {
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -336,7 +338,7 @@ export function BalancePositionsCard({
     setCet1Capital,
     resetAll
   } = useWhatIf();
-  const { hasCustomAssumptions } = useBehavioural();
+  const { hasActiveAssumptions } = useBehavioural();
 
   const balanceTree = useMemo(() => {
     if (summaryTree) return mapSummaryTreeToUiTree(summaryTree);
@@ -583,7 +585,7 @@ export function BalancePositionsCard({
                 >
                   <Brain className="h-3 w-3" />
                   Behavioural
-                  {hasCustomAssumptions && (
+                  {hasActiveAssumptions && (
                     <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-background border border-primary-foreground" />
                   )}
                 </Button>
@@ -606,12 +608,13 @@ export function BalancePositionsCard({
         sessionId={sessionId ?? null}
       />
 
-      {/* What-If Builder Side Panel */}
-      <WhatIfBuilder
+      {/* What-If Workbench Modal */}
+      <WhatIfWorkbench
         open={showWhatIfBuilder}
         onOpenChange={setShowWhatIfBuilder}
         sessionId={sessionId ?? null}
         balanceTree={balanceTree}
+        scenarios={scenarios}
       />
 
       {/* Behavioural Assumptions Modal */}
@@ -860,7 +863,7 @@ interface WhatIfItemRowProps {
   label: string;
   amount: number;
   positionDelta: number;
-  type: 'add' | 'remove';
+  type: 'add' | 'remove' | 'behavioural' | 'pricing';
   formatAmount: (n: number) => string;
 }
 function WhatIfItemRow({

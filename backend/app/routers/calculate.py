@@ -102,6 +102,45 @@ def calculate_eve_nii(session_id: str, req: CalculateRequest) -> CalculationResu
     state._calc_progress[session_id]["current_task"] = "Loading positions…"
     motor_df = _reconstruct_motor_dataframe(session_id)
 
+    # 2b. Count excluded credit instruments for user warning
+    warnings: list[str] = []
+    sct = motor_df.get("source_contract_type", pd.Series(dtype=str)).str.lower()
+    n_static = int((sct == "static_position").sum())
+    if n_static > 0:
+        warnings.append(
+            f"{n_static} credit instrument(s) (static_position) excluded from "
+            "EVE/NII \u2014 not interest-rate sensitive."
+        )
+
+    # 2c. NMD warning when present but no behavioural params
+    n_fixed_nmd = int((sct == "fixed_non_maturity").sum())
+    n_var_nmd = int((sct == "variable_non_maturity").sum())
+    nmd_params = None
+    cpr_annual = 0.0
+    tdrr_annual = 0.0
+    if req.behavioural:
+        nmd_params = req.behavioural.nmd
+        if req.behavioural.loan_prepayment:
+            cpr_annual = req.behavioural.loan_prepayment.cpr_annual
+        if req.behavioural.term_deposit:
+            tdrr_annual = req.behavioural.term_deposit.tdrr_annual
+    if n_fixed_nmd > 0 and nmd_params is None:
+        warnings.append(
+            f"{n_fixed_nmd} fixed non-maturity deposit(s) excluded from EVE/NII "
+            "\u2014 set NMD behavioural assumptions to include them."
+        )
+
+    # 2d. Classify term deposits for TDRR targeting
+    if tdrr_annual > 0.0:
+        try:
+            from app.parsers._canonicalization import _vectorized_classify_motor_rows
+            cls_df = _vectorized_classify_motor_rows(motor_df)
+            motor_df = motor_df.copy()
+            motor_df["is_term_deposit"] = cls_df["cls_subcategory_id"].eq("term-deposits").values
+        except Exception:
+            motor_df = motor_df.copy()
+            motor_df["is_term_deposit"] = motor_df.get("side", pd.Series(dtype=str)).str.strip().str.upper().eq("L")
+
     # 3. Build base ForwardCurveSet
     try:
         base_curve_set = _build_forward_curve_set(session_id, analysis_date)
@@ -155,11 +194,31 @@ def calculate_eve_nii(session_id: str, req: CalculateRequest) -> CalculationResu
 
     _unified_tag: dict = {}
 
+    # Compute per-scenario NMD rate delta (Δr) for deposit β-repricing.
+    # Δr = scenario short rate − base short rate at O/N tenor.
+    _nmd_rate_deltas: dict[str, float] = {}
+    if nmd_params is not None:
+        from datetime import timedelta as _td
+        _on_date = analysis_date + _td(days=1)
+        try:
+            _base_on_rate = base_curve_set.rate_on_date(risk_free_index, _on_date)
+        except Exception:
+            _base_on_rate = 0.0
+        for _sc_name, _sc_set in scenario_curve_sets.items():
+            try:
+                _sc_on_rate = _sc_set.rate_on_date(risk_free_index, _on_date)
+                _nmd_rate_deltas[_sc_name] = _sc_on_rate - _base_on_rate
+            except Exception:
+                _nmd_rate_deltas[_sc_name] = 0.0
+
     _unified_tag[state._executor.submit(
         _workers.eve_nii_unified,
         motor_df, base_curve_set, base_curve_set,
         req.discount_curve_id, effective_margin_set,
         risk_free_index, True, NII_HORIZON_MONTHS,
+        None,  # scheduled_principal_flows
+        nmd_params, cpr_annual, tdrr_annual,
+        0.0,  # nmd_rate_delta — base scenario
     )] = None
     for sc_name, sc_set in scenario_curve_sets.items():
         _unified_tag[state._executor.submit(
@@ -167,6 +226,9 @@ def calculate_eve_nii(session_id: str, req: CalculateRequest) -> CalculationResu
             motor_df, sc_set, sc_set,
             req.discount_curve_id, effective_margin_set,
             risk_free_index, True, NII_HORIZON_MONTHS,
+            None,  # scheduled_principal_flows
+            nmd_params, cpr_annual, tdrr_annual,
+            _nmd_rate_deltas.get(sc_name, 0.0),
         )] = sc_name
 
     total_tasks = len(_unified_tag)
@@ -291,6 +353,7 @@ def calculate_eve_nii(session_id: str, req: CalculateRequest) -> CalculationResu
         worst_case_scenario=worst_scenario_name,
         scenario_results=scenario_items,
         calculated_at=calculated_at,
+        warnings=warnings,
     )
 
     _chart_data_path(session_id).write_text(

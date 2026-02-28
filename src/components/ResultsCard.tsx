@@ -20,7 +20,7 @@
  * - %CET1 columns are blank until the user sets a CET1 capital value.
  */
 import React, { useState, useEffect, useRef } from 'react';
-import { BarChart3, Eye, Clock, Loader2, ChevronDown } from 'lucide-react';
+import { BarChart3, Eye, Clock, Loader2, ChevronDown, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { CalculationResults, Scenario } from '@/types/financial';
@@ -157,7 +157,9 @@ export function ResultsCard({
     let cancelled = false;
     let tid: ReturnType<typeof setTimeout>;
 
-    const modsPayload: WhatIfModificationRequest[] = currentMods.map((m) => ({
+    // V1 backend only handles 'add' and 'remove' types
+    const v1Mods = currentMods.filter((m) => m.type === 'add' || m.type === 'remove');
+    const modsPayload: WhatIfModificationRequest[] = v1Mods.map((m) => ({
       id: m.id,
       type: m.type,
       label: m.label,
@@ -176,6 +178,10 @@ export function ResultsCard({
       repricingFreq: m.repricingFreq,
       refIndex: m.refIndex,
       spread: m.spread,
+      // V2 enrichment fields
+      amortization: m.amortization,
+      floorRate: m.floorRate,
+      capRate: m.capRate,
     }));
 
     calculateWhatIf(sessionId, { modifications: modsPayload })
@@ -352,6 +358,18 @@ export function ResultsCard({
             </div>
           </div>
         </div>
+
+        {/* Warnings banner — non-blocking info about excluded instruments */}
+        {results.warnings.length > 0 && (
+          <div className="mx-3 mb-1.5 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50/60 px-3 py-1.5 text-[11px] text-blue-800">
+            <Info className="h-3.5 w-3.5 mt-0.5 shrink-0 text-blue-500" />
+            <div className="space-y-0.5">
+              {results.warnings.map((w, i) => (
+                <p key={i}>{w}</p>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="dashboard-card-content flex-1 min-h-0">
           {/* Layout: 1/3 table, 2/3 chart - both fill available height */}

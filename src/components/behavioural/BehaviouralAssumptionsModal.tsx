@@ -1,5 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Brain, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
+/**
+ * BehaviouralAssumptionsModal.tsx – Tabbed modal for configuring behavioural
+ * assumptions (NMDs, Loan Prepayments, Term Deposits).
+ *
+ * Single-step flow: open modal -> see all three tabs -> edit params -> Apply.
+ * NMD tab uses a wider modal; Loan and Term tabs use a slimmer one.
+ */
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { Brain, Info } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -8,31 +15,63 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   useBehavioural,
-  BehaviouralProfile,
-  NMDParameters,
-  LoanPrepaymentParameters,
-  TermDepositParameters,
-  NMD_BUCKET_DISTRIBUTION,
-  MAX_TOTAL_MATURITY,
+  NMD_BUCKETS,
+  type NMDParameters,
+  type LoanPrepaymentParameters,
+  type TermDepositParameters,
 } from './BehaviouralContext';
-import { NMDCashflowChart } from './NMDCashflowChart';
+
+// Short bucket labels without the ">" prefix
+const BUCKET_SHORT_LABELS: Record<string, string> = {};
+for (const b of NMD_BUCKETS) {
+  BUCKET_SHORT_LABELS[b.id] = b.label.replace(/^>/, '').trim();
+}
+
+/** Number input that shows placeholder "0" when value is 0, selects-all on focus */
+function NumInput({
+  value,
+  onChange,
+  min = 0,
+  max = 100,
+  step = 1,
+  suffix,
+  className = '',
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  suffix?: string;
+  className?: string;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const display = value === 0 ? '' : String(value);
+
+  return (
+    <div className="flex items-baseline gap-2">
+      <input
+        ref={ref}
+        type="number"
+        min={min} max={max} step={step}
+        placeholder="0"
+        value={display}
+        onFocus={() => ref.current?.select()}
+        onChange={(e) => {
+          const num = parseFloat(e.target.value);
+          if (e.target.value === '' || isNaN(num)) { onChange(0); return; }
+          onChange(Math.max(min, Math.min(max, num)));
+        }}
+        className={`h-8 text-sm font-semibold w-24 rounded-md border border-input bg-background px-3 py-1 shadow-sm placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-ring ${className}`}
+      />
+      {suffix && <span className="text-xs text-muted-foreground">{suffix}</span>}
+    </div>
+  );
+}
 
 interface BehaviouralAssumptionsModalProps {
   open: boolean;
@@ -44,8 +83,6 @@ export function BehaviouralAssumptionsModal({
   onOpenChange,
 }: BehaviouralAssumptionsModalProps) {
   const {
-    activeProfile,
-    setActiveProfile,
     nmdParams,
     setNmdParams,
     loanPrepaymentParams,
@@ -55,116 +92,112 @@ export function BehaviouralAssumptionsModal({
     applyAssumptions,
   } = useBehavioural();
 
-  // Local state for editing (to allow cancel without saving)
-  const [localProfile, setLocalProfile] = useState<BehaviouralProfile>(activeProfile);
-  const [localNmdParams, setLocalNmdParams] = useState<NMDParameters>(nmdParams);
-  const [localLoanParams, setLocalLoanParams] = useState<LoanPrepaymentParameters>(loanPrepaymentParams);
-  const [localTermParams, setLocalTermParams] = useState<TermDepositParameters>(termDepositParams);
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('nmd');
+
+  // Local state for editing (cancel-safe)
+  const [localNmd, setLocalNmd] = useState<NMDParameters>(nmdParams);
+  const [localLoan, setLocalLoan] = useState<LoanPrepaymentParameters>(loanPrepaymentParams);
+  const [localTerm, setLocalTerm] = useState<TermDepositParameters>(termDepositParams);
 
   // Sync local state when modal opens
   useEffect(() => {
     if (open) {
-      setLocalProfile(activeProfile);
-      setLocalNmdParams(nmdParams);
-      setLocalLoanParams(loanPrepaymentParams);
-      setLocalTermParams(termDepositParams);
+      setLocalNmd(nmdParams);
+      setLocalLoan(loanPrepaymentParams);
+      setLocalTerm(termDepositParams);
     }
-  }, [open, activeProfile, nmdParams, loanPrepaymentParams, termDepositParams]);
+  }, [open, nmdParams, loanPrepaymentParams, termDepositParams]);
 
-  // Calculate local total average maturity for NMD
-  const localTotalMaturity = useMemo(() => {
-    return (localNmdParams.coreProportion / 100) * localNmdParams.coreAverageMaturity;
-  }, [localNmdParams.coreProportion, localNmdParams.coreAverageMaturity]);
+  // ── NMD computed values ──────────────────────────────────────────────
+  const coreProp = localNmd.coreProportion ?? 0;
+  const nonCorePct = 100 - coreProp;
 
-  const localIsValidMaturity = localTotalMaturity <= MAX_TOTAL_MATURITY;
+  // Core bucket weights must sum to coreProportion
+  const distributionSum = useMemo(
+    () => Object.values(localNmd.distribution).reduce((a, b) => a + b, 0),
+    [localNmd.distribution],
+  );
+  const distributionValid = coreProp > 0
+    ? Math.abs(distributionSum - coreProp) < 0.02
+    : distributionSum === 0;
 
-  // Calculate local CPR from SMM
+  // WAM computed from distribution (auto — replaces the manual input)
+  const coreWam = useMemo(() => {
+    if (distributionSum === 0) return 0;
+    let wam = 0;
+    for (const b of NMD_BUCKETS) {
+      if (b.id === 'ON') continue;
+      wam += (localNmd.distribution[b.id] ?? 0) * b.midpoint;
+    }
+    return wam / distributionSum;
+  }, [localNmd.distribution, distributionSum]);
+
+  // Total WAM (core proportion weighted)
+  const totalWam = (coreProp / 100) * coreWam;
+
+  // Auto-sync coreAverageMaturity from distribution WAM
+  useEffect(() => {
+    setLocalNmd(prev => ({ ...prev, coreAverageMaturity: coreWam }));
+  }, [coreWam]);
+
+  // Max value across all buckets (for visual bar scaling)
+  const maxBucketValue = useMemo(() => {
+    let max = nonCorePct;
+    for (const b of NMD_BUCKETS) {
+      if (b.id === 'ON') continue;
+      max = Math.max(max, localNmd.distribution[b.id] ?? 0);
+    }
+    return Math.max(max, 1);
+  }, [localNmd.distribution, nonCorePct]);
+
+  // ── Loan computed values ─────────────────────────────────────────────
   const localCpr = useMemo(() => {
-    const smm = localLoanParams.smm / 100;
-    const cprDecimal = 1 - Math.pow(1 - smm, 12);
-    return cprDecimal * 100;
-  }, [localLoanParams.smm]);
+    const smm = localLoan.smm ?? 0;
+    if (smm === 0) return 0;
+    return (1 - Math.pow(1 - smm / 100, 12)) * 100;
+  }, [localLoan.smm]);
 
-  // Calculate local annual TDRR
+  // ── Term computed values ─────────────────────────────────────────────
   const localAnnualTdrr = useMemo(() => {
-    const monthly = localTermParams.tdrr / 100;
-    const annualDecimal = 1 - Math.pow(1 - monthly, 12);
-    return annualDecimal * 100;
-  }, [localTermParams.tdrr]);
+    const tdrr = localTerm.tdrr ?? 0;
+    if (tdrr === 0) return 0;
+    return (1 - Math.pow(1 - tdrr / 100, 12)) * 100;
+  }, [localTerm.tdrr]);
 
-  // NMD handlers
-  const handleCoreProportion = (value: string) => {
-    const num = parseFloat(value);
-    if (!isNaN(num)) {
-      setLocalNmdParams(prev => ({
-        ...prev,
-        coreProportion: Math.max(0, Math.min(100, num)),
-      }));
-    }
-  };
+  // ── Handlers ─────────────────────────────────────────────────────────
+  const handleNmdField = useCallback((field: 'coreProportion' | 'passThrough', value: number) => {
+    setLocalNmd(prev => ({ ...prev, [field]: value }));
+  }, []);
 
-  const handleCoreMaturity = (value: string) => {
-    const num = parseFloat(value);
-    if (!isNaN(num)) {
-      setLocalNmdParams(prev => ({
-        ...prev,
-        coreAverageMaturity: Math.max(2, Math.min(10, num)),
-      }));
-    }
-  };
-
-  const handlePassThrough = (value: string) => {
-    const num = parseFloat(value);
-    if (!isNaN(num)) {
-      setLocalNmdParams(prev => ({
-        ...prev,
-        passThrough: Math.max(0, Math.min(100, num)),
-      }));
-    }
-  };
-
-  // Loan Prepayment handlers
-  const handleSmm = (value: string) => {
-    const num = parseFloat(value);
-    if (!isNaN(num)) {
-      setLocalLoanParams(prev => ({
-        ...prev,
-        smm: Math.max(0, Math.min(50, num)),
-      }));
-    }
-  };
-
-  // Term Deposit handlers
-  const handleTdrr = (value: string) => {
-    const num = parseFloat(value);
-    if (!isNaN(num)) {
-      setLocalTermParams(prev => ({
-        ...prev,
-        tdrr: Math.max(0, Math.min(50, num)),
-      }));
-    }
-  };
+  const handleBucketChange = useCallback((bucketId: string, value: string) => {
+    setLocalNmd(prev => {
+      const dist = { ...prev.distribution };
+      const num = parseFloat(value);
+      if (value === '' || isNaN(num)) {
+        delete dist[bucketId];
+      } else if (num >= 0) {
+        dist[bucketId] = num;
+      }
+      return { ...prev, distribution: dist };
+    });
+  }, []);
 
   const handleApply = () => {
-    if (localProfile === 'nmd' && localNmdParams.enabled && !localIsValidMaturity) {
-      return; // Prevent apply if NMD maturity invalid
-    }
-    setActiveProfile(localProfile);
-    setNmdParams(localNmdParams);
-    setLoanPrepaymentParams(localLoanParams);
-    setTermDepositParams(localTermParams);
+    setNmdParams(localNmd);
+    setLoanPrepaymentParams(localLoan);
+    setTermDepositParams(localTerm);
     applyAssumptions();
     onOpenChange(false);
   };
 
-  const handleCancel = () => {
-    onOpenChange(false);
-  };
+  // ── Active indicators per tab ────────────────────────────────────────
+  const nmdHasValues = coreProp > 0 || (localNmd.passThrough ?? 0) > 0 || Object.keys(localNmd.distribution).length > 0;
+  const loanHasValues = (localLoan.smm ?? 0) > 0;
+  const termHasValues = (localTerm.tdrr ?? 0) > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto max-w-4xl top-[12%] translate-y-0" style={{ position: 'fixed' }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <Brain className="h-4 w-4 text-primary" />
@@ -175,269 +208,198 @@ export function BehaviouralAssumptionsModal({
           </p>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
-          {/* Profile Selector */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium">Profile</Label>
-            <Select
-              value={localProfile}
-              onValueChange={(value: BehaviouralProfile) => setLocalProfile(value)}
-            >
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Select behavioural profile" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none" className="text-xs">None (default)</SelectItem>
-                <SelectItem value="nmd" className="text-xs">Non-Maturing Deposits (NMDs)</SelectItem>
-                <SelectItem value="loan-prepayments" className="text-xs">Loan Prepayments</SelectItem>
-                <SelectItem value="term-deposits" className="text-xs">Term Deposits</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-1">
+          <TabsList className="w-full grid grid-cols-3 h-9">
+            <TabsTrigger value="nmd" className="text-xs gap-1.5">
+              NMDs
+              {nmdHasValues && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+            </TabsTrigger>
+            <TabsTrigger value="loan" className="text-xs gap-1.5">
+              Loan Prepayments
+              {loanHasValues && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+            </TabsTrigger>
+            <TabsTrigger value="term" className="text-xs gap-1.5">
+              Term Deposits
+              {termHasValues && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+            </TabsTrigger>
+          </TabsList>
 
-          {/* NMD Configuration Panel */}
-          {localProfile === 'nmd' && (
-            <div className="rounded-md border border-border bg-muted/30 p-3 space-y-4">
-              {/* Activation Toggle */}
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="nmd-enabled"
-                  checked={localNmdParams.enabled}
-                  onCheckedChange={(checked) =>
-                    setLocalNmdParams(prev => ({ ...prev, enabled: !!checked }))
-                  }
+          {/* ── NMD Tab ──────────────────────────────────────────────── */}
+          <TabsContent value="nmd" className="mt-3 space-y-4">
+            {/* Parameters row */}
+            <div className="grid grid-cols-3 gap-4">
+              {/* Core Proportion */}
+              <div className="rounded-lg border border-border/50 bg-muted/30 p-3 space-y-1.5">
+                <Label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Core proportion</Label>
+                <NumInput
+                  value={coreProp} min={0} max={100} step={1} suffix="%"
+                  onChange={(v) => handleNmdField('coreProportion', v)}
                 />
-                <Label htmlFor="nmd-enabled" className="text-xs font-medium cursor-pointer">
-                  Apply behavioural assumptions to NMDs
-                </Label>
+                <p className="text-[10px] text-muted-foreground">
+                  Non-core (auto): <span className="font-medium">{nonCorePct.toFixed(1)}%</span>
+                </p>
               </div>
 
-              {localNmdParams.enabled && (
-                <div className="space-y-4 pt-2 border-t border-border/50">
-                  <p className="text-[10px] text-muted-foreground italic">
-                    All parameters apply to the aggregate of all NMDs (no segmentation).
-                  </p>
+              {/* Core Avg Maturity — auto-calculated from distribution (read-only) */}
+              <div className="rounded-lg border border-border/50 bg-muted/30 p-3 space-y-1.5">
+                <Label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Core avg maturity</Label>
+                <div className="h-8 flex items-center text-sm font-semibold">
+                  {coreWam > 0 ? `${coreWam.toFixed(2)} years` : <span className="text-muted-foreground/40">-</span>}
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Computed from distribution. Total WAM: <span className="font-medium">{totalWam.toFixed(2)} yrs</span>
+                </p>
+              </div>
 
-                  {/* Parameter 1: Core Proportion */}
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">Core proportion (%)</Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={100}
-                      step={1}
-                      value={localNmdParams.coreProportion}
-                      onChange={(e) => handleCoreProportion(e.target.value)}
-                      className="h-8 text-xs w-24"
-                    />
-                  </div>
+              {/* Pass-through Rate */}
+              <div className="rounded-lg border border-border/50 bg-muted/30 p-3 space-y-1.5">
+                <Label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Pass-through rate</Label>
+                <NumInput
+                  value={localNmd.passThrough ?? 0} min={0} max={100} step={1} suffix="%"
+                  onChange={(v) => handleNmdField('passThrough', v)}
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  NII repricing pass-through (0% = none, 100% = full)
+                </p>
+              </div>
+            </div>
 
-                  {/* Parameter 2: Core Average Maturity */}
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">Core average maturity (years)</Label>
-                    <div className="flex items-start gap-4">
-                      <Input
-                        type="number"
-                        min={2}
-                        max={10}
-                        step={0.25}
-                        value={localNmdParams.coreAverageMaturity}
-                        onChange={(e) => handleCoreMaturity(e.target.value)}
-                        className="h-8 text-xs w-24"
-                      />
-                      
-                      {/* Calculated Total Maturity */}
-                      <div className={`flex-1 rounded-md p-2 text-xs ${
-                        localIsValidMaturity 
-                          ? 'bg-muted/50 border border-border/50' 
-                          : 'bg-destructive/10 border border-destructive/30'
-                      }`}>
-                        <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">Total average maturity (core + non-core):</span>
-                          <span className={`font-semibold ${!localIsValidMaturity ? 'text-destructive' : ''}`}>
-                            {localTotalMaturity.toFixed(2)} years
-                          </span>
+            <div className="flex items-start gap-1.5 text-[10px] text-muted-foreground">
+              <Info className="h-3 w-3 mt-0.5 shrink-0" />
+              Applies to fixed NMDs only. Variable NMDs follow their repricing schedule automatically.
+            </div>
+
+            {/* Distribution — visual bars + inputs, single wide row */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-medium">Core Maturity Distribution</Label>
+                <span className="text-[10px] text-muted-foreground">
+                  Buckets must sum to {coreProp.toFixed(1)}% (core). O/N = {nonCorePct.toFixed(1)}% (non-core, auto).
+                </span>
+              </div>
+
+              <div className="rounded-lg border border-border/50 bg-background p-2 overflow-x-auto">
+                <div className="flex gap-0.5" style={{ minWidth: '720px' }}>
+                  {NMD_BUCKETS.map((b) => {
+                    const isON = b.id === 'ON';
+                    const val = isON ? nonCorePct : (localNmd.distribution[b.id] ?? 0);
+                    const barHeight = maxBucketValue > 0 ? Math.max(2, (val / maxBucketValue) * 48) : 2;
+
+                    return (
+                      <div key={b.id} className="flex-1 flex flex-col items-center gap-0.5 min-w-[36px]">
+                        {/* Visual bar */}
+                        <div className="w-full flex items-end justify-center" style={{ height: 52 }}>
+                          <div
+                            className={`w-full max-w-[28px] rounded-t-sm transition-all ${isON ? 'bg-muted-foreground/40' : 'bg-primary/70'}`}
+                            style={{ height: barHeight }}
+                          />
                         </div>
-                        <div className="text-[10px] text-muted-foreground mt-0.5">
-                          Max allowed: {MAX_TOTAL_MATURITY.toFixed(2)} years
-                        </div>
-                        {!localIsValidMaturity && (
-                          <div className="flex items-center gap-1 mt-1.5 text-destructive">
-                            <AlertTriangle className="h-3 w-3" />
-                            <span className="text-[10px] font-medium">Exceeds supervisory limit (5 years)</span>
-                          </div>
-                        )}
+                        {/* Input */}
+                        <input
+                          type="number"
+                          min={0} max={100} step={0.1}
+                          placeholder="0"
+                          value={isON ? val.toFixed(1) : (localNmd.distribution[b.id] != null ? localNmd.distribution[b.id] : '')}
+                          disabled={isON}
+                          onFocus={(e) => e.target.select()}
+                          onChange={(e) => handleBucketChange(b.id, e.target.value)}
+                          className={`w-full text-center text-[9px] border rounded px-0 py-0.5 outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/30 ${
+                            isON ? 'bg-muted text-muted-foreground border-border/30' : 'bg-background border-border/50'
+                          }`}
+                        />
+                        {/* Label */}
+                        <span className="text-[7px] text-muted-foreground leading-tight text-center truncate w-full">
+                          {BUCKET_SHORT_LABELS[b.id]}
+                        </span>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Parameter 3: Pass-through */}
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">Rate pass-through (%)</Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={100}
-                      step={1}
-                      value={localNmdParams.passThrough}
-                      onChange={(e) => handlePassThrough(e.target.value)}
-                      className="h-8 text-xs w-24"
-                    />
-                  </div>
-
-                  {/* Additional Details - Collapsible */}
-                  <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
-                    <CollapsibleTrigger className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors">
-                      {detailsOpen ? (
-                        <ChevronDown className="h-3 w-3" />
-                      ) : (
-                        <ChevronRight className="h-3 w-3" />
-                      )}
-                      Additional details
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="pt-3">
-                      <NMDCashflowChart
-                        coreProportion={localNmdParams.coreProportion}
-                        coreAverageMaturity={localNmdParams.coreAverageMaturity}
-                      />
-                      <p className="text-[10px] text-muted-foreground mt-2 italic">
-                        The shape of the behavioural maturity profile is fixed.
-                        The selected core maturity scales the overall timing of cash flows.
-                      </p>
-                    </CollapsibleContent>
-                  </Collapsible>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* Loan Prepayments Configuration Panel */}
-          {localProfile === 'loan-prepayments' && (
-            <div className="rounded-md border border-border bg-muted/30 p-3 space-y-4">
-              {/* Activation Toggle */}
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="loan-enabled"
-                  checked={localLoanParams.enabled}
-                  onCheckedChange={(checked) =>
-                    setLocalLoanParams(prev => ({ ...prev, enabled: !!checked }))
-                  }
-                />
-                <Label htmlFor="loan-enabled" className="text-xs font-medium cursor-pointer">
-                  Apply behavioural assumptions to Loan Prepayments
-                </Label>
               </div>
 
-              {localLoanParams.enabled && (
-                <div className="space-y-4 pt-2 border-t border-border/50">
-                  <p className="text-[10px] text-muted-foreground italic">
-                    Applies to the aggregate loan portfolio (no segmentation).
-                  </p>
-
-                  {/* Parameter: SMM */}
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">SMM – Single Monthly Mortality (monthly) (%)</Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={50}
-                      step={0.01}
-                      value={localLoanParams.smm}
-                      onChange={(e) => handleSmm(e.target.value)}
-                      className="h-8 text-xs w-24"
-                    />
-                  </div>
-
-                  {/* Calculated CPR */}
-                  <div className="rounded-md p-2 text-xs bg-muted/50 border border-border/50">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Equivalent CPR (annual):</span>
-                      <span className="font-semibold">{localCpr.toFixed(2)} %</span>
-                    </div>
-                    <div className="text-[10px] text-muted-foreground mt-1">
-                      Annualized using CPR = 1 − (1 − SMM)<sup>12</sup>
-                    </div>
-                  </div>
+              {/* Totals & WAM */}
+              <div className="flex items-center gap-4 text-[10px] px-1">
+                <span className={distributionValid ? 'text-green-700 font-medium' : 'text-destructive font-medium'}>
+                  Core total: {distributionSum.toFixed(1)}% / {coreProp.toFixed(1)}%
+                  {distributionValid ? ' \u2713' : ''}
+                </span>
+                {coreWam > 0 && (
+                  <span className="text-muted-foreground">
+                    Implied WAM (core): <span className="font-medium">{coreWam.toFixed(2)} years</span>
+                  </span>
+                )}
+                <div className="flex-1" />
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-sm bg-muted-foreground/40" />
+                    <span className="text-muted-foreground">Non-core</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-sm bg-primary/70" />
+                    <span className="text-muted-foreground">Core</span>
+                  </span>
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* Term Deposits Configuration Panel */}
-          {localProfile === 'term-deposits' && (
-            <div className="rounded-md border border-border bg-muted/30 p-3 space-y-4">
-              {/* Activation Toggle */}
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="term-enabled"
-                  checked={localTermParams.enabled}
-                  onCheckedChange={(checked) =>
-                    setLocalTermParams(prev => ({ ...prev, enabled: !!checked }))
-                  }
-                />
-                <Label htmlFor="term-enabled" className="text-xs font-medium cursor-pointer">
-                  Apply behavioural assumptions to Term Deposits
-                </Label>
               </div>
+            </div>
+          </TabsContent>
 
-              {localTermParams.enabled && (
-                <div className="space-y-4 pt-2 border-t border-border/50">
-                  <p className="text-[10px] text-muted-foreground italic">
-                    Applies to the aggregate term deposit portfolio.
-                  </p>
-
-                  {/* Parameter: TDRR */}
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">TDRR – Term Deposit Redemption Rate (monthly) (%)</Label>
-                    <Input
-                      type="number"
-                      min={0}
-                      max={50}
-                      step={0.01}
-                      value={localTermParams.tdrr}
-                      onChange={(e) => handleTdrr(e.target.value)}
-                      className="h-8 text-xs w-24"
-                    />
-                    <p className="text-[10px] text-muted-foreground">
-                      Monthly early redemption rate for term deposits.
-                    </p>
-                  </div>
-
-                  {/* Calculated Annual TDRR */}
-                  <div className="rounded-md p-2 text-xs bg-muted/50 border border-border/50">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Equivalent annual TDRR:</span>
-                      <span className="font-semibold">{localAnnualTdrr.toFixed(2)} %</span>
-                    </div>
-                    <div className="text-[10px] text-muted-foreground mt-1">
-                      Annualized using: 1 − (1 − monthly rate)<sup>12</sup>
-                    </div>
-                  </div>
+          {/* ── Loan Prepayments Tab ─────────────────────────────────── */}
+          <TabsContent value="loan" className="mt-3">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-lg border border-border/50 bg-muted/30 p-4 space-y-1.5">
+                <Label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">SMM - Single Monthly Mortality</Label>
+                <NumInput
+                  value={localLoan.smm ?? 0} min={0} max={50} step={0.01} suffix="% monthly"
+                  onChange={(v) => setLocalLoan({ smm: v })}
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Monthly prepayment rate applied to outstanding loan principal.
+                </p>
+              </div>
+              <div className="rounded-lg border border-border/50 bg-muted/30 p-4 space-y-1.5">
+                <Label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Equivalent CPR (annual)</Label>
+                <div className="h-8 flex items-center text-sm font-semibold">
+                  {localCpr > 0 ? `${localCpr.toFixed(2)}%` : <span className="text-muted-foreground/40">-</span>}
                 </div>
-              )}
+                <p className="text-[10px] text-muted-foreground">
+                  CPR = 1 - (1 - SMM)<sup>12</sup>
+                </p>
+              </div>
             </div>
-          )}
+          </TabsContent>
 
-          {/* Empty state for None profile */}
-          {localProfile === 'none' && (
-            <div className="text-center py-8 text-muted-foreground">
-              <p className="text-xs">No behavioural assumptions selected.</p>
-              <p className="text-[10px] mt-1">Select a profile to configure behavioural parameters.</p>
+          {/* ── Term Deposits Tab ────────────────────────────────────── */}
+          <TabsContent value="term" className="mt-3">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-lg border border-border/50 bg-muted/30 p-4 space-y-1.5">
+                <Label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">TDRR - Monthly Early Redemption Rate</Label>
+                <NumInput
+                  value={localTerm.tdrr ?? 0} min={0} max={50} step={0.01} suffix="% monthly"
+                  onChange={(v) => setLocalTerm({ tdrr: v })}
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Monthly rate of early withdrawals from term deposit balances.
+                </p>
+              </div>
+              <div className="rounded-lg border border-border/50 bg-muted/30 p-4 space-y-1.5">
+                <Label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Equivalent annual TDRR</Label>
+                <div className="h-8 flex items-center text-sm font-semibold">
+                  {localAnnualTdrr > 0 ? `${localAnnualTdrr.toFixed(2)}%` : <span className="text-muted-foreground/40">-</span>}
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Annual = 1 - (1 - TDRR)<sup>12</sup>
+                </p>
+              </div>
             </div>
-          )}
-        </div>
+          </TabsContent>
+        </Tabs>
 
-        <DialogFooter className="gap-2">
-          <Button variant="outline" size="sm" onClick={handleCancel} className="text-xs">
+        <DialogFooter className="gap-2 mt-2">
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="text-xs">
             Cancel
           </Button>
-          <Button
-            size="sm"
-            onClick={handleApply}
-            disabled={localProfile === 'nmd' && localNmdParams.enabled && !localIsValidMaturity}
-            className="text-xs"
-          >
-            Apply assumptions
+          <Button size="sm" onClick={handleApply} className="text-xs">
+            Apply & Close
           </Button>
         </DialogFooter>
       </DialogContent>

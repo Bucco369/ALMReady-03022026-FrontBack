@@ -270,5 +270,6 @@ export function runCalculation(
     worstCaseScenario,
     scenarioResults,
     calculatedAt: new Date().toISOString(),
+    warnings: [],
   };
 }

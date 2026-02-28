@@ -4,6 +4,12 @@ node_modules/
 # ── Build output ──
 dist/
 dist-ssr/
+backend/build/
+backend/dist/
+
+# ── Tauri ──
+src-tauri/target/
+src-tauri/gen/
 
 # ── Logs ──
 logs/

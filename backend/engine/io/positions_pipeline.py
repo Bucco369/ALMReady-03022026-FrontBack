@@ -164,6 +164,7 @@ def load_positions_from_specs(
     source_specs: Sequence[Mapping[str, Any]] | None = None,
     on_progress: Callable[[int, int], None] | None = None,
     parallel: int = 0,
+    executor: ProcessPoolExecutor | None = None,
 ) -> pd.DataFrame:
     """
     Loads and canonicalises positions from multiple files using declarative SOURCE_SPECS.
@@ -172,9 +173,11 @@ def load_positions_from_specs(
     file size so large files move the bar proportionally more than small ones.
     Within each CSV file, progress updates every 50K rows via chunked reading.
 
-    When parallel > 0, uses a ThreadPoolExecutor with that many workers to read
-    files concurrently.  pd.read_csv releases the GIL during C-level parsing,
-    so threads genuinely overlap I/O and parsing work.
+    When parallel > 0, uses a ProcessPoolExecutor to read files concurrently.
+    If *executor* is provided (e.g. the pre-warmed pool from the app lifespan),
+    tasks are submitted to it — avoiding the overhead of spawning new worker
+    processes (critical in PyInstaller frozen binaries where each new process
+    re-imports the entire application stack).
     """
 
     base_path = Path(root_path)
@@ -227,40 +230,54 @@ def load_positions_from_specs(
     # CPU-bound type conversion and string processing.  Workers write results
     # as Parquet temp files instead of returning DataFrames via pickle,
     # avoiding ~15s of serialization overhead on 1.5M+ row datasets.
+    #
+    # When an external *executor* is supplied (e.g. the pre-warmed pool from
+    # the FastAPI lifespan), we submit tasks to it directly.  This avoids
+    # spawning a second set of worker processes — critical in PyInstaller
+    # frozen binaries where each spawn re-executes the entire frozen exe,
+    # re-importing the full app stack (10-20s overhead + 200MB per worker).
     if parallel > 0 and len(file_tasks) > 1:
         import tempfile, shutil
 
         workers = min(parallel, len(file_tasks))
         module_name = mapping_module.__name__
-        ctx = mp.get_context("spawn")  # safe on macOS (avoids fork-safety issues)
         tmpdir = tempfile.mkdtemp(prefix="alm_parallel_")
+
+        # Decide whether to use the caller's executor or create a fresh one.
+        own_pool = executor is None
+        pool: ProcessPoolExecutor | None = None
 
         try:
             ordered_paths: list[tuple[int, list[str]]] = []
             completed_bytes = 0
 
-            with ProcessPoolExecutor(
-                max_workers=workers,
-                mp_context=ctx,
-                initializer=_init_worker,
-            ) as pool:
-                futures = {}
-                for task_id, (raw_spec, source_file, effective_sheets) in enumerate(file_tasks):
-                    file_bytes = source_file.stat().st_size
-                    fut = pool.submit(
-                        _read_one_task_to_parquet,
-                        task_id, dict(raw_spec), source_file, effective_sheets,
-                        module_name, tmpdir,
-                    )
-                    futures[fut] = (task_id, file_bytes)
+            if own_pool:
+                ctx = mp.get_context("spawn")  # safe on macOS (avoids fork-safety issues)
+                pool = ProcessPoolExecutor(
+                    max_workers=workers,
+                    mp_context=ctx,
+                    initializer=_init_worker,
+                )
+            else:
+                pool = executor
 
-                for fut in as_completed(futures):
-                    task_id, file_bytes = futures[fut]
-                    parquet_paths = fut.result()  # lightweight list of strings
-                    ordered_paths.append((task_id, parquet_paths))
-                    completed_bytes += file_bytes
-                    if on_progress and total_bytes > 0:
-                        on_progress(completed_bytes, total_bytes)
+            futures = {}
+            for task_id, (raw_spec, source_file, effective_sheets) in enumerate(file_tasks):
+                file_bytes = source_file.stat().st_size
+                fut = pool.submit(
+                    _read_one_task_to_parquet,
+                    task_id, dict(raw_spec), source_file, effective_sheets,
+                    module_name, tmpdir,
+                )
+                futures[fut] = (task_id, file_bytes)
+
+            for fut in as_completed(futures):
+                task_id, file_bytes = futures[fut]
+                parquet_paths = fut.result()  # lightweight list of strings
+                ordered_paths.append((task_id, parquet_paths))
+                completed_bytes += file_bytes
+                if on_progress and total_bytes > 0:
+                    on_progress(completed_bytes, total_bytes)
 
             # Read temp Parquet files in original spec order for deterministic concat
             ordered_paths.sort(key=lambda x: x[0])
@@ -270,6 +287,8 @@ def load_positions_from_specs(
                 for p in paths
             ]
         finally:
+            if own_pool and pool is not None:
+                pool.shutdown(wait=True)
             shutil.rmtree(tmpdir, ignore_errors=True)
 
         if not frames:

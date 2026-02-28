@@ -45,12 +45,14 @@ _IMPLEMENTED_SOURCE_CONTRACT_TYPES = {
     "variable_bullet",
     "variable_linear",
     "variable_scheduled",
+    "variable_non_maturity",
 }
 _EXCLUDED_SOURCE_CONTRACT_TYPES = {
     "static_position",
     "fixed_non_maturity",
-    "variable_non_maturity",
 }
+
+_VARIABLE_NMD_SYNTHETIC_MATURITY_YEARS = 30
 
 
 def _normalise_source_contract_type(series: pd.Series) -> pd.Series:
@@ -85,7 +87,20 @@ def _split_implemented_positions(positions: pd.DataFrame) -> pd.DataFrame:
             )
 
         mask = sct.isin(_IMPLEMENTED_SOURCE_CONTRACT_TYPES)
-        return positions.loc[mask].copy()
+        result = positions.loc[mask].copy()
+
+        # Route variable_non_maturity → variable_bullet with synthetic maturity
+        if not result.empty and "source_contract_type" in result.columns:
+            sct_r = _normalise_source_contract_type(result["source_contract_type"])
+            vnm_mask = sct_r.eq("variable_non_maturity")
+            if vnm_mask.any():
+                synthetic_mat = date.today().replace(
+                    year=date.today().year + _VARIABLE_NMD_SYNTHETIC_MATURITY_YEARS
+                )
+                result.loc[vnm_mask, "maturity_date"] = synthetic_mat
+                result.loc[vnm_mask, "source_contract_type"] = "variable_bullet"
+
+        return result
 
     if "rate_type" not in positions.columns:
         raise ValueError(
@@ -616,6 +631,7 @@ def _compute_renewal_nii(
     monthly: dict[int, dict[str, float]],
     month_bounds: list[date] | None = None,
     rate_cache: dict[tuple[str, date], float] | None = None,
+    cpr_annual: float = 0.0,
 ) -> float:
     """Compute renewal NII for a single contract that matures before horizon_end.
 
@@ -724,6 +740,7 @@ def _compute_renewal_nii(
                 cycle_maturity=cycle_maturity, outstanding=notional,
                 sign=sign, base=base, fixed_rate=renew_rate,
                 payment_frequency=payment_frequency,
+                cpr_annual=cpr_annual,
             )
             total_nii += nii
             _prorate_to_months(
@@ -788,6 +805,7 @@ def _compute_renewal_nii(
                 floor_rate=floor_rate, cap_rate=cap_rate,
                 curve_set=curve_set, anchor_date=renewal_anchor,
                 frequency=frequency, fixed_rate_for_stub=None,
+                cpr_annual=cpr_annual,
             )
             total_nii += nii
             _prorate_to_months(
@@ -829,6 +847,7 @@ def _compute_renewal_nii(
                 repricing_frequency=frequency,
                 fixed_rate_for_stub=None,
                 annuity_payment_mode=annuity_mode,
+                cpr_annual=cpr_annual,
             )
             total_nii += nii
             _prorate_to_months(
@@ -859,6 +878,7 @@ def _compute_renewal_nii(
                 cap_rate=cap_rate, curve_set=curve_set,
                 anchor_date=renewal_anchor, frequency=frequency,
                 fixed_rate_for_stub=None,
+                cpr_annual=cpr_annual,
             )
             total_nii += nii
             _prorate_to_months(
@@ -900,6 +920,7 @@ def _compute_renewal_nii(
                 cycle_start=cycle_start, cycle_end=cycle_end,
                 outstanding=notional, sign=sign, base=base,
                 fixed_rate=renew_rate, principal_flow_map=flow_map,
+                cpr_annual=cpr_annual,
             )
             total_nii += nii
             _prorate_to_months(
@@ -943,6 +964,7 @@ def _compute_renewal_nii(
                 cap_rate=cap_rate, anchor_date=renewal_anchor,
                 frequency=frequency, fixed_rate_for_stub=None,
                 principal_flow_map=flow_map,
+                cpr_annual=cpr_annual,
             )
             total_nii += nii
             _prorate_to_months(
@@ -965,6 +987,10 @@ def compute_nii_from_cashflows(
     margin_set: CalibratedMarginSet | None = None,
     risk_free_index: str = "EUR_ESTR_OIS",
     scheduled_principal_flows: pd.DataFrame | None = None,
+    nmd_params=None,
+    cpr_annual: float = 0.0,
+    tdrr_annual: float = 0.0,
+    nmd_rate_delta: float = 0.0,
 ) -> NiiFromCashflowsResult:
     """Derive NII (aggregate + monthly) from EVE cashflows.
 
@@ -1004,7 +1030,7 @@ def compute_nii_from_cashflows(
 
     # Filter NII-eligible positions
     nii_positions = _split_implemented_positions(positions_df)
-    if nii_positions.empty:
+    if nii_positions.empty and nmd_params is None:
         return empty_result
 
     # Build position lookup by contract_id
@@ -1217,12 +1243,20 @@ def compute_nii_from_cashflows(
 
                 # ── C. Renewal NII ────────────────────────────────────────
                 if balance_constant and maturity_date < horizon_end:
+                    # Determine decay rate: CPR for assets, TDRR for term deposits
+                    _decay = cpr_annual if is_asset else (
+                        tdrr_annual if (
+                            "is_term_deposit" in nii_positions.columns
+                            and getattr(pos, "is_term_deposit", False)
+                        ) else 0.0
+                    )
                     renewal_nii = _compute_renewal_nii(
                         pos, cid, sct, curve_set, analysis_date, horizon_end,
                         horizon_months, notional, sign, base, is_asset,
                         margin_set, risk_free_index, nii_positions,
                         scheduled_principal_flows, monthly,
                         month_bounds, rate_cache,
+                        cpr_annual=_decay,
                     )
                     if is_asset:
                         total_income += renewal_nii
@@ -1314,17 +1348,159 @@ def compute_nii_from_cashflows(
                         total_expense += pre_nii
 
                 # Renewal
+                _decay2 = cpr_annual if is_asset else (
+                    tdrr_annual if (
+                        "is_term_deposit" in nii_positions.columns
+                        and getattr(pos, "is_term_deposit", False)
+                    ) else 0.0
+                )
                 renewal_nii = _compute_renewal_nii(
                     pos, cid, sct, curve_set, analysis_date, horizon_end,
                     horizon_months, notional, sign, base, is_asset,
                     margin_set, risk_free_index, nii_positions,
                     scheduled_principal_flows, monthly,
                     month_bounds, rate_cache,
+                    cpr_annual=_decay2,
                 )
                 if is_asset:
                     total_income += renewal_nii
                 else:
                     total_expense += renewal_nii
+
+    # ── NMD NII (deposit β repricing) ────────────────────────────────────
+    # NMD positions (fixed_non_maturity) are excluded from Sections A-C.
+    # This block computes the FULL NMD NII at the repriced rate:
+    #   repriced_rate = max(client_rate + β × Δr, 0)
+    # Non-core: reprices next day → full horizon at repriced_rate
+    # Core ≤12M: avg_rate until midpoint, repriced_rate after
+    # Core >12M: no repricing within horizon → avg_rate for full horizon
+    if nmd_params is not None and not cashflows_df.empty:
+        from engine.config.nmd_buckets import NMD_BUCKET_MAP
+
+        beta = nmd_params.pass_through_fraction  # 0-1
+        core_frac = nmd_params.core_proportion / 100.0
+        distribution = nmd_params.distribution  # bucket_id → % of total
+
+        # Identify NMD cashflows by synthetic contract_id prefix
+        nmd_cf_mask = cashflows_df["contract_id"].astype(str).str.startswith("NMD_")
+        nmd_cf = cashflows_df.loc[nmd_cf_mask]
+        if not nmd_cf.empty:
+            for side_val in ("A", "L"):
+                is_asset_side = side_val == "A"
+                prefix = f"NMD_{side_val}_"
+                side_cf = nmd_cf[nmd_cf["contract_id"].astype(str).str.startswith(prefix)]
+                if side_cf.empty:
+                    continue
+
+                # Get avg_rate from original NMD positions
+                if "source_contract_type" in positions_df.columns:
+                    sct_col = _normalise_source_contract_type(
+                        positions_df["source_contract_type"]
+                    )
+                    nmd_pos_mask = sct_col.eq("fixed_non_maturity")
+                    nmd_pos_side = positions_df.loc[nmd_pos_mask]
+                    if not nmd_pos_side.empty:
+                        side_col = nmd_pos_side["side"].astype(str).str.strip().str.upper()
+                        nmd_pos_side = nmd_pos_side.loc[side_col.eq(side_val)]
+                else:
+                    nmd_pos_side = pd.DataFrame()
+
+                if nmd_pos_side.empty:
+                    continue
+
+                notionals = nmd_pos_side["notional"].astype(float)
+                total_notional = float(notionals.sum())
+                if abs(total_notional) < 1e-10:
+                    continue
+
+                rates = nmd_pos_side["fixed_rate"].astype(float)
+                avg_rate = float((rates * notionals).sum() / total_notional)
+                sign = 1.0 if is_asset_side else -1.0
+
+                repriced_rate = max(avg_rate + beta * nmd_rate_delta, 0.0)
+
+                # Non-core: full horizon at repriced_rate
+                noncore_notional = total_notional * (1.0 - core_frac)
+                if abs(noncore_notional) > 1e-10:
+                    yf_horizon = yearfrac(analysis_date, horizon_end, "ACT/365")
+                    nmd_nii = sign * noncore_notional * repriced_rate * yf_horizon
+                    if is_asset_side:
+                        total_income += nmd_nii
+                    else:
+                        total_expense += nmd_nii
+                    per_month = nmd_nii / horizon_months
+                    for mi in range(1, horizon_months + 1):
+                        if is_asset_side:
+                            monthly[mi]["income"] += per_month
+                        else:
+                            monthly[mi]["expense"] += per_month
+
+                # Core buckets
+                for bucket_id, weight_pct in distribution.items():
+                    if weight_pct <= 0.0 or bucket_id == "ON":
+                        continue
+                    bucket = NMD_BUCKET_MAP.get(bucket_id)
+                    if bucket is None:
+                        continue
+                    notional_k = total_notional * (weight_pct / 100.0)
+                    if abs(notional_k) < 1e-10:
+                        continue
+
+                    midpoint_years = bucket.midpoint_years
+
+                    if midpoint_years > (horizon_months / 12.0):
+                        # Core >12M: no repricing — full horizon at avg_rate
+                        yf_h = yearfrac(analysis_date, horizon_end, "ACT/365")
+                        nmd_nii_k = sign * notional_k * avg_rate * yf_h
+                        if abs(nmd_nii_k) > 1e-16:
+                            if is_asset_side:
+                                total_income += nmd_nii_k
+                            else:
+                                total_expense += nmd_nii_k
+                            per_m = nmd_nii_k / horizon_months
+                            for mi in range(1, horizon_months + 1):
+                                if is_asset_side:
+                                    monthly[mi]["income"] += per_m
+                                else:
+                                    monthly[mi]["expense"] += per_m
+                        continue
+
+                    # Core ≤12M: avg_rate until midpoint, repriced_rate after
+                    from datetime import timedelta as _td
+                    midpoint_date = analysis_date + _td(
+                        days=int(round(midpoint_years * 365.25))
+                    )
+                    if midpoint_date > horizon_end:
+                        midpoint_date = horizon_end
+
+                    yf_pre = yearfrac(analysis_date, midpoint_date, "ACT/365")
+                    yf_post = yearfrac(midpoint_date, horizon_end, "ACT/365")
+
+                    nmd_nii_k = sign * (
+                        notional_k * avg_rate * yf_pre
+                        + notional_k * repriced_rate * yf_post
+                    )
+
+                    if abs(nmd_nii_k) > 1e-16:
+                        if is_asset_side:
+                            total_income += nmd_nii_k
+                        else:
+                            total_expense += nmd_nii_k
+                        # Pre-midpoint: pro-rate avg_rate portion
+                        _prorate_to_months(
+                            sign * notional_k * avg_rate * yf_pre,
+                            analysis_date, midpoint_date,
+                            analysis_date, horizon_months, is_asset_side, monthly,
+                            month_bounds,
+                        )
+                        # Post-midpoint: pro-rate repriced portion
+                        if yf_post > 1e-14:
+                            _prorate_to_months(
+                                sign * notional_k * repriced_rate * yf_post,
+                                midpoint_date, horizon_end,
+                                analysis_date, horizon_months, is_asset_side, monthly,
+                                month_bounds,
+                            )
 
     aggregate = total_income + total_expense
 

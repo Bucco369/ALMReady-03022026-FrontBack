@@ -278,12 +278,34 @@ export type BalanceContractsQuery = {
   limit?: number;
 };
 
+export type NMDBehaviouralParams = {
+  core_proportion: number;
+  core_average_maturity: number;
+  pass_through_rate: number;
+  distribution: Record<string, number>;
+};
+
+export type LoanPrepaymentParams = {
+  smm: number;
+};
+
+export type TermDepositParams = {
+  tdrr: number;
+};
+
+export type BehaviouralAssumptions = {
+  nmd?: NMDBehaviouralParams;
+  loan_prepayment?: LoanPrepaymentParams;
+  term_deposit?: TermDepositParams;
+};
+
 export type CalculateRequest = {
   discount_curve_id?: string;
   scenarios?: string[];
   analysis_date?: string;
   currency?: string;
   risk_free_index?: string;
+  behavioural?: BehaviouralAssumptions;
 };
 
 export type WhatIfModificationRequest = {
@@ -305,6 +327,10 @@ export type WhatIfModificationRequest = {
   repricingFreq?: string;
   refIndex?: string;
   spread?: number;
+  // V2 enrichment fields
+  amortization?: string;
+  floorRate?: number;
+  capRate?: number;
 };
 
 export type WhatIfCalculateRequestBody = {
@@ -358,6 +384,7 @@ export type CalculationResultsResponse = {
   worst_case_scenario: string;
   scenario_results: ScenarioResultItem[];
   calculated_at: string;
+  warnings: string[];
 };
 
 export { API_BASE };
@@ -419,9 +446,10 @@ export type UploadProgressResponse = {
   phase_label?: string;
 };
 
-export async function getUploadProgress(sessionId: string): Promise<UploadProgressResponse> {
+export async function getUploadProgress(sessionId: string, signal?: AbortSignal): Promise<UploadProgressResponse> {
   return http<UploadProgressResponse>(
-    `/api/sessions/${encodeURIComponent(sessionId)}/upload-progress`
+    `/api/sessions/${encodeURIComponent(sessionId)}/upload-progress`,
+    signal ? { signal } : undefined,
   );
 }
 
@@ -557,6 +585,94 @@ export async function calculateWhatIf(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(request),
+    }
+  );
+}
+
+// ── What-If V2: Decompose + Find Limit ──────────────────────────────────────
+
+import type {
+  LoanSpec,
+  DecomposeResponse,
+  FindLimitRequest as FindLimitRequestBody,
+  FindLimitResponse as FindLimitResponseBody,
+} from '@/types/whatif';
+
+export async function decomposePosition(
+  sessionId: string,
+  spec: LoanSpec,
+): Promise<DecomposeResponse> {
+  // Convert camelCase spec to snake_case for backend
+  const payload = {
+    id: spec.id,
+    notional: spec.notional,
+    term_years: spec.termYears,
+    side: spec.side ?? 'A',
+    currency: spec.currency ?? 'EUR',
+    rate_type: spec.rateType,
+    fixed_rate: spec.fixedRate,
+    variable_index: spec.variableIndex,
+    spread_bps: spec.spreadBps ?? 0,
+    mixed_fixed_years: spec.mixedFixedYears,
+    amortization: spec.amortization,
+    grace_years: spec.graceYears ?? 0,
+    daycount: spec.daycount ?? '30/360',
+    payment_freq: spec.paymentFreq ?? '12M',
+    repricing_freq: spec.repricingFreq,
+    start_date: spec.startDate,
+    floor_rate: spec.floorRate,
+    cap_rate: spec.capRate,
+    label: spec.label ?? '',
+  };
+  return http<DecomposeResponse>(
+    `/api/sessions/${encodeURIComponent(sessionId)}/whatif/decompose`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }
+  );
+}
+
+export async function findLimit(
+  sessionId: string,
+  request: FindLimitRequestBody,
+): Promise<FindLimitResponseBody> {
+  // Convert camelCase product_spec to snake_case for backend
+  const spec = request.product_spec;
+  const payload = {
+    product_spec: {
+      id: spec.id,
+      notional: spec.notional,
+      term_years: spec.termYears,
+      side: spec.side ?? 'A',
+      currency: spec.currency ?? 'EUR',
+      rate_type: spec.rateType,
+      fixed_rate: spec.fixedRate,
+      variable_index: spec.variableIndex,
+      spread_bps: spec.spreadBps ?? 0,
+      mixed_fixed_years: spec.mixedFixedYears,
+      amortization: spec.amortization,
+      grace_years: spec.graceYears ?? 0,
+      daycount: spec.daycount ?? '30/360',
+      payment_freq: spec.paymentFreq ?? '12M',
+      repricing_freq: spec.repricingFreq,
+      start_date: spec.startDate,
+      floor_rate: spec.floorRate,
+      cap_rate: spec.capRate,
+      label: spec.label ?? '',
+    },
+    target_metric: request.target_metric,
+    target_scenario: request.target_scenario,
+    limit_value: request.limit_value,
+    solve_for: request.solve_for,
+  };
+  return http<FindLimitResponseBody>(
+    `/api/sessions/${encodeURIComponent(sessionId)}/whatif/find-limit`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
     }
   );
 }

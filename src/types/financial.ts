@@ -110,6 +110,7 @@ export interface CalculationResults {
   worstCaseScenario: ScenarioType;  // Name of the worst scenario
   scenarioResults: ScenarioResult[];  // Per-scenario breakdown
   calculatedAt: string;         // ISO timestamp of when calculation ran
+  warnings: string[];           // Non-blocking warnings (e.g. excluded instrument types)
 }
 
 /**

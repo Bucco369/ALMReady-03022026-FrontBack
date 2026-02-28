@@ -1,0 +1,45 @@
+[package]
+name = "almready"
+version = "1.0.0"
+description = "ALMReady – Asset-Liability Management risk analysis tool"
+authors = []
+edition = "2021"
+rust-version = "1.77.2"
+
+# See https://doc.rust-lang.org/cargo/reference/manifest.html
+# The lib crate allows running Tauri commands in tests and also satisfies
+# the mobile build requirements for future iOS/Android targets.
+[lib]
+name = "almready_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Async runtime: used in setup() to spawn the sidecar-management task.
+# We only need the subset of features required: rt, rt-multi-thread, macros,
+# net (TcpStream health check), time (sleep between polls).
+tokio = { version = "1", features = [
+    "rt",
+    "rt-multi-thread",
+    "macros",
+    "net",
+    "time",
+    "io-util",
+    "process",
+] }
+
+[profile.release]
+# Strip debug symbols from the release binary to reduce its size.
+strip = true
+# Link-time optimisation – produces a smaller, faster binary.
+lto = true
+# Reduce parallelism in exchange for a slightly smaller binary.
+codegen-units = 1
+# Abort on panic in release (avoids the unwinding overhead).
+panic = "abort"

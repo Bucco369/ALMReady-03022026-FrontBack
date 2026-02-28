@@ -167,6 +167,44 @@ class CurvePointsResponse(BaseModel):
     points: list[CurvePoint]
 
 
+# ── Behavioural Assumptions ─────────────────────────────────────────────────
+
+class NMDBehaviouralParams(BaseModel):
+    core_proportion: float          # 0–100 (%)
+    core_average_maturity: float    # years (informational — derived from distribution)
+    pass_through_rate: float        # 0–100 (%), NII repricing sensitivity
+    distribution: dict[str, float]  # bucket_id → % of total NMDs
+
+    @property
+    def pass_through_fraction(self) -> float:
+        """Convert pass-through rate from % to 0–1 fraction for engine use."""
+        return self.pass_through_rate / 100.0
+
+
+class LoanPrepaymentParams(BaseModel):
+    smm: float                      # 0–50 (%) monthly
+
+    @property
+    def cpr_annual(self) -> float:
+        """Convert SMM (monthly %) to CPR (annual fraction) for engine use."""
+        return 1.0 - (1.0 - self.smm / 100.0) ** 12
+
+
+class TermDepositParams(BaseModel):
+    tdrr: float                     # 0–50 (%) monthly
+
+    @property
+    def tdrr_annual(self) -> float:
+        """Convert monthly TDRR (%) to annual fraction for engine use."""
+        return 1.0 - (1.0 - self.tdrr / 100.0) ** 12
+
+
+class BehaviouralAssumptions(BaseModel):
+    nmd: NMDBehaviouralParams | None = None
+    loan_prepayment: LoanPrepaymentParams | None = None
+    term_deposit: TermDepositParams | None = None
+
+
 # ── Calculation ─────────────────────────────────────────────────────────────
 
 class CalculateRequest(BaseModel):
@@ -177,6 +215,7 @@ class CalculateRequest(BaseModel):
     analysis_date: str | None = None
     currency: str = "EUR"
     risk_free_index: str | None = None
+    behavioural: BehaviouralAssumptions | None = None
 
 
 class ScenarioResultItem(BaseModel):
@@ -197,6 +236,7 @@ class CalculationResultsResponse(BaseModel):
     worst_case_scenario: str
     scenario_results: list[ScenarioResultItem]
     calculated_at: str
+    warnings: list[str] = []
 
 
 # ── What-If ─────────────────────────────────────────────────────────────────
@@ -220,6 +260,12 @@ class WhatIfModificationItem(BaseModel):
     repricingFreq: str | None = None
     refIndex: str | None = None
     spread: float | None = None
+    # V2 fields (from What-If Workbench)
+    amortization: str | None = None       # 'bullet' | 'linear' | 'annuity'
+    floorRate: float | None = None        # Interest rate floor (decimal)
+    capRate: float | None = None          # Interest rate cap (decimal)
+    grace_years: float | None = None      # Grace period (years) — approximated in V1
+    mixedFixedYears: float | None = None  # Mixed rate fixed period — approximated in V1
 
 
 class WhatIfCalculateRequest(BaseModel):
@@ -280,3 +326,81 @@ class ChartDataResponse(BaseModel):
     session_id: str
     eve_buckets: list[ChartBucketRow]
     nii_monthly: list[ChartNiiMonthRow]
+
+
+# ── What-If V2 (Decomposer) ──────────────────────────────────────────────
+
+class LoanSpecItem(BaseModel):
+    """Rich loan spec sent from frontend — maps to decomposer.LoanSpec."""
+    id: str
+    notional: float
+    term_years: float
+    side: str = "A"
+    currency: str = "EUR"
+    rate_type: str = "fixed"
+    fixed_rate: float | None = None
+    variable_index: str | None = None
+    spread_bps: float = 0.0
+    mixed_fixed_years: float | None = None
+    amortization: str = "bullet"
+    grace_years: float = 0.0
+    daycount: str = "30/360"
+    payment_freq: str = "12M"
+    repricing_freq: str | None = None
+    start_date: str | None = None
+    floor_rate: float | None = None
+    cap_rate: float | None = None
+    label: str = ""
+
+
+class DecomposedPosition(BaseModel):
+    """Single motor position from decomposer."""
+    contract_id: str
+    side: str
+    source_contract_type: str
+    notional: float
+    fixed_rate: float
+    spread: float
+    start_date: str
+    maturity_date: str
+    index_name: str | None = None
+    next_reprice_date: str | None = None
+    daycount_base: str
+    payment_freq: str
+    repricing_freq: str | None = None
+    currency: str
+    floor_rate: float | None = None
+    cap_rate: float | None = None
+    rate_type: str
+
+
+class DecomposeResponse(BaseModel):
+    session_id: str
+    positions: list[DecomposedPosition]
+    position_count: int
+
+
+class WhatIfV2CalculateRequest(BaseModel):
+    additions: list[LoanSpecItem] = Field(default_factory=list)
+    removals: list[WhatIfModificationItem] = Field(default_factory=list)
+
+
+class FindLimitRequest(BaseModel):
+    product_spec: LoanSpecItem
+    target_metric: str          # "eve" | "nii"
+    target_scenario: str        # "base" | "worst" | scenario name
+    limit_value: float          # absolute target
+    solve_for: str              # "notional" | "rate" | "maturity" | "spread"
+
+
+class FindLimitResponse(BaseModel):
+    session_id: str
+    found_value: float
+    achieved_metric: float
+    target_metric: str
+    target_scenario: str
+    solve_for: str
+    converged: bool
+    iterations: int
+    tolerance: float
+    product_spec: LoanSpecItem

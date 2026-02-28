@@ -57,12 +57,16 @@ _IMPLEMENTED_SOURCE_CONTRACT_TYPES = {
     "variable_bullet",
     "variable_linear",
     "variable_scheduled",
+    "variable_non_maturity",
 }
 _EXCLUDED_SOURCE_CONTRACT_TYPES = {
     "static_position",
     "fixed_non_maturity",
-    "variable_non_maturity",
 }
+
+# Synthetic maturity for variable NMDs (30 years from analysis_date).
+# EVE sensitivity is driven by time to next repricing, not maturity.
+_VARIABLE_NMD_SYNTHETIC_MATURITY_YEARS = 30
 
 _DEFAULT_BULLET_PAYMENT_FREQUENCY = (1, "Y")
 
@@ -157,6 +161,74 @@ def _append_contract_records(
         )
 
 
+def _daycount_base_days(convention: str) -> float:
+    """Extract the numeric base (360 or 365) from a daycount convention string."""
+    c = str(convention).strip().upper()
+    if "365" in c:
+        return 365.0
+    return 360.0  # 30/360, ACT/360 → 360
+
+
+def _apply_cpr_overlay(
+    flow_map: dict[date, dict[str, float]],
+    *,
+    outstanding: float,
+    sign: float,
+    cpr_annual: float,
+    daycount_base_days: float,
+    accrual_start: date | None = None,
+) -> dict[date, dict[str, float]]:
+    """Apply CPR/TDRR dual-schedule overlay to a contractual flow_map.
+
+    Reads the signed contractual flows, computes behavioural (prepaid)
+    flows using the Banca Etica validated formula:
+        QCm(t) = DRm(t) * min(1, QCc(t)/DRc(t) + CPRp(t))
+        QIp(t) = QIc(t) * DRm(t) / DRc(t)
+    Returns a new flow_map with behavioural values.
+    """
+    if cpr_annual <= 0.0:
+        return flow_map
+
+    sorted_dates = sorted(flow_map.keys())
+    if not sorted_dates:
+        return flow_map
+
+    behavioural: dict[date, dict[str, float]] = {}
+    DRc = float(outstanding)
+    DRm = float(outstanding)
+    # For the first period, use accrual_start if provided so the first
+    # flow gets a non-zero CPRp (matching Banca Etica validation).
+    prev_date = accrual_start if accrual_start is not None else sorted_dates[0]
+
+    for flow_date in sorted_dates:
+        vals = flow_map[flow_date]
+        QIc = abs(float(vals.get("interest_amount", 0.0)))
+        QCc = abs(float(vals.get("principal_amount", 0.0)))
+
+        # Periodic CPR from days since previous flow (or accrual_start)
+        days = (flow_date - prev_date).days
+        CPRp = 1.0 - (1.0 - cpr_annual) ** (days / daycount_base_days) if days > 0 else 0.0
+
+        # Contractual amortization rate
+        amort_rate = QCc / DRc if DRc > 1e-10 else 1.0
+
+        # Behavioural principal and interest
+        combined = min(1.0, amort_rate + CPRp)
+        QCm = DRm * combined
+        QIp = QIc * (DRm / DRc) if DRc > 1e-10 else 0.0
+
+        behavioural[flow_date] = {
+            "interest_amount": sign * QIp,
+            "principal_amount": sign * QCm,
+        }
+
+        DRm = max(0.0, DRm - QCm)
+        DRc = max(0.0, DRc - QCc)
+        prev_date = flow_date
+
+    return behavioural
+
+
 def _positions_by_supported_type(positions: pd.DataFrame) -> dict[str, pd.DataFrame]:
     if positions.empty:
         return {}
@@ -179,9 +251,30 @@ def _positions_by_supported_type(positions: pd.DataFrame) -> dict[str, pd.DataFr
 
         out: dict[str, pd.DataFrame] = {}
         for contract_type in sorted(_IMPLEMENTED_SOURCE_CONTRACT_TYPES):
+            if contract_type == "variable_non_maturity":
+                continue  # handled below — routed to variable_bullet
             mask = sct.eq(contract_type)
             if mask.any():
                 out[contract_type] = positions.loc[mask].copy()
+
+        # Route variable_non_maturity → variable_bullet with synthetic maturity
+        vnm_mask = sct.eq("variable_non_maturity")
+        if vnm_mask.any():
+            vnm_df = positions.loc[vnm_mask].copy()
+            # Synthetic maturity 30Y from today — far enough that EVE sensitivity
+            # is driven by repricing frequency, not maturity.
+            synthetic_mat = date.today().replace(
+                year=date.today().year + _VARIABLE_NMD_SYNTHETIC_MATURITY_YEARS
+            )
+            vnm_df["maturity_date"] = synthetic_mat
+            vnm_df["source_contract_type"] = "variable_bullet"
+            if "variable_bullet" in out:
+                out["variable_bullet"] = pd.concat(
+                    [out["variable_bullet"], vnm_df], ignore_index=True
+                )
+            else:
+                out["variable_bullet"] = vnm_df
+
         return out
 
     if "rate_type" not in positions.columns or "maturity_date" not in positions.columns:
@@ -213,6 +306,7 @@ def _extend_fixed_bullet_cashflows(
     *,
     positions: pd.DataFrame,
     analysis_date: date,
+    cpr_annual: float = 0.0,
 ) -> None:
     if positions.empty:
         return
@@ -263,6 +357,12 @@ def _extend_fixed_bullet_cashflows(
             prev = pay_date
 
         _add_flow(flow_map, flow_date=maturity_date, principal_amount=sign * notional)
+        if cpr_annual > 0.0:
+            flow_map = _apply_cpr_overlay(
+                flow_map, outstanding=notional, sign=sign,
+                cpr_annual=cpr_annual, daycount_base_days=_daycount_base_days(base),
+                accrual_start=analysis_date,
+            )
         _append_contract_records(
             records,
             flow_map=flow_map,
@@ -279,6 +379,7 @@ def _extend_fixed_linear_cashflows(
     *,
     positions: pd.DataFrame,
     analysis_date: date,
+    cpr_annual: float = 0.0,
 ) -> None:
     if positions.empty:
         return
@@ -344,6 +445,12 @@ def _extend_fixed_linear_cashflows(
             )
             prev = pay_date
 
+        if cpr_annual > 0.0:
+            flow_map = _apply_cpr_overlay(
+                flow_map, outstanding=outstanding, sign=sign,
+                cpr_annual=cpr_annual, daycount_base_days=_daycount_base_days(base),
+                accrual_start=analysis_date,
+            )
         _append_contract_records(
             records,
             flow_map=flow_map,
@@ -360,6 +467,7 @@ def _extend_fixed_annuity_cashflows(
     *,
     positions: pd.DataFrame,
     analysis_date: date,
+    cpr_annual: float = 0.0,
 ) -> None:
     if positions.empty:
         return
@@ -428,6 +536,12 @@ def _extend_fixed_annuity_cashflows(
             balance = max(0.0, balance - principal)
             prev = pay_date
 
+        if cpr_annual > 0.0:
+            flow_map = _apply_cpr_overlay(
+                flow_map, outstanding=outstanding, sign=sign,
+                cpr_annual=cpr_annual, daycount_base_days=_daycount_base_days(base),
+                accrual_start=analysis_date,
+            )
         _append_contract_records(
             records,
             flow_map=flow_map,
@@ -445,6 +559,7 @@ def _extend_variable_bullet_cashflows(
     positions: pd.DataFrame,
     analysis_date: date,
     projection_curve_set: ForwardCurveSet,
+    cpr_annual: float = 0.0,
 ) -> None:
     if positions.empty:
         return
@@ -553,6 +668,12 @@ def _extend_variable_bullet_cashflows(
             period_start = pay_date
 
         _add_flow(flow_map, flow_date=maturity_date, principal_amount=sign * notional)
+        if cpr_annual > 0.0:
+            flow_map = _apply_cpr_overlay(
+                flow_map, outstanding=notional, sign=sign,
+                cpr_annual=cpr_annual, daycount_base_days=_daycount_base_days(base),
+                accrual_start=analysis_date,
+            )
         _append_contract_records(
             records,
             flow_map=flow_map,
@@ -570,6 +691,7 @@ def _extend_variable_linear_cashflows(
     positions: pd.DataFrame,
     analysis_date: date,
     projection_curve_set: ForwardCurveSet,
+    cpr_annual: float = 0.0,
 ) -> None:
     if positions.empty:
         return
@@ -706,6 +828,12 @@ def _extend_variable_linear_cashflows(
             )
             prev = pay_date
 
+        if cpr_annual > 0.0:
+            flow_map = _apply_cpr_overlay(
+                flow_map, outstanding=outstanding, sign=sign,
+                cpr_annual=cpr_annual, daycount_base_days=_daycount_base_days(base),
+                accrual_start=analysis_date,
+            )
         _append_contract_records(
             records,
             flow_map=flow_map,
@@ -723,6 +851,7 @@ def _extend_variable_annuity_cashflows(
     positions: pd.DataFrame,
     analysis_date: date,
     projection_curve_set: ForwardCurveSet,
+    cpr_annual: float = 0.0,
 ) -> None:
     if positions.empty:
         return
@@ -850,6 +979,12 @@ def _extend_variable_annuity_cashflows(
                 stub_interest = balance * regime_rate * yearfrac(prev, regime_end, base)
                 _add_flow(flow_map, flow_date=regime_end, interest_amount=sign * stub_interest)
 
+        if cpr_annual > 0.0:
+            flow_map = _apply_cpr_overlay(
+                flow_map, outstanding=outstanding, sign=sign,
+                cpr_annual=cpr_annual, daycount_base_days=_daycount_base_days(base),
+                accrual_start=analysis_date,
+            )
         _append_contract_records(
             records,
             flow_map=flow_map,
@@ -867,6 +1002,7 @@ def _extend_fixed_scheduled_cashflows(
     positions: pd.DataFrame,
     analysis_date: date,
     flows_by_contract: dict[str, list[tuple[date, float]]],
+    cpr_annual: float = 0.0,
 ) -> None:
     if positions.empty:
         return
@@ -928,6 +1064,12 @@ def _extend_fixed_scheduled_cashflows(
         if balance > 1e-10:
             _add_flow(flow_map, flow_date=maturity_date, principal_amount=sign * balance)
 
+        if cpr_annual > 0.0:
+            flow_map = _apply_cpr_overlay(
+                flow_map, outstanding=outstanding, sign=sign,
+                cpr_annual=cpr_annual, daycount_base_days=_daycount_base_days(base),
+                accrual_start=analysis_date,
+            )
         _append_contract_records(
             records,
             flow_map=flow_map,
@@ -946,6 +1088,7 @@ def _extend_variable_scheduled_cashflows(
     analysis_date: date,
     projection_curve_set: ForwardCurveSet,
     flows_by_contract: dict[str, list[tuple[date, float]]],
+    cpr_annual: float = 0.0,
 ) -> None:
     if positions.empty:
         return
@@ -1055,6 +1198,12 @@ def _extend_variable_scheduled_cashflows(
         if balance > 1e-10:
             _add_flow(flow_map, flow_date=maturity_date, principal_amount=sign * balance)
 
+        if cpr_annual > 0.0:
+            flow_map = _apply_cpr_overlay(
+                flow_map, outstanding=outstanding, sign=sign,
+                cpr_annual=cpr_annual, daycount_base_days=_daycount_base_days(base),
+                accrual_start=analysis_date,
+            )
         _append_contract_records(
             records,
             flow_map=flow_map,
@@ -1072,6 +1221,9 @@ def build_eve_cashflows(
     analysis_date: date,
     projection_curve_set: ForwardCurveSet | None = None,
     scheduled_principal_flows: pd.DataFrame | None = None,
+    nmd_params=None,
+    cpr_annual: float = 0.0,
+    tdrr_annual: float = 0.0,
 ) -> pd.DataFrame:
     """
     Builds run-off cashflows for EVE.
@@ -1111,54 +1263,102 @@ def build_eve_cashflows(
 
     records: list[dict[str, Any]] = []
 
-    _extend_fixed_annuity_cashflows(
-        records,
-        positions=groups.get("fixed_annuity", pd.DataFrame()),
-        analysis_date=analysis_date,
-    )
-    _extend_fixed_bullet_cashflows(
-        records,
-        positions=groups.get("fixed_bullet", pd.DataFrame()),
-        analysis_date=analysis_date,
-    )
-    _extend_fixed_linear_cashflows(
-        records,
-        positions=groups.get("fixed_linear", pd.DataFrame()),
-        analysis_date=analysis_date,
-    )
-    _extend_fixed_scheduled_cashflows(
-        records,
-        positions=groups.get("fixed_scheduled", pd.DataFrame()),
-        analysis_date=analysis_date,
-        flows_by_contract=flows_by_contract,
-    )
+    # ── Helper: determine effective decay rate per position sub-group ──
+    # CPR applies to asset-side loans; TDRR applies to term-deposit liabilities.
+    def _effective_decay(pos_df: pd.DataFrame) -> float:
+        """Return the single decay rate for a homogeneous sub-group.
+
+        For mixed asset/liability groups, we call the generator twice
+        (split by side), each with the correct rate.
+        """
+        if pos_df.empty:
+            return 0.0
+        if cpr_annual > 0.0 or tdrr_annual > 0.0:
+            sides = pos_df["side"].str.strip().str.upper().unique() if "side" in pos_df.columns else []
+            has_asset = "A" in sides
+            has_liab = "L" in sides
+            if has_asset and not has_liab:
+                return cpr_annual
+            if has_liab and not has_asset:
+                # TDRR only for term deposits; if is_term_deposit column
+                # exists, filter was already applied upstream
+                if tdrr_annual > 0.0 and "is_term_deposit" in pos_df.columns:
+                    if pos_df["is_term_deposit"].any():
+                        return tdrr_annual
+                return 0.0
+        return 0.0
+
+    def _split_and_extend(extend_fn, sct_key, **extra_kw):
+        """Call an _extend_*_cashflows function, splitting by CPR/TDRR as needed."""
+        pos_df = groups.get(sct_key, pd.DataFrame())
+        if pos_df.empty:
+            return
+        has_side = "side" in pos_df.columns
+        needs_split = (cpr_annual > 0.0 or tdrr_annual > 0.0) and has_side
+
+        if not needs_split:
+            extend_fn(records, positions=pos_df, analysis_date=analysis_date,
+                       cpr_annual=0.0, **extra_kw)
+            return
+
+        side_col = pos_df["side"].str.strip().str.upper()
+        asset_mask = side_col.eq("A")
+        liab_mask = ~asset_mask
+
+        # Assets get CPR
+        asset_df = pos_df.loc[asset_mask]
+        if not asset_df.empty:
+            extend_fn(records, positions=asset_df, analysis_date=analysis_date,
+                       cpr_annual=cpr_annual, **extra_kw)
+
+        # Liabilities: term deposits get TDRR, others get no decay
+        liab_df = pos_df.loc[liab_mask]
+        if not liab_df.empty and tdrr_annual > 0.0:
+            if "is_term_deposit" in liab_df.columns:
+                td_col = liab_df["is_term_deposit"]
+                td_mask = td_col.notna() & td_col.astype(bool)
+                td_df = liab_df.loc[td_mask]
+                non_td_df = liab_df.loc[~td_mask]
+                if not td_df.empty:
+                    extend_fn(records, positions=td_df, analysis_date=analysis_date,
+                               cpr_annual=tdrr_annual, **extra_kw)
+                if not non_td_df.empty:
+                    extend_fn(records, positions=non_td_df, analysis_date=analysis_date,
+                               cpr_annual=0.0, **extra_kw)
+            else:
+                extend_fn(records, positions=liab_df, analysis_date=analysis_date,
+                           cpr_annual=0.0, **extra_kw)
+        elif not liab_df.empty:
+            extend_fn(records, positions=liab_df, analysis_date=analysis_date,
+                       cpr_annual=0.0, **extra_kw)
+
+    _split_and_extend(_extend_fixed_annuity_cashflows, "fixed_annuity")
+    _split_and_extend(_extend_fixed_bullet_cashflows, "fixed_bullet")
+    _split_and_extend(_extend_fixed_linear_cashflows, "fixed_linear")
+    _split_and_extend(_extend_fixed_scheduled_cashflows, "fixed_scheduled",
+                      flows_by_contract=flows_by_contract)
 
     if projection_curve_set is not None:
-        _extend_variable_annuity_cashflows(
-            records,
-            positions=groups.get("variable_annuity", pd.DataFrame()),
-            analysis_date=analysis_date,
-            projection_curve_set=projection_curve_set,
-        )
-        _extend_variable_bullet_cashflows(
-            records,
-            positions=groups.get("variable_bullet", pd.DataFrame()),
-            analysis_date=analysis_date,
-            projection_curve_set=projection_curve_set,
-        )
-        _extend_variable_linear_cashflows(
-            records,
-            positions=groups.get("variable_linear", pd.DataFrame()),
-            analysis_date=analysis_date,
-            projection_curve_set=projection_curve_set,
-        )
-        _extend_variable_scheduled_cashflows(
-            records,
-            positions=groups.get("variable_scheduled", pd.DataFrame()),
-            analysis_date=analysis_date,
-            projection_curve_set=projection_curve_set,
-            flows_by_contract=flows_by_contract,
-        )
+        _split_and_extend(_extend_variable_annuity_cashflows, "variable_annuity",
+                          projection_curve_set=projection_curve_set)
+        _split_and_extend(_extend_variable_bullet_cashflows, "variable_bullet",
+                          projection_curve_set=projection_curve_set)
+        _split_and_extend(_extend_variable_linear_cashflows, "variable_linear",
+                          projection_curve_set=projection_curve_set)
+        _split_and_extend(_extend_variable_scheduled_cashflows, "variable_scheduled",
+                          projection_curve_set=projection_curve_set,
+                          flows_by_contract=flows_by_contract)
+
+    # ── NMD behavioural expansion (Phase 3) ─────────────────────────────
+    if nmd_params is not None and "source_contract_type" in positions.columns:
+        sct_col = _normalise_source_contract_type(positions["source_contract_type"])
+        nmd_mask = sct_col.eq("fixed_non_maturity")
+        nmd_df = positions.loc[nmd_mask]
+        if not nmd_df.empty:
+            from engine.services.nmd_behavioural import expand_nmd_positions
+            nmd_cf = expand_nmd_positions(nmd_df, nmd_params, analysis_date)
+            if not nmd_cf.empty:
+                records.extend(nmd_cf.to_dict("records"))
 
     out = pd.DataFrame(records)
     if out.empty:

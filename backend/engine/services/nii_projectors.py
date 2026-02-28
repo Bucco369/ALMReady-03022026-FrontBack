@@ -561,6 +561,7 @@ def project_fixed_annuity_cycle(
     base: str,
     fixed_rate: float,
     payment_frequency: tuple[int, str],
+    cpr_annual: float = 0.0,
 ) -> float:
     if cycle_end <= cycle_start or outstanding <= 0.0:
         return 0.0
@@ -580,6 +581,7 @@ def project_fixed_annuity_cycle(
 
     out = 0.0
     balance = float(outstanding)
+    DRc = float(outstanding)
     prev = cycle_start
     for i, pay_date in enumerate(payment_dates):
         if pay_date <= prev:
@@ -602,7 +604,19 @@ def project_fixed_annuity_cycle(
                 principal = 0.0
             if principal > balance:
                 principal = balance
-        balance = max(0.0, balance - principal)
+
+        # CPR/TDRR: apply prepayment decay to balance
+        if cpr_annual > 0.0 and DRc > 1e-10:
+            days = (pay_date - prev).days
+            CPRp = 1.0 - (1.0 - cpr_annual) ** (days / 360.0)
+            amort_rate = principal / DRc if DRc > 1e-10 else 1.0
+            combined = min(1.0, amort_rate + CPRp)
+            behav_principal = balance * combined
+            DRc = max(0.0, DRc - principal)
+            balance = max(0.0, balance - behav_principal)
+        else:
+            DRc = max(0.0, DRc - principal)
+            balance = max(0.0, balance - principal)
         prev = pay_date
 
         if balance <= 1e-10:
@@ -629,6 +643,7 @@ def project_variable_annuity_cycle(
     repricing_frequency: tuple[int, str] | None,
     fixed_rate_for_stub: float | None,
     annuity_payment_mode: str,
+    cpr_annual: float = 0.0,
 ) -> float:
     if cycle_end <= cycle_start or outstanding <= 0.0:
         return 0.0
@@ -676,6 +691,7 @@ def project_variable_annuity_cycle(
         regime_bounds = [cycle_start, *reset_dates, cycle_end]
         out = 0.0
         balance = float(outstanding)
+        DRc = float(outstanding)
 
         for ridx in range(len(regime_bounds) - 1):
             regime_start = regime_bounds[ridx]
@@ -685,9 +701,6 @@ def project_variable_annuity_cycle(
 
             regime_rate = _rate_at(regime_start)
 
-            # Modeling note:
-            # here the payment is recalculated at each reset. This represents products
-            # where the payment is not fixed and adjusts with each repricing.
             remaining_payment_dates = [d for d in payment_dates if d > regime_start]
             if not remaining_payment_dates:
                 break
@@ -717,7 +730,19 @@ def project_variable_annuity_cycle(
                         principal = 0.0
                     if principal > balance:
                         principal = balance
-                balance = max(0.0, balance - principal)
+
+                # CPR/TDRR: apply prepayment decay
+                if cpr_annual > 0.0 and DRc > 1e-10:
+                    days = (pay_date - prev).days
+                    CPRp = 1.0 - (1.0 - cpr_annual) ** (days / 360.0)
+                    amort_rate = principal / DRc if DRc > 1e-10 else 1.0
+                    combined = min(1.0, amort_rate + CPRp)
+                    behav_principal = balance * combined
+                    DRc = max(0.0, DRc - principal)
+                    balance = max(0.0, balance - behav_principal)
+                else:
+                    DRc = max(0.0, DRc - principal)
+                    balance = max(0.0, balance - principal)
                 prev = pay_date
                 if balance <= 1e-10:
                     break
@@ -776,6 +801,13 @@ def project_variable_annuity_cycle(
                     if principal > balance:
                         principal = balance
 
+                # CPR/TDRR: additional prepayment decay
+                if cpr_annual > 0.0:
+                    days = (seg_end - seg_start).days
+                    CPRp = 1.0 - (1.0 - cpr_annual) ** (days / 360.0)
+                    extra_prepay = balance * CPRp
+                    principal = min(balance, principal + extra_prepay)
+
                 balance = max(0.0, balance - principal)
                 accrued_interest_since_payment = 0.0
                 if balance <= 1e-10:
@@ -826,6 +858,7 @@ def project_variable_bullet_cycle(
     anchor_date: date | None,
     frequency: tuple[int, str] | None,
     fixed_rate_for_stub: float | None,
+    cpr_annual: float = 0.0,
 ) -> float:
     if cycle_end <= cycle_start:
         return 0.0
@@ -849,6 +882,7 @@ def project_variable_bullet_cycle(
 
     boundaries = [cycle_start, *reset_dates, cycle_end]
     out = 0.0
+    balance = float(notional)
     for i in range(len(boundaries) - 1):
         seg_start = boundaries[i]
         seg_end = boundaries[i + 1]
@@ -868,7 +902,14 @@ def project_variable_bullet_cycle(
 
         seg_rate = apply_floor_cap(seg_rate, floor_rate=floor_rate, cap_rate=cap_rate)
         accrual_factor = yearfrac(seg_start, seg_end, base)
-        out += sign * notional * seg_rate * accrual_factor
+        out += sign * balance * seg_rate * accrual_factor
+
+        # CPR/TDRR: apply prepayment decay to balance
+        if cpr_annual > 0.0:
+            days = (seg_end - seg_start).days
+            CPRp = 1.0 - (1.0 - cpr_annual) ** (days / 360.0)
+            balance = max(0.0, balance * (1.0 - CPRp))
+
     return float(out)
 
 
@@ -888,6 +929,7 @@ def project_variable_linear_cycle(
     anchor_date: date | None,
     frequency: tuple[int, str] | None,
     fixed_rate_for_stub: float | None,
+    cpr_annual: float = 0.0,
 ) -> float:
     if cycle_end <= cycle_start:
         return 0.0
@@ -944,6 +986,13 @@ def project_variable_linear_cycle(
         avg_notional = 0.5 * (notional_start + notional_end)
         if avg_notional <= 0.0:
             continue
+
+        # CPR/TDRR: scale interest by average survival factor
+        if cpr_annual > 0.0:
+            elapsed_months = max(0.0, (seg_start - cycle_start).days / 30.0)
+            smm = 1.0 - (1.0 - cpr_annual) ** (1.0 / 12.0)
+            survival = (1.0 - smm) ** elapsed_months
+            avg_notional *= survival
 
         accrual_factor = yearfrac(seg_start, seg_end, base)
         out += sign * avg_notional * seg_rate * accrual_factor
@@ -1649,12 +1698,11 @@ def project_fixed_scheduled_cycle(
     base: str,
     fixed_rate: float,
     principal_flow_map: Mapping[date, float],
+    cpr_annual: float = 0.0,
 ) -> float:
     if cycle_end <= cycle_start or outstanding <= 0.0:
         return 0.0
 
-    # Principal flows in (cycle_start, cycle_end] — half-open convention
-    # consistent with scheduled_flow_map_for_window.
     boundaries = {cycle_start, cycle_end}
     for d in principal_flow_map.keys():
         if cycle_start < d <= cycle_end:
@@ -1669,12 +1717,17 @@ def project_fixed_scheduled_cycle(
         if seg_end <= seg_start:
             continue
 
-        # Interest accrued on the outstanding balance during the segment.
-        # Principal is applied at the end of the segment, after accumulating interest.
         out += sign * balance * float(fixed_rate) * yearfrac(seg_start, seg_end, base)
         principal_at_end = float(principal_flow_map.get(seg_end, 0.0))
         if principal_at_end != 0.0:
             balance = apply_principal_flow(balance, principal_at_end)
+
+        # CPR/TDRR: additional prepayment decay
+        if cpr_annual > 0.0 and balance > 1e-10:
+            days = (seg_end - seg_start).days
+            CPRp = 1.0 - (1.0 - cpr_annual) ** (days / 360.0)
+            balance = max(0.0, balance * (1.0 - CPRp))
+
         if balance <= 1e-10:
             break
 
@@ -1697,6 +1750,7 @@ def project_variable_scheduled_cycle(
     frequency: tuple[int, str] | None,
     fixed_rate_for_stub: float | None,
     principal_flow_map: Mapping[date, float],
+    cpr_annual: float = 0.0,
 ) -> float:
     if cycle_end <= cycle_start or outstanding <= 0.0:
         return 0.0
@@ -1749,13 +1803,18 @@ def project_variable_scheduled_cycle(
             seg_rate = float(curve_set.rate_on_date(index_name, seg_start)) + float(spread)
         seg_rate = apply_floor_cap(seg_rate, floor_rate=floor_rate, cap_rate=cap_rate)
 
-        # Interest accrued on the outstanding balance during the segment.
-        # Principal is applied at the end of the segment, after accumulating interest.
         out += sign * balance * seg_rate * yearfrac(seg_start, seg_end, base)
 
         principal_at_end = float(principal_flow_map.get(seg_end, 0.0))
         if principal_at_end != 0.0:
             balance = apply_principal_flow(balance, principal_at_end)
+
+        # CPR/TDRR: additional prepayment decay
+        if cpr_annual > 0.0 and balance > 1e-10:
+            days = (seg_end - seg_start).days
+            CPRp = 1.0 - (1.0 - cpr_annual) ** (days / 360.0)
+            balance = max(0.0, balance * (1.0 - CPRp))
+
         if balance <= 1e-10:
             break
 

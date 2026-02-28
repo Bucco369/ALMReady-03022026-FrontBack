@@ -37,6 +37,12 @@ def create_synthetic_motor_row(
     sct = mapping.get("source_contract_type", "fixed_bullet")
     side = mapping.get("side", category_side_map.get(mod.category or "asset", "A"))
 
+    # If explicit amortization provided, override the template default
+    amortization = getattr(mod, "amortization", None)
+    if amortization and amortization in ("bullet", "linear", "annuity"):
+        base_type = sct.split("_")[0]  # 'fixed' or 'variable'
+        sct = f"{base_type}_{amortization}"
+
     if mod.startDate:
         try:
             start = date.fromisoformat(mod.startDate)
@@ -90,8 +96,8 @@ def create_synthetic_motor_row(
         "payment_freq": payment_freq_str,
         "repricing_freq": repricing_freq_str,
         "currency": mod.currency or "EUR",
-        "floor_rate": None,
-        "cap_rate": None,
+        "floor_rate": getattr(mod, "floorRate", None),
+        "cap_rate": getattr(mod, "capRate", None),
     }
     return row
 

@@ -20,7 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 import app.state as state
-from app.routers import balance, calculate, curves, sessions
+from app.routers import balance, calculate, curves, sessions, whatif
 
 logging.basicConfig(
     level=logging.INFO,
@@ -142,6 +142,7 @@ app.include_router(sessions.router)
 app.include_router(balance.router)
 app.include_router(curves.router)
 app.include_router(calculate.router)
+app.include_router(whatif.router)
 
 
 @app.get("/api/health")

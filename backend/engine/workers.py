@@ -78,6 +78,11 @@ def eve_nii_unified(
     balance_constant: bool,
     horizon_months: int,
     scheduled_principal_flows=None,
+    # Behavioural assumptions (Phases 3-5)
+    nmd_params=None,
+    cpr_annual: float = 0.0,
+    tdrr_annual: float = 0.0,
+    nmd_rate_delta: float = 0.0,
 ) -> dict:
     """Unified worker: build cashflows ONCE, derive both EVE and NII.
 
@@ -96,6 +101,9 @@ def eve_nii_unified(
         analysis_date=analysis_date,
         projection_curve_set=projection_curve_set,
         scheduled_principal_flows=scheduled_principal_flows,
+        nmd_params=nmd_params,
+        cpr_annual=cpr_annual,
+        tdrr_annual=tdrr_annual,
     )
 
     # 2. EVE: scalar + bucket breakdown from the same cashflows
@@ -117,6 +125,10 @@ def eve_nii_unified(
         margin_set=margin_set,
         risk_free_index=risk_free_index,
         scheduled_principal_flows=scheduled_principal_flows,
+        nmd_params=nmd_params,
+        cpr_annual=cpr_annual,
+        tdrr_annual=tdrr_annual,
+        nmd_rate_delta=nmd_rate_delta,
     )
 
     return {

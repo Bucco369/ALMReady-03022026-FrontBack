@@ -28,7 +28,7 @@ import { BalancePositionsCardConnected } from '@/components/connected/BalancePos
 import { CurvesAndScenariosCard } from '@/components/CurvesAndScenariosCard';
 import { ResultsCard } from '@/components/ResultsCard';
 import { WhatIfProvider } from '@/components/whatif/WhatIfContext';
-import { BehaviouralProvider } from '@/components/behavioural/BehaviouralContext';
+import { useBehavioural, buildBehaviouralPayload } from '@/components/behavioural/BehaviouralContext';
 import { useSession } from '@/hooks/useSession';
 import { calculateEveNii, getCalcProgress } from '@/lib/api';
 import { runCalculation } from '@/lib/calculationEngine';
@@ -51,6 +51,7 @@ const Index = () => {
   const calcPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { sessionId, sessionMeta } = useSession();
+  const behaviouralCtx = useBehavioural();
 
   const calcEta = useProgressETA(calcProgress, isCalculating);
 
@@ -108,6 +109,7 @@ const Index = () => {
         const response = await calculateEveNii(sessionId, {
           scenarios: enabledScenarios,
           discount_curve_id: selectedCurves[0] || "EUR_ESTR_OIS",
+          behavioural: buildBehaviouralPayload(behaviouralCtx),
         });
 
         // Map backend snake_case → frontend camelCase CalculationResults
@@ -126,6 +128,7 @@ const Index = () => {
             deltaNii: sr.delta_nii,
           })),
           calculatedAt: response.calculated_at,
+          warnings: response.warnings ?? [],
         };
 
         setResults(calculationResults);
@@ -156,10 +159,9 @@ const Index = () => {
         setCalcProgress(0);
       }, 400);
     }
-  }, [canCalculate, sessionId, positions, curves, selectedCurves, scenarios]);
+  }, [canCalculate, sessionId, positions, curves, selectedCurves, scenarios, behaviouralCtx]);
 
   return (
-    <BehaviouralProvider>
       <WhatIfProvider>
       <div className="h-screen flex flex-col bg-background overflow-hidden">
         {/* Apple-style Glass Header */}
@@ -206,6 +208,7 @@ const Index = () => {
               sessionId={sessionId}
               hasBalance={sessionMeta?.has_balance ?? false}
               onDataReset={handleDataReset}
+              scenarios={scenarios}
             />
 
             {/* Top-right: Curves & Scenarios (merged) */}
@@ -236,7 +239,6 @@ const Index = () => {
 
       </div>
       </WhatIfProvider>
-    </BehaviouralProvider>
   );
 };
 

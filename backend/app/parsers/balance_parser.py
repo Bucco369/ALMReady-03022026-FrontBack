@@ -187,6 +187,7 @@ def _parse_zip_balance(
             source_specs=filtered_specs,
             on_progress=_report_progress,
             parallel=n_workers,
+            executor=state._executor,
         )
     except Exception as exc:
         progress.clear()

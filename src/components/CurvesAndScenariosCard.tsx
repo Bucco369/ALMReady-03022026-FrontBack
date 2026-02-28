@@ -224,12 +224,13 @@ function buildAdaptiveXAxisTicks(maxYears: number, availableYears: number[]): nu
 
   if (sorted.length <= 2) return sorted;
 
+  // Scale minimum gap with total range so labels never overlap
   const minGapYears =
-    maxYears > 15 ? 1.0
-      : maxYears > 8 ? 0.45
-        : maxYears > 3 ? 0.2
-          : maxYears > 1 ? 0.09
-            : 0.04;
+    maxYears > 15 ? Math.max(2.5, maxYears * 0.08)
+      : maxYears > 8 ? 0.8
+        : maxYears > 3 ? 0.35
+          : maxYears > 1 ? 0.15
+            : 0.06;
 
   const thinned: number[] = [];
   sorted.forEach((value, idx) => {
@@ -251,6 +252,14 @@ function buildAdaptiveXAxisTicks(maxYears: number, availableYears: number[]): nu
     thinned.push(last);
   }
 
+  // If the last and second-to-last ticks are too close, drop the second-to-last
+  if (thinned.length >= 3) {
+    const gap = thinned[thinned.length - 1] - thinned[thinned.length - 2];
+    if (gap < minGapYears) {
+      thinned.splice(thinned.length - 2, 1);
+    }
+  }
+
   return thinned;
 }
 
@@ -269,11 +278,8 @@ function formatTenorFromYears(years: number): string {
     return `${wholeYears}Y`;
   }
 
-  const months = Math.round(years * 12);
-  if (months % 12 === 0) {
-    return `${Math.round(months / 12)}Y`;
-  }
-  return `${months}M`;
+  // For non-whole years >= 1, always display in years (one decimal) — never months
+  return `${years.toFixed(1)}Y`;
 }
 
 function formatMaturityLabel(years: number): string {
@@ -1217,7 +1223,7 @@ export function CurvesAndScenariosCard({
                     data={chartModel.rows}
                     margin={{
                       top: 5,
-                      right: 10,
+                      right: 30,
                       left: 0,
                       bottom: analysisDate ? 12 : 5,
                     }}
@@ -1231,7 +1237,7 @@ export function CurvesAndScenariosCard({
                       ticks={xAxisTicks}
                       tick={xAxisTick}
                       tickLine={false}
-                      minTickGap={24}
+                      minTickGap={40}
                       interval="preserveStartEnd"
                       stroke="hsl(var(--border))"
                       height={analysisDate ? 36 : 18}
